@@ -65,12 +65,12 @@ The protocol handshake granting Cloudgate access tokens and refresh tokens from 
 _Avoid_: Login session, API handshake
 
 **VendorDriver**:
-A provider-specific protocol adapter implementing the uniform Driver interface (`About`, `List`, `Get`, `Put`, `Delete`, `Move`, `Mkdir`) directly against third-party REST APIs without external SDK overhead.
-_Avoid_: Client wrapper, connector plugin
+A thin adapter over an embedded `rclone/fs.Fs` that implements the uniform Driver interface (`About`, `List`, `Get`, `Put`, `Delete`, `Move`, `Mkdir`) by delegating chunked uploads, retry, rate-limiting and provider quirks to rclone while preserving single-binary deployment without an external executable.
+_Avoid_: Raw REST client, client wrapper, connector plugin
 
 **CredentialPersistence**:
-The local SQLite-backed mechanism that securely stores OAuth refresh tokens and client secrets, enabling automatic background token renewal and driver rehydration across gateway restarts.
-_Avoid_: Token cache, session store
+The local SQLite-backed mechanism that securely stores OAuth refresh tokens and client secrets in the `accounts.credentials` column and, on restart, rehydrates live VendorDrivers by injecting those credentials into in-memory `rclone/fs` configs without ever writing a persistent `rclone.conf` to disk.
+_Avoid_: Token cache, session store, rclone.conf file
 
 **AccountDisconnection**:
 The coordinated teardown process that detaches a RemoteAccount, evicts its active Driver from all StoragePools, wipes its cached MetadataIndex entries, and purges its stored credentials.

@@ -118,4 +118,71 @@ func TestRedirectURIConsistency(t *testing.T) {
 	}
 }
 
+func TestOneDriveOAuthFlow(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "cloudgate_od_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+	database, err := db.Open(tempDir)
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer database.Close()
+	srv := server.NewServer(database, nil)
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+	resp, err := http.Get(ts.URL + "/api/auth/onedrive/login")
+	if err != nil {
+		t.Fatalf("failed to request onedrive oauth login: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK from /api/auth/onedrive/login, got %d", resp.StatusCode)
+	}
+	var res map[string]string
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	authURL := res["auth_url"]
+	if !strings.HasPrefix(authURL, "https://login.microsoftonline.com/common/oauth2/v2.0/authorize") {
+		t.Fatalf("expected OneDrive OAuth URL, got: %s", authURL)
+	}
+	if !strings.Contains(authURL, "scope=") {
+		t.Fatalf("auth URL missing scope: %s", authURL)
+	}
+}
+
+func TestDropboxOAuthFlow(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "cloudgate_dbx_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+	database, err := db.Open(tempDir)
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer database.Close()
+	srv := server.NewServer(database, nil)
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+	resp, err := http.Get(ts.URL + "/api/auth/dropbox/login")
+	if err != nil {
+		t.Fatalf("failed to request dropbox oauth login: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK from /api/auth/dropbox/login, got %d", resp.StatusCode)
+	}
+	var res map[string]string
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	authURL := res["auth_url"]
+	if !strings.HasPrefix(authURL, "https://www.dropbox.com/oauth2/authorize") {
+		t.Fatalf("expected Dropbox OAuth URL, got: %s", authURL)
+	}
+}
+
 

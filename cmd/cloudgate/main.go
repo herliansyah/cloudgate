@@ -134,7 +134,7 @@ func runServer(rawArgs []string) {
 			quota = 15 * 1024 * 1024 * 1024
 		}
 		var d storage.Driver
-		if (acc.Provider == "google" || acc.Provider == "gdrive") && acc.Credentials != "" {
+		if acc.Credentials != "" {
 			var creds struct {
 				ClientID     string `json:"client_id"`
 				ClientSecret string `json:"client_secret"`
@@ -142,7 +142,17 @@ func runServer(rawArgs []string) {
 				RefreshToken string `json:"refresh_token"`
 			}
 			if err := json.Unmarshal([]byte(acc.Credentials), &creds); err == nil && (creds.AccessToken != "" || creds.RefreshToken != "") {
-				d = storage.NewGDriveDriver(acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
+				switch acc.Provider {
+				case "google", "gdrive":
+					d = storage.NewGDriveDriver(acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
+				case "onedrive", "dropbox":
+					d = storage.NewRcloneAdapter(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
+				default:
+					// Generic rclone-backed provider (box, pcloud, etc.) — also rehydrated via adapter if provider known
+					if acc.Provider == "box" || acc.Provider == "pcloud" || acc.Provider == "koofr" || acc.Provider == "yandex" || acc.Provider == "onedrive" || acc.Provider == "dropbox" {
+						d = storage.NewRcloneAdapter(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
+					}
+				}
 			}
 		}
 		if d == nil {

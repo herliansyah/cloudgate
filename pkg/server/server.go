@@ -416,9 +416,11 @@ button:hover { background: #475569; }
 		return
 	}
 
-	// Fetch real user info from Google
+	// Fetch provider-specific user info and instantiate live driver
 	var userEmail, userName string
-	if provider == "google" || provider == "gdrive" {
+	var liveDriver storage.Driver
+	switch provider {
+	case "google", "gdrive":
 		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
 		if err == nil {
 			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
@@ -440,26 +442,88 @@ button:hover { background: #475569; }
 				}
 			}
 		}
+		gdriver := storage.NewGDriveDriver(accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
+		liveDriver = gdriver
+	case "onedrive":
+		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://graph.microsoft.com/v1.0/me", nil)
+		if err == nil {
+			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
+			userResp, err := http.DefaultClient.Do(userReq)
+			if err == nil {
+				defer userResp.Body.Close()
+				var userInfo struct {
+					DisplayName string `json:"displayName"`
+					Mail        string `json:"mail"`
+					UserPrincipal string `json:"userPrincipalName"`
+				}
+				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
+					userEmail = userInfo.Mail
+					if userEmail == "" {
+						userEmail = userInfo.UserPrincipal
+					}
+					userName = userInfo.DisplayName
+					if userInfo.DisplayName != "" && userEmail != "" {
+						accName = fmt.Sprintf("%s (%s)", userInfo.DisplayName, userEmail)
+					} else if userEmail != "" {
+						accName = userEmail
+					} else if userInfo.DisplayName != "" {
+						accName = userInfo.DisplayName
+					}
+				}
+			}
+		}
+		adapter := storage.NewRcloneAdapter("onedrive", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
+		liveDriver = adapter
+	case "dropbox":
+		userReq, err := http.NewRequestWithContext(r.Context(), "POST", "https://api.dropboxapi.com/2/users/get_current_account", nil)
+		if err == nil {
+			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
+			userResp, err := http.DefaultClient.Do(userReq)
+			if err == nil {
+				defer userResp.Body.Close()
+				var userInfo struct {
+					Name struct {
+						DisplayName string `json:"display_name"`
+					} `json:"name"`
+					Email string `json:"email"`
+				}
+				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
+					userEmail = userInfo.Email
+					userName = userInfo.Name.DisplayName
+					if userInfo.Name.DisplayName != "" && userInfo.Email != "" {
+						accName = fmt.Sprintf("%s (%s)", userInfo.Name.DisplayName, userInfo.Email)
+					} else if userInfo.Email != "" {
+						accName = userInfo.Email
+					} else if userInfo.Name.DisplayName != "" {
+						accName = userInfo.Name.DisplayName
+					}
+				}
+			}
+		}
+		adapter := storage.NewRcloneAdapter("dropbox", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
+		liveDriver = adapter
+	default:
+		// Fallback: treat as generic dropbox-style rclone adapter if provider is known to auth
+		adapter := storage.NewRcloneAdapter(provider, accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, "", "")
+		liveDriver = adapter
 	}
 
-	// Instantiate live Google Drive driver
-	gdriver := storage.NewGDriveDriver(accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
-	quota, qErr := gdriver.About(r.Context())
+	quota, qErr := liveDriver.About(r.Context())
 	if qErr == nil {
 		quotaTotal = quota.Total
 		quotaUsed = quota.Used
 	}
 
 	s.mu.Lock()
-	s.drivers[accID] = gdriver
+	s.drivers[accID] = liveDriver
 	if allPool, ok := s.pools["all_pool"]; ok {
-		allPool.AddDriver(gdriver)
+		allPool.AddDriver(liveDriver)
 	}
 	s.mu.Unlock()
 
 	// Trigger background indexing of real files
-	go func() {
-		files, err := gdriver.List(context.Background(), "/")
+	go func(drv storage.Driver) {
+		files, err := drv.List(context.Background(), "/")
 		if err == nil {
 			var indexed []db.IndexedFile
 			for _, f := range files {
@@ -474,7 +538,7 @@ button:hover { background: #475569; }
 			}
 			_ = s.database.IndexFiles(indexed)
 		}
-	}()
+	}(liveDriver)
 
 	credsBytes, _ := json.Marshal(map[string]string{
 		"client_id":     stateData.ClientID,
