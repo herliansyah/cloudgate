@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloudgate - Unified Cloud Storage</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-hover: #334155;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Top Navigation Bar */
+    header {
+      height: 64px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .brand svg { fill: var(--primary); }
+    .brand span.tag { font-size: 0.75rem; background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+
+    .search-box {
+      flex: 1;
+      max-width: 600px;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      height: 42px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 0 44px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+    .search-icon { position: absolute; left: 16px; top: 12px; fill: var(--text-muted); pointer-events: none; }
+    .search-dropdown {
+      position: absolute; top: 48px; left: 0; right: 0; background: var(--card-bg);
+      border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      max-height: 350px; overflow-y: auto; display: none; z-index: 100;
+    }
+    .search-item { padding: 10px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .search-item:hover { background: var(--card-hover); }
+
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-icon {
+      background: transparent; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-icon:hover { background: var(--card-hover); border-color: var(--text-muted); }
+
+    /* Layout Main */
+    .app-body { flex: 1; display: flex; overflow: hidden; }
+
+    /* Sidebar */
+    aside {
+      width: 280px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 16px;
+    }
+
+    .btn-upload {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      height: 48px;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transition: all 0.2s;
+    }
+    .btn-upload:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+    .nav-list { list-style: none; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; }
+    .nav-section-title { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 12px 8px 4px 8px; letter-spacing: 0.05em; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .nav-item:hover { background: var(--card-hover); color: var(--text); }
+    .nav-item.active { background: rgba(59, 130, 246, 0.15); color: var(--primary); font-weight: 600; }
+    .nav-item svg { fill: currentColor; }
+
+    /* Sidebar Capacity Card */
+    .capacity-card {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .capacity-card:hover { border-color: var(--primary); }
+    .capacity-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+    .progress-bar-bg { background: #334155; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+    .progress-bar-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.4s ease; }
+    .capacity-desc { font-size: 0.75rem; color: var(--text-muted); text-align: right; }
+
+    /* Workspace Content */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .toolbar {
+      height: 56px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .breadcrumbs { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600; }
+    .breadcrumb-item { color: var(--text-muted); cursor: pointer; }
+    .breadcrumb-item:hover { color: var(--primary); }
+    .breadcrumb-item.active { color: var(--text); }
+
+    .view-toggles { display: flex; align-items: center; gap: 8px; }
+
+    /* File List & Grid */
+    .content-area {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .dropzone-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.85); border: 2px dashed var(--primary);
+      display: none; align-items: center; justify-content: center; flex-direction: column;
+      z-index: 50; gap: 12px; pointer-events: none;
+    }
+
+    /* Grid View */
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .file-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.15s;
+    }
+    .file-card:hover { background: var(--card-hover); border-color: var(--primary); transform: translateY(-2px); }
+    .file-card.selected { border-color: var(--primary); background: rgba(59, 130, 246, 0.15); }
+    .file-icon { width: 44px; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; }
+    .file-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; }
+
+    /* List View Table */
+    .file-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+    .file-table th { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+    .file-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .file-table tr:hover { background: var(--card-hover); cursor: pointer; }
+    .file-table tr.selected { background: rgba(59, 130, 246, 0.15); }
+
+    /* Floating Transfer Manager */
+    .transfer-manager {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 340px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      z-index: 1000;
+      overflow: hidden;
+      display: none;
+    }
+    .transfer-header {
+      padding: 12px 16px;
+      background: #0f172a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .transfer-body { max-height: 200px; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .transfer-item { font-size: 0.8rem; }
+    .transfer-item-title { display: flex; justify-content: space-between; margin-bottom: 4px; }
+
+    /* Drawer / Side Modals */
+    .drawer {
+      position: fixed; top: 0; right: -420px; width: 400px; height: 100vh;
+      background: var(--card-bg); border-left: 1px solid var(--border);
+      box-shadow: -10px 0 30px rgba(0,0,0,0.5); z-index: 2000;
+      display: flex; flex-direction: column; transition: right 0.3s ease;
+    }
+    .drawer.open { right: 0; }
+    .drawer-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .drawer-content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* Audit Log Item */
+    .audit-item {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .audit-header { display: flex; justify-content: space-between; }
+    .audit-badge { padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
+    .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-failed { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center;
+      z-index: 3000;
+    }
+    .modal {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 16px; width: 90%; max-width: 520px; padding: 24px;
+      display: flex; flex-direction: column; gap: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; font-size: 1.15rem; font-weight: 700; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+    .form-control {
+      background: #0f172a; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 14px; color: var(--text); font-size: 0.9rem; outline: none;
+    }
+    .form-control:focus { border-color: var(--primary); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+    .btn { padding: 10px 18px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+
+    /* Context Menu */
+    .context-menu {
+      position: fixed; background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 5000;
+      display: none; flex-direction: column; width: 180px; overflow: hidden;
+    }
+    .context-menu-item {
+      padding: 10px 16px; font-size: 0.85rem; color: var(--text); display: flex;
+      align-items: center; gap: 10px; cursor: pointer;
+    }
+    .context-menu-item:hover { background: var(--card-hover); color: var(--primary); }
+    .context-menu-item.danger:hover { color: var(--danger); }
+
+    /* Selected Item Actions Bar */
+    .selected-action-bar {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 12px;
+      margin-left: 14px;
+    }
+    .preview-modal {
+      animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalFadeIn {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Toast Notification */
+    .toast-container { position: fixed; bottom: 24px; left: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--card-bg); border: 1px solid var(--border); border-left: 4px solid var(--primary);
+      border-radius: 8px; padding: 12px 18px; font-size: 0.85rem; color: var(--text); box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+      display: flex; align-items: center; gap: 10px; animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="brand" onclick="navigate('/')">
+      <svg width="28" height="28" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+      Cloudgate
+      <span class="tag">v0.1.0</span>
+    </div>
+
+    <div class="search-box">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input type="text" id="searchInput" placeholder="Search across all cloud drives..." oninput="handleSearch(this.value)">
+      <div class="search-dropdown" id="searchDropdown"></div>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-icon" title="Activity Log" onclick="toggleDrawer('auditDrawer')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+      </button>
+      <button class="btn-icon" title="GitHub Sync" onclick="openModal('syncModal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+      </button>
+      <button class="btn-icon" title="About & Updates" onclick="openModal('aboutModal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- App Body -->
+  <div class="app-body">
+    <!-- Sidebar -->
+    <aside>
+      <button class="btn-upload" onclick="triggerFileInput()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        New Upload
+      </button>
+      <input type="file" id="hiddenFileInput" style="display:none" onchange="uploadSelectedFile(this)">
+
+      <ul class="nav-list" id="sidebarNav">
+        <li class="nav-section-title">Aggregated Pools</li>
+        <li class="nav-item active" onclick="selectPool('all_pool')">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+          Round-Robin Pool
+        </li>
+
+        <li class="nav-section-title">Cloud Accounts</li>
+        <div id="accountsNavList"></div>
+        <li class="nav-item" onclick="openModal('addAccountModal')">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          + Add Account
+        </li>
+
+        <li class="nav-section-title">System</li>
+        <li class="nav-item" onclick="selectTrash()">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          Trash Bin
+        </li>
+      </ul>
+
+      <!-- Capacity Visual Widget -->
+      <div class="capacity-card" onclick="openModal('storageModal')">
+        <div class="capacity-header">
+          <span>Storage</span>
+          <span id="capacityPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="capacityFill"></div>
+        </div>
+        <div class="capacity-desc" id="capacityText">Loading...</div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main id="mainWorkspace" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <div class="dropzone-overlay" id="dropOverlay">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="var(--primary)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+        <span style="font-size: 1.1rem; font-weight: 600;">Drop files here to upload instantly</span>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div style="display:flex; align-items:center; overflow:hidden; flex:1; gap:8px;">
+          <div class="breadcrumbs" id="breadcrumbs">
+            <span class="breadcrumb-item active">Round-Robin Pool</span>
+          </div>
+          <div class="selected-action-bar" id="selectedActionBar">
+            <div id="selectedItemTitle" style="display:flex; align-items:center; font-size:0.85rem;"></div>
+            <div id="selectedItemActions" style="display:flex; align-items:center; gap:6px;"></div>
+          </div>
+        </div>
+        <div class="view-toggles">
+          <button class="btn-icon" id="btnRefresh" title="Refresh" onclick="refreshCurrentView()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          </button>
+          <button class="btn-icon" id="btnToggleView" title="Toggle Grid/List View" onclick="toggleViewMode()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- File Content Area -->
+      <div class="content-area" id="contentArea"></div>
+    </main>
+  </div>
+
+  <!-- Floating Transfer Manager -->
+  <div class="transfer-manager" id="transferManager">
+    <div class="transfer-header">
+      <span>Transfers</span>
+      <button class="btn-icon" style="width:24px;height:24px;border:none;" onclick="toggleTransferManager()">✕</button>
+    </div>
+    <div class="transfer-body" id="transferList"></div>
+  </div>
+
+  <!-- Activity Log Drawer -->
+  <div class="drawer" id="auditDrawer">
+    <div class="drawer-header">
+      <h3 style="font-size:1.1rem;font-weight:700;">Audit Trail (Last 100)</h3>
+      <button class="btn-icon" onclick="toggleDrawer('auditDrawer')">✕</button>
+    </div>
+    <div style="padding: 12px 20px 0 20px; display:flex; justify-content:flex-end;">
+      <button class="btn btn-secondary" style="font-size:0.75rem;padding:6px 12px;" onclick="exportAudit()">Export JSON</button>
+    </div>
+    <div class="drawer-content" id="auditList"></div>
+  </div>
+
+  <!-- Add Account Modal -->
+  <div class="modal-backdrop" id="addAccountModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Connect Cloud Drive</span>
+        <button class="btn-icon" onclick="closeModal('addAccountModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Cloud Provider</label>
+        <select class="form-control" id="newAccountProvider" onchange="updateProviderAuthUI()">
+          <option value="gdrive">Google Drive (OAuth2)</option>
+          <option value="onedrive">Microsoft OneDrive (OAuth2)</option>
+          <option value="dropbox">Dropbox (OAuth2)</option>
+          <option value="box">Box</option>
+          <option value="mega">Mega</option>
+          <option value="pcloud">pCloud</option>
+          <option value="webdav">Nextcloud / WebDAV</option>
+          <option value="s3">S3 / S3-Compatible (MinIO, R2, Wasabi)</option>
+          <option value="koofr">Koofr</option>
+          <option value="yandex">Yandex Disk / SFTP</option>
+        </select>
+      </div>
+      <div id="oauthSection" style="background:#0f172a;padding:14px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;gap:12px;">
+        <div style="font-size:0.8rem;line-height:1.4;color:var(--text-muted);background:rgba(59,130,246,0.1);padding:10px;border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
+          <strong style="color:var(--text);">Panduan Autentikasi Google Drive:</strong><br>
+          1. <strong>Wajib:</strong> Pastikan <a href="https://console.developers.google.com/apis/api/drive.googleapis.com/overview" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:underline;">Google Drive API sudah di-ENABLE (Aktif) ↗</a> di project Anda.<br>
+          2. Buka <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:underline;">Google Cloud Console Credentials ↗</a>.<br>
+          3. Buat <em>OAuth 2.0 Client ID</em> (Pilih Web application atau Desktop app).<br>
+          4. Tambahkan <strong>Authorized redirect URI</strong> persis seperti di bawah:<br>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <input type="text" id="gdriveRedirectUriDisplay" readonly value="http://localhost:5210/api/auth/google/callback" class="form-control" style="font-size:0.75rem;padding:4px 8px;flex:1;">
+            <button class="btn btn-secondary" style="font-size:0.75rem;padding:4px 10px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('gdriveRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Google OAuth Client ID</label>
+          <input type="text" class="form-control" id="newAccountClientID" placeholder="contoh: 123456789-xxx.apps.googleusercontent.com">
+        </div>
+
+        <div class="form-group">
+          <label>Google OAuth Client Secret</label>
+          <input type="password" class="form-control" id="newAccountClientSecret" placeholder="contoh: GOCSPX-xxxxxxxxxxxxxxxxx">
+        </div>
+
+        <button class="btn btn-primary" id="btnOAuthAction" style="display:flex;align-items:center;justify-content:center;gap:8px;" onclick="startOAuthConnect()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+          <span id="btnOAuthText">Masuk dengan Akun Google</span>
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Account Label / Name (Optional)</label>
+        <input type="text" class="form-control" id="newAccountName" placeholder="e.g. Personal Google Drive">
+      </div>
+      <div class="form-group">
+        <label>Allocated Quota (GB)</label>
+        <input type="number" class="form-control" id="newAccountQuota" value="15">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addAccountModal')">Cancel</button>
+        <button class="btn btn-secondary" id="btnManualAdd" onclick="submitAddAccount()">Manual / Simulated Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Storage Statistics Breakdown Modal -->
+  <div class="modal-backdrop" id="storageModal">
+    <div class="modal" style="max-width:600px;">
+      <div class="modal-header">
+        <span>Storage Capacity Breakdown</span>
+        <button class="btn-icon" onclick="closeModal('storageModal')">✕</button>
+      </div>
+      <div style="display:flex; justify-content:center; align-items:center; padding:16px;">
+        <svg id="donutChartSvg" width="180" height="180" viewBox="0 0 100 100"></svg>
+      </div>
+      <div id="storageAccountsBreakdown" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('storageModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GitHub Sync Modal -->
+  <div class="modal-backdrop" id="syncModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>GitHub Encrypted Vault Sync</span>
+        <button class="btn-icon" onclick="closeModal('syncModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label>GitHub Personal Access Token (PAT)</label>
+        <input type="password" class="form-control" id="syncToken" placeholder="ghp_xxxxxxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label>Repository (owner/repo)</label>
+        <input type="text" class="form-control" id="syncRepo" placeholder="username/my-cloudgate-vault">
+      </div>
+      <div class="form-group">
+        <label>Master Passphrase (AES-256-GCM)</label>
+        <input type="password" class="form-control" id="syncPassphrase" placeholder="Enter passphrase">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="submitSyncPull()">Restore from GitHub</button>
+        <button class="btn btn-primary" onclick="submitSyncPush()">Backup to GitHub</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About & Update Modal -->
+  <div class="modal-backdrop" id="aboutModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>About Cloudgate</span>
+        <button class="btn-icon" onclick="closeModal('aboutModal')">✕</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px; font-size:0.9rem;">
+        <p><strong>Cloudgate Unified Cloud Storage Gateway</strong></p>
+        <p>Version: <span id="aboutVersion">0.1.0</span></p>
+        <p>Author: <strong>Herliansyah</strong></p>
+        <p>Repository: <a href="https://github.com/herliansyah/cloudgate" target="_blank" style="color:var(--primary);text-decoration:none;">github.com/herliansyah/cloudgate</a></p>
+        <hr style="border:0;border-top:1px solid var(--border);">
+        <div id="updateStatusText" style="color:var(--text-muted);">Click below to check for updates.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('aboutModal')">Close</button>
+        <button class="btn btn-primary" onclick="checkAppUpdates()">Check for Updates</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Preview Modal -->
+  <div class="modal-backdrop" id="filePreviewModal" onclick="if(event.target===this)closeModal('filePreviewModal')">
+    <div class="modal preview-modal" style="max-width: 960px; width: 94%; max-height: 92vh; padding: 20px; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding-bottom: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
+          <span id="previewFileIcon" style="display:flex; align-items:center; flex-shrink:0;"></span>
+          <div style="overflow:hidden;">
+            <div id="previewFileName" style="font-size:1.05rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+            <div id="previewFileMeta" style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"></div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn btn-primary" id="previewDownloadBtn" style="padding:6px 14px; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Unduh
+          </button>
+          <button class="btn-icon" onclick="closeModal('filePreviewModal')" title="Tutup Preview">✕</button>
+        </div>
+      </div>
+      <div id="previewContentArea" style="flex:1; overflow:auto; margin-top:14px; background:#0b1120; border-radius:10px; display:flex; align-items:center; justify-content:center; min-height:450px; position:relative;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Download Confirmation Modal -->
+  <div class="modal-backdrop" id="downloadConfirmModal" onclick="if(event.target===this)closeModal('downloadConfirmModal')">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="background:rgba(59,130,246,0.15);width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          </div>
+          <span>Download File?</span>
+        </div>
+        <button class="btn-icon" onclick="closeModal('downloadConfirmModal')">✕</button>
+      </div>
+      <div style="margin:8px 0; font-size:0.9rem; color:#cbd5e1; line-height:1.5;">
+        <div style="background:#0f172a; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div id="dlModalName" style="font-weight:600; color:#fff; word-break:break-all; margin-bottom:4px;"></div>
+          <div id="dlModalMeta" style="font-size:0.8rem; color:var(--text-muted);"></div>
+        </div>
+        <span>Apakah Anda ingin mengunduh file ini ke perangkat lokal Anda?</span>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('downloadConfirmModal')">Batal</button>
+        <button class="btn btn-primary" id="dlModalConfirmBtn">Unduh Sekarang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" onclick="contextDownload()">Download</div>
+    <div class="context-menu-item danger" onclick="contextTrash()">Move to Trash</div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // State
+    let currentMode = 'pool'; // 'pool', 'account', 'trash'
+    let activeAccountID = '';
+    let activeAccountName = '';
+    let currentPath = '/';
+    let viewMode = 'grid'; // 'grid' or 'list'
+    let currentFiles = [];
+    let selectedFile = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initApp();
+      document.addEventListener('click', () => hideContextMenu());
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal('filePreviewModal');
+          closeModal('downloadConfirmModal');
+          deselectItem();
+          hideContextMenu();
+        }
+      });
+    });
+
+    async function initApp() {
+      await loadAccounts();
+      await loadStats();
+      await loadCurrentView();
+      await updateProviderAuthUI();
+    }
+
+    async function loadAccounts() {
+      try {
+        const res = await fetch('/api/accounts');
+        const accounts = (await res.json()) || [];
+        const container = document.getElementById('accountsNavList');
+        container.innerHTML = '';
+        accounts.forEach(acc => {
+          const item = document.createElement('li');
+          item.className = `nav-item ${activeAccountID === acc.id && currentMode === 'account' ? 'active' : ''}`;
+          item.style.display = 'flex';
+          item.style.alignItems = 'center';
+          item.style.justifyContent = 'space-between';
+          item.style.paddingRight = '8px';
+          item.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;" title="${acc.name}">
+              <svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+              <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${acc.name}</span>
+            </div>
+            <button class="btn-icon" style="opacity:0.4;padding:2px 6px;font-size:0.8rem;border-radius:4px;" title="Putuskan Akun" onclick="deleteAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}', event)">✕</button>
+          `;
+          item.onclick = (e) => {
+            if (e.target.tagName.toLowerCase() !== 'button') {
+              selectAccount(acc.id, acc.name);
+            }
+          };
+          container.appendChild(item);
+        });
+      } catch (err) {
+        console.error('Failed to load accounts', err);
+      }
+    }
+
+    async function deleteAccount(id, name, event) {
+      if (event) event.stopPropagation();
+      if (!confirm(`Putuskan akun "${name}" dari Cloudgate?`)) return;
+      try {
+        const res = await fetch(`/api/accounts/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast(`Akun "${name}" berhasil diputuskan.`);
+          if (activeAccountID === id) {
+            selectPool('all_pool');
+          }
+          await loadAccounts();
+          await loadStats();
+          await loadCurrentView();
+        } else {
+          showToast('Gagal memutuskan akun', 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const stats = await res.json();
+        const pct = stats.total_storage > 0 ? Math.round((stats.total_used / stats.total_storage) * 100) : 0;
+        document.getElementById('capacityPercent').innerText = `${pct}%`;
+        document.getElementById('capacityFill').style.width = `${pct}%`;
+        document.getElementById('capacityText').innerText = `${formatBytes(stats.total_used)} of ${formatBytes(stats.total_storage)}`;
+        renderDonutChart(stats);
+      } catch (err) {
+        console.error('Failed to load stats', err);
+      }
+    }
+
+    function renderDonutChart(stats) {
+      const container = document.getElementById('storageAccountsBreakdown');
+      container.innerHTML = '';
+      if (!stats.accounts) return;
+
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+      let cumulativePercent = 0;
+      let svgPaths = '';
+
+      stats.accounts.forEach((acc, i) => {
+        const color = colors[i % colors.length];
+        const accPct = stats.total_storage > 0 ? (acc.total / stats.total_storage) * 100 : 0;
+
+        container.innerHTML += `
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="width:10px;height:10px;border-radius:50%;background:${color};"></span>
+              <span>${acc.name} (${acc.provider})</span>
+            </div>
+            <span style="color:var(--text-muted);">${formatBytes(acc.used)} / ${formatBytes(acc.total)}</span>
+          </div>
+        `;
+      });
+    }
+
+    async function loadCurrentView() {
+      const area = document.getElementById('contentArea');
+      area.innerHTML = '<div style="color:var(--text-muted);padding:24px;">Loading files...</div>';
+
+      try {
+        let url = '';
+        if (currentMode === 'pool') {
+          url = `/api/files?pool_id=all_pool&path=${encodeURIComponent(currentPath)}`;
+        } else if (currentMode === 'account') {
+          url = `/api/files?account_id=${encodeURIComponent(activeAccountID)}&path=${encodeURIComponent(currentPath)}`;
+        } else if (currentMode === 'trash') {
+          url = `/api/trash`;
+        }
+
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to load files');
+        }
+        currentFiles = Array.isArray(data) ? data : [];
+        renderFiles(currentFiles);
+      } catch (err) {
+        let helpHTML = '';
+        if (err.message.includes('Google Drive API has not been used') || err.message.includes('accessNotConfigured')) {
+          helpHTML = `
+            <div style="background:rgba(0,0,0,0.3);padding:14px;border-radius:8px;font-size:0.85rem;color:#cbd5e1;margin-top:12px;line-height:1.5;">
+              <strong style="color:#fff;">Langkah Penyelesaian:</strong><br>
+              Layanan <strong>Google Drive API</strong> belum diaktifkan pada project Google Cloud Anda.<br>
+              1. Buka tautan aktivasi berikut: <a href="https://console.developers.google.com/apis/api/drive.googleapis.com/overview" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:underline;">Aktifkan Google Drive API di Google Cloud Console ↗</a>.<br>
+              2. Klik tombol biru <strong>"ENABLE"</strong> (Aktifkan).<br>
+              3. Tunggu 1-2 menit lalu klik tombol "Refresh / Muat Ulang" di bawah.
+            </div>
+          `;
+        }
+        area.innerHTML = `
+          <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:24px;margin:24px;max-width:700px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="font-size:1.4rem;">⚠️</span>
+              <h4 style="color:#ef4444;margin:0;">Kendala Akses Google Drive</h4>
+            </div>
+            <p style="color:#fca5a5;font-size:0.85rem;line-height:1.5;margin-bottom:8px;word-break:break-all;">${err.message}</p>
+            ${helpHTML}
+            <button class="btn btn-secondary" style="margin-top:16px;" onclick="loadCurrentView()">Muat Ulang File ↻</button>
+          </div>
+        `;
+      }
+    }
+
+    function getFileType(fileName, isDir) {
+      if (isDir) return 'folder';
+      if (!fileName) return 'file';
+      const ext = fileName.slice((fileName.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
+      if (ext === 'pdf') return 'pdf';
+      if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) return 'image';
+      if (['mp4', 'webm', 'ogv', 'mov', 'mkv', 'avi'].includes(ext)) return 'video';
+      if (['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'].includes(ext)) return 'audio';
+      if (['txt', 'log', 'ini', 'conf', 'env'].includes(ext)) return 'text';
+      if (['json', 'js', 'mjs', 'ts', 'jsx', 'tsx', 'html', 'htm', 'css', 'go', 'py', 'c', 'cpp', 'h', 'java', 'xml', 'yaml', 'yml', 'sh', 'bash', 'sql', 'md', 'markdown'].includes(ext)) return 'code';
+      if (['zip', 'rar', 'tar', 'gz', '7z', 'bz2', 'xz'].includes(ext)) return 'archive';
+      if (['csv', 'xls', 'xlsx', 'ods'].includes(ext)) return 'spreadsheet';
+      if (['doc', 'docx', 'odt', 'rtf'].includes(ext)) return 'document';
+      if (['ppt', 'pptx', 'odp'].includes(ext)) return 'presentation';
+      return 'file';
+    }
+
+    function getFileIconSvg(type, size = 20) {
+      switch (type) {
+        case 'folder':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#f59e0b"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+        case 'pdf':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ef4444"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zm4.5 2h1v-3h-1v3zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>`;
+        case 'image':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ec4899"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
+        case 'video':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#8b5cf6"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>`;
+        case 'audio':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#10b981"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
+        case 'code':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#06b6d4"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`;
+        case 'text':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#38bdf8"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+        case 'spreadsheet':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#22c55e"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4h-4V5h4v2zm-6 0H9V5h4v2zm-6 0H5V5h2v2zm-2 4h2v2H5v-2zm4 0h4v2H9v-2zm6 0h4v2h-4v-2zm4 6h-4v-2h4v2zm-6 0H9v-2h4v2zm-6 0H5v-2h2v2z"/></svg>`;
+        case 'document':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#3b82f6"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+        case 'archive':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#f97316"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>`;
+        default:
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#94a3b8"><path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/></svg>`;
+      }
+    }
+
+    function renderFiles(files) {
+      const area = document.getElementById('contentArea');
+      area.innerHTML = '';
+      deselectItem();
+
+      if (!files || files.length === 0) {
+        area.innerHTML = `
+          <div style="text-align:center; padding:60px 20px; color:var(--text-muted);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>
+            <p style="margin-top:12px; font-size:1rem;">Folder ini kosong</p>
+            ${currentPath !== '/' ? '<button class="btn btn-secondary" style="margin-top:16px;" onclick="navigateUp()">← Kembali ke Folder Induk</button>' : ''}
+          </div>
+        `;
+        return;
+      }
+
+      // Sort: directories first, then alphabetical by name
+      const sorted = [...files].sort((a, b) => {
+        if (a.is_dir && !b.is_dir) return -1;
+        if (!a.is_dir && b.is_dir) return 1;
+        const nameA = (a.name || a.file_name || '').toLowerCase();
+        const nameB = (b.name || b.file_name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
+      if (viewMode === 'grid') {
+        const grid = document.createElement('div');
+        grid.className = 'file-grid';
+        sorted.forEach(f => {
+          const fileName = f.name || f.file_name;
+          const type = getFileType(fileName, f.is_dir);
+          const card = document.createElement('div');
+          card.className = 'file-card';
+          card.innerHTML = `
+            <div class="file-icon" style="background:rgba(255,255,255,0.03);">
+              ${getFileIconSvg(type, 28)}
+            </div>
+            <div class="file-name" title="${fileName}">${fileName}</div>
+            <div class="file-meta">
+              <span>${f.is_dir ? 'Folder' : formatBytes(f.size)}</span>
+              <span>${f.account_id || ''}</span>
+            </div>
+          `;
+          card.onclick = (e) => selectFileCard(f, card, e);
+          card.ondblclick = (e) => {
+            e.stopPropagation();
+            if (f.is_dir) openFolder(f);
+            else previewFile(f);
+          };
+          card.oncontextmenu = (e) => showContextMenu(e, f);
+          grid.appendChild(card);
+        });
+        area.appendChild(grid);
+      } else {
+        const table = document.createElement('table');
+        table.className = 'file-table';
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Drive Account</th>
+              <th>Size</th>
+              <th>Last Modified</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sorted.map(f => {
+              const fileName = f.name || f.file_name;
+              const type = getFileType(fileName, f.is_dir);
+              const jsonStr = JSON.stringify(f).replace(/'/g, "&apos;");
+              return `
+                <tr onclick='selectFileRow(${jsonStr}, this, event)' ondblclick='if(${f.is_dir}){openFolder(${jsonStr})}else{previewFile(${jsonStr})}' oncontextmenu='showContextMenu(event, ${jsonStr})'>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                      <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.04);flex-shrink:0;">
+                        ${getFileIconSvg(type, 18)}
+                      </span>
+                      <span class="file-table-name" style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${fileName}">
+                        ${fileName}
+                      </span>
+                    </div>
+                  </td>
+                  <td style="color:var(--text-muted);">${f.account_id || 'Pool'}</td>
+                  <td style="color:var(--text-muted);">${f.is_dir ? '-' : formatBytes(f.size)}</td>
+                  <td style="color:var(--text-muted);">${f.mod_time ? new Date(f.mod_time).toLocaleDateString() : '-'}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        `;
+        area.appendChild(table);
+      }
+    }
+
+    function selectFileCard(f, el, event) {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.file-card').forEach(c => c.classList.remove('selected'));
+      document.querySelectorAll('.file-table tr').forEach(r => r.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedFile = f;
+      updateSelectedActionBar();
+    }
+
+    function selectFileRow(f, el, event) {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.file-card').forEach(c => c.classList.remove('selected'));
+      document.querySelectorAll('.file-table tr').forEach(r => r.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedFile = f;
+      updateSelectedActionBar();
+    }
+
+    function deselectItem() {
+      document.querySelectorAll('.file-card').forEach(c => c.classList.remove('selected'));
+      document.querySelectorAll('.file-table tr').forEach(r => r.classList.remove('selected'));
+      selectedFile = null;
+      updateSelectedActionBar();
+    }
+
+    function updateSelectedActionBar() {
+      const bar = document.getElementById('selectedActionBar');
+      if (!bar) return;
+      if (!selectedFile) {
+        bar.style.display = 'none';
+        return;
+      }
+
+      bar.style.display = 'flex';
+      const name = selectedFile.name || selectedFile.file_name;
+      const isDir = selectedFile.is_dir;
+      const type = getFileType(name, isDir);
+
+      const titleEl = document.getElementById('selectedItemTitle');
+      titleEl.innerHTML = `
+        <span style="display:flex;align-items:center;margin-right:6px;">${getFileIconSvg(type, 18)}</span>
+        <span style="font-weight:600;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name}">${name}</span>
+        <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">(${isDir ? 'Folder' : formatBytes(selectedFile.size)})</span>
+      `;
+
+      const actionsEl = document.getElementById('selectedItemActions');
+      if (isDir) {
+        actionsEl.innerHTML = `
+          <button class="btn btn-primary" style="padding:6px 14px;font-size:0.85rem;display:flex;align-items:center;gap:6px;" onclick="openFolder(selectedFile)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+            Buka Folder
+          </button>
+          <button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem;" onclick="contextTrash()">Hapus</button>
+          <button class="btn-icon" style="width:28px;height:28px;" title="Deselect" onclick="deselectItem()">✕</button>
+        `;
+      } else {
+        actionsEl.innerHTML = `
+          <button class="btn btn-primary" style="padding:6px 14px;font-size:0.85rem;display:flex;align-items:center;gap:6px;" onclick="previewFile(selectedFile)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            Lihat (Preview)
+          </button>
+          <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.85rem;display:flex;align-items:center;gap:6px;" onclick="askDownload(selectedFile)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Unduh
+          </button>
+          <button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem;" onclick="contextTrash()">Hapus</button>
+          <button class="btn-icon" style="width:28px;height:28px;" title="Deselect" onclick="deselectItem()">✕</button>
+        `;
+      }
+    }
+
+    function openFolder(f) {
+      if (!f) return;
+      let targetPath = f.path;
+      if (!targetPath) {
+        targetPath = currentPath === '/' ? '/' + f.name : currentPath + '/' + f.name;
+      }
+      navigateToPath(targetPath);
+    }
+
+    function navigateToPath(targetPath) {
+      currentPath = targetPath.replace(/\/+/g, '/') || '/';
+      deselectItem();
+      updateBreadcrumbs();
+      loadCurrentView();
+    }
+
+    function navigateUp() {
+      if (currentPath === '/' || !currentPath) return;
+      const parts = currentPath.split('/').filter(Boolean);
+      parts.pop();
+      const parentPath = '/' + parts.join('/');
+      navigateToPath(parentPath);
+    }
+
+    function updateBreadcrumbs() {
+      const container = document.getElementById('breadcrumbs');
+      let rootName = 'Round-Robin Pool';
+      if (currentMode === 'account') {
+        rootName = activeAccountName || 'Cloud Account';
+      } else if (currentMode === 'trash') {
+        rootName = 'Trash Bin';
+      }
+
+      const isRoot = currentPath === '/' || !currentPath;
+      let html = '';
+
+      if (!isRoot) {
+        html += `
+          <button class="btn-icon" style="width:28px;height:28px;border-radius:6px;margin-right:6px;" title="Kembali ke Folder Atas" onclick="navigateUp()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </button>
+        `;
+      }
+
+      html += `<span class="breadcrumb-item ${isRoot ? 'active' : ''}" onclick="navigateToPath('/')">${rootName}</span>`;
+
+      if (!isRoot) {
+        const parts = currentPath.split('/').filter(Boolean);
+        let accumulated = '';
+        parts.forEach((part, index) => {
+          accumulated += '/' + part;
+          const isLast = index === parts.length - 1;
+          html += `<span style="color:var(--text-muted);margin:0 4px;">/</span>`;
+          if (isLast) {
+            html += `<span class="breadcrumb-item active">${part}</span>`;
+          } else {
+            const segPath = accumulated;
+            html += `<span class="breadcrumb-item" onclick="navigateToPath('${segPath.replace(/'/g, "\\'")}')">${part}</span>`;
+          }
+        });
+      }
+
+      container.innerHTML = html;
+    }
+
+    function toggleViewMode() {
+      viewMode = viewMode === 'grid' ? 'list' : 'grid';
+      renderFiles(currentFiles);
+    }
+
+    function selectPool(poolID) {
+      currentMode = 'pool';
+      activeAccountID = '';
+      currentPath = '/';
+      updateBreadcrumbs();
+      updateNavHighlight();
+      loadCurrentView();
+    }
+
+    function selectAccount(accountID, name) {
+      currentMode = 'account';
+      activeAccountID = accountID;
+      activeAccountName = name;
+      currentPath = '/';
+      updateBreadcrumbs();
+      updateNavHighlight();
+      loadCurrentView();
+    }
+
+    function selectTrash() {
+      currentMode = 'trash';
+      activeAccountID = '';
+      currentPath = '/';
+      updateBreadcrumbs();
+      updateNavHighlight();
+      loadCurrentView();
+    }
+
+    function updateNavHighlight() {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    }
+
+    function refreshCurrentView() {
+      loadStats();
+      loadCurrentView();
+      showToast('Refreshed files and capacities');
+    }
+
+    // Context Menu
+    function showContextMenu(e, file) {
+      e.preventDefault();
+      selectedFile = file;
+      updateSelectedActionBar();
+      const menu = document.getElementById('contextMenu');
+      const isDir = file.is_dir;
+
+      if (isDir) {
+        menu.innerHTML = `
+          <div class="context-menu-item" onclick="openFolder(selectedFile)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>Buka Folder</div>
+          <div class="context-menu-item danger" onclick="contextTrash()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Hapus ke Trash</div>
+        `;
+      } else {
+        menu.innerHTML = `
+          <div class="context-menu-item" onclick="previewFile(selectedFile)"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Lihat (Preview)</div>
+          <div class="context-menu-item" onclick="askDownload(selectedFile)"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>Download File</div>
+          <div class="context-menu-item danger" onclick="contextTrash()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Hapus ke Trash</div>
+        `;
+      }
+
+      menu.style.display = 'flex';
+      menu.style.left = `${Math.min(e.pageX, window.innerWidth - 200)}px`;
+      menu.style.top = `${Math.min(e.pageY, window.innerHeight - 150)}px`;
+    }
+
+    function hideContextMenu() {
+      document.getElementById('contextMenu').style.display = 'none';
+    }
+
+    async function previewFile(f) {
+      if (!f) return;
+      const name = f.name || f.file_name;
+      const acc = f.account_id || activeAccountID;
+      const filePath = f.path || f.original_path;
+      const type = getFileType(name, f.is_dir);
+
+      document.getElementById('previewFileName').innerText = name;
+      document.getElementById('previewFileName').title = name;
+      document.getElementById('previewFileMeta').innerText = `${formatBytes(f.size)} • Akun: ${acc || 'Pool'} • Path: ${filePath}`;
+      document.getElementById('previewFileIcon').innerHTML = getFileIconSvg(type, 24);
+
+      const dlBtn = document.getElementById('previewDownloadBtn');
+      dlBtn.onclick = () => askDownload(f);
+
+      const contentArea = document.getElementById('previewContentArea');
+      contentArea.innerHTML = '<div style="color:var(--text-muted);display:flex;align-items:center;gap:12px;"><div class="spinner"></div><span>Memuat pratinjau...</span></div>';
+
+      openModal('filePreviewModal');
+
+      const rawUrl = `/api/files/download?account_id=${encodeURIComponent(acc)}&path=${encodeURIComponent(filePath)}&inline=true`;
+
+      if (type === 'pdf') {
+        contentArea.innerHTML = `
+          <iframe src="${rawUrl}" style="width:100%; height:75vh; border:none; border-radius:8px; background:#fff;"></iframe>
+        `;
+      } else if (type === 'image') {
+        contentArea.innerHTML = `
+          <div style="padding:16px; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">
+            <img src="${rawUrl}" alt="${name}" style="max-width:100%; max-height:72vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.6);" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'color:#ef4444;\\'>Gagal memuat gambar preview.</div>'" />
+          </div>
+        `;
+      } else if (type === 'video') {
+        contentArea.innerHTML = `
+          <div style="padding:16px; width:100%; display:flex; justify-content:center;">
+            <video controls autoplay src="${rawUrl}" style="max-width:100%; max-height:72vh; border-radius:8px; background:#000; outline:none;"></video>
+          </div>
+        `;
+      } else if (type === 'audio') {
+        contentArea.innerHTML = `
+          <div style="padding:48px 24px; text-align:center; width:100%; max-width:500px;">
+            <div style="margin-bottom:24px;">${getFileIconSvg('audio', 64)}</div>
+            <div style="font-weight:600; font-size:1.05rem; margin-bottom:16px;">${name}</div>
+            <audio controls autoplay src="${rawUrl}" style="width:100%;"></audio>
+          </div>
+        `;
+      } else if (type === 'text' || type === 'code' || type === 'spreadsheet') {
+        try {
+          const res = await fetch(rawUrl);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const text = await res.text();
+          const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          contentArea.innerHTML = `
+            <div style="width:100%; height:75vh; display:flex; flex-direction:column; overflow:hidden;">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 16px; background:#0f172a; border-bottom:1px solid var(--border); font-size:0.8rem; color:var(--text-muted);">
+                <span>${text.length} karakter • ${text.split('\n').length} baris</span>
+                <button class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px;" id="btnCopyText">Salin Teks</button>
+              </div>
+              <pre style="flex:1; margin:0; padding:16px; overflow:auto; font-family:Consolas, Monaco, 'Courier New', monospace; font-size:0.85rem; line-height:1.6; color:#e2e8f0; background:#090d16; white-space:pre-wrap; word-break:break-word;"><code>${escaped}</code></pre>
+            </div>
+          `;
+          document.getElementById('btnCopyText').onclick = () => {
+            navigator.clipboard.writeText(text);
+            showToast('Teks disalin ke clipboard!');
+          };
+        } catch (err) {
+          contentArea.innerHTML = `
+            <div style="text-align:center; padding:30px; color:#ef4444;">
+              <p>Gagal memuat pratinjau teks: ${err.message}</p>
+              <button class="btn btn-primary" style="margin-top:12px;" onclick="askDownload(selectedFile)">Unduh File Saja</button>
+            </div>
+          `;
+        }
+      } else {
+        contentArea.innerHTML = `
+          <div style="text-align:center; padding:48px 24px; max-width:440px;">
+            <div style="margin-bottom:16px;">${getFileIconSvg(type, 64)}</div>
+            <h3 style="font-size:1.15rem; margin-bottom:8px; color:#f8fafc;">${name}</h3>
+            <p style="color:var(--text-muted); font-size:0.88rem; line-height:1.5; margin-bottom:24px;">
+              Pratinjau langsung tidak tersedia untuk format file ini.<br>Anda dapat mengunduh file ini untuk melihatnya di perangkat Anda.
+            </p>
+            <button class="btn btn-primary" style="padding:10px 24px; font-size:0.95rem;" onclick="executeDownload('${acc}', '${filePath}', '${name}')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:8px;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              Unduh File (${formatBytes(f.size)})
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function askDownload(f) {
+      if (!f) return;
+      const name = f.name || f.file_name;
+      const acc = f.account_id || activeAccountID;
+      const filePath = f.path || f.original_path;
+
+      document.getElementById('dlModalName').innerText = name;
+      document.getElementById('dlModalMeta').innerText = `${formatBytes(f.size)} • Akun: ${acc || 'Pool'} • Path: ${filePath}`;
+      
+      const confirmBtn = document.getElementById('dlModalConfirmBtn');
+      confirmBtn.onclick = () => {
+        closeModal('downloadConfirmModal');
+        executeDownload(acc, filePath, name);
+      };
+
+      openModal('downloadConfirmModal');
+    }
+
+    function executeDownload(acc, filePath, fileName) {
+      window.location.href = `/api/files/download?account_id=${encodeURIComponent(acc)}&path=${encodeURIComponent(filePath)}`;
+      showToast(`Mengunduh ${fileName}...`);
+    }
+
+    function contextDownload() {
+      hideContextMenu();
+      if (!selectedFile) return;
+      askDownload(selectedFile);
+    }
+
+    async function contextTrash() {
+      hideContextMenu();
+      if (!selectedFile) return;
+      const acc = selectedFile.account_id || activeAccountID;
+      const filePath = selectedFile.path || selectedFile.original_path;
+
+      if (!confirm(`Pindahkan "${selectedFile.name || selectedFile.file_name}" ke Trash Bin?`)) return;
+
+      try {
+        const res = await fetch('/api/files/trash', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ account_id: acc, path: filePath })
+        });
+        if (!res.ok) throw new Error('Trash operation failed');
+        showToast(`Moved ${selectedFile.name} to trash`);
+        deselectItem();
+        loadCurrentView();
+        loadStats();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Upload & Drag Drop
+    function triggerFileInput() {
+      document.getElementById('hiddenFileInput').click();
+    }
+
+    async function uploadSelectedFile(input) {
+      if (!input.files || input.files.length === 0) return;
+      const file = input.files[0];
+      await performUpload(file);
+      input.value = '';
+    }
+
+    function handleDragOver(e) { e.preventDefault(); document.getElementById('dropOverlay').style.display = 'flex'; }
+    function handleDragLeave(e) { e.preventDefault(); document.getElementById('dropOverlay').style.display = 'none'; }
+    async function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('dropOverlay').style.display = 'none';
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        await performUpload(e.dataTransfer.files[0]);
+      }
+    }
+
+    async function performUpload(file) {
+      showTransfer(file.name, file.size);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      let url = '';
+      if (currentMode === 'pool') {
+        url = `/api/files/upload?pool_id=all_pool&path=${encodeURIComponent(currentPath)}`;
+      } else {
+        url = `/api/files/upload?account_id=${encodeURIComponent(activeAccountID)}&path=${encodeURIComponent(currentPath)}`;
+      }
+
+      try {
+        const res = await fetch(url, { method: 'POST', body: formData });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Upload failed');
+        }
+        showToast(`Uploaded ${file.name} successfully!`);
+        completeTransfer(file.name);
+        loadCurrentView();
+        loadStats();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Transfer Manager
+    function showTransfer(name, size) {
+      const tm = document.getElementById('transferManager');
+      tm.style.display = 'block';
+      const list = document.getElementById('transferList');
+      const id = 'transfer_' + Date.now();
+      list.innerHTML += `
+        <div class="transfer-item" id="${id}">
+          <div class="transfer-item-title">
+            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">${name}</span>
+            <span>Uploading...</span>
+          </div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:75%;"></div></div>
+        </div>
+      `;
+    }
+
+    function completeTransfer(name) {
+      const list = document.getElementById('transferList');
+      list.innerHTML = `
+        <div class="transfer-item">
+          <div class="transfer-item-title">
+            <span>${name}</span>
+            <span style="color:var(--success)">Done</span>
+          </div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:100%;background:var(--success);"></div></div>
+        </div>
+      `;
+      setTimeout(() => { document.getElementById('transferManager').style.display = 'none'; }, 4000);
+    }
+    function toggleTransferManager() {
+      const tm = document.getElementById('transferManager');
+      tm.style.display = tm.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Instant Search
+    async function handleSearch(query) {
+      const dropdown = document.getElementById('searchDropdown');
+      if (!query || query.trim() === '') {
+        dropdown.style.display = 'none';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const files = await res.json();
+        if (!files || files.length === 0) {
+          dropdown.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:0.85rem;">No files found</div>';
+        } else {
+          dropdown.innerHTML = files.map(f => {
+            const type = getFileType(f.name, f.is_dir);
+            return `
+              <div class="search-item" onclick="navigateToFile('${f.account_id}', '${f.path.replace(/'/g, "\\'")}', '${(f.name || '').replace(/'/g, "\\'")}', ${f.is_dir})">
+                <span style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;">
+                  ${getFileIconSvg(type, 18)}
+                </span>
+                <div style="flex:1;overflow:hidden;">
+                  <div style="font-size:0.85rem;font-weight:600;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">${f.name}</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted);">${f.account_id} • ${formatBytes(f.size)}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+        dropdown.style.display = 'block';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function navigateToFile(accountID, filePath, fileName, isDir) {
+      document.getElementById('searchDropdown').style.display = 'none';
+      if (isDir) {
+        if (accountID) {
+          activeAccountID = accountID;
+          currentMode = 'account';
+        }
+        navigateToPath(filePath);
+      } else {
+        const dir = filePath.substring(0, filePath.lastIndexOf('/')) || '/';
+        if (accountID) {
+          activeAccountID = accountID;
+          currentMode = 'account';
+        }
+        currentPath = dir;
+        updateBreadcrumbs();
+        loadCurrentView().then(() => {
+          previewFile({ name: fileName, path: filePath, account_id: accountID, is_dir: false });
+        });
+      }
+    }
+
+    // Modals & Drawer
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function toggleDrawer(id) {
+      const drawer = document.getElementById(id);
+      drawer.classList.toggle('open');
+      if (drawer.classList.contains('open')) loadAuditLog();
+    }
+
+    // Add Account & OAuth
+    async function updateProviderAuthUI() {
+      const p = document.getElementById('newAccountProvider').value;
+      const oauthSection = document.getElementById('oauthSection');
+      const btnOAuthText = document.getElementById('btnOAuthText');
+      if (p === 'gdrive' || p === 'onedrive' || p === 'dropbox') {
+        oauthSection.style.display = 'flex';
+        let name = 'Google Drive';
+        if (p === 'onedrive') name = 'Microsoft OneDrive';
+        if (p === 'dropbox') name = 'Dropbox';
+        btnOAuthText.innerText = `Masuk dengan Akun ${name}`;
+
+        try {
+          const res = await fetch(`/api/auth/${p}/login`);
+          const data = await res.json();
+          if (data.redirect_uri) {
+            document.getElementById('gdriveRedirectUriDisplay').value = data.redirect_uri;
+          }
+        } catch(e) {}
+      } else {
+        oauthSection.style.display = 'none';
+      }
+    }
+
+    async function startOAuthConnect() {
+      const provider = document.getElementById('newAccountProvider').value;
+      const clientId = (document.getElementById('newAccountClientID').value || '').trim();
+      const clientSecret = (document.getElementById('newAccountClientSecret').value || '').trim();
+
+      if ((provider === 'google' || provider === 'gdrive') && (!clientId || !clientSecret)) {
+        showToast('Wajib memasukkan Client ID dan Client Secret dari Google Cloud Console.', 'error');
+        return;
+      }
+
+      const width = 600, height = 700;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+
+      try {
+        const res = await fetch(`/api/auth/${provider}/login?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`);
+        const data = await res.json();
+        if (data.auth_url) {
+          window.open(data.auth_url, 'CloudgateOAuth', `width=${width},height=${height},top=${top},left=${left}`);
+          showToast(`Opening official ${provider.toUpperCase()} login screen...`);
+        } else {
+          showToast('Failed to generate OAuth URL', 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    window.addEventListener('message', async (e) => {
+      if (e.data && e.data.type === 'oauth_complete') {
+        showToast(`Successfully authenticated and connected ${e.data.provider.toUpperCase()}!`);
+        closeModal('addAccountModal');
+        await loadAccounts();
+        await loadStats();
+        await loadCurrentView();
+      }
+    });
+
+    async function submitAddAccount() {
+      const provider = document.getElementById('newAccountProvider').value;
+      const name = document.getElementById('newAccountName').value || `${provider} Account`;
+      const quota = parseInt(document.getElementById('newAccountQuota').value) || 15;
+
+      try {
+        const res = await fetch('/api/accounts', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id: 'acc_' + Date.now(),
+            provider,
+            name,
+            root_folder: '/',
+            quota_total: quota * 1024 * 1024 * 1024
+          })
+        });
+        if (!res.ok) throw new Error('Failed to connect drive');
+        closeModal('addAccountModal');
+        showToast(`Connected ${name} successfully!`);
+        await loadAccounts();
+        await loadStats();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Audit Log
+    async function loadAuditLog() {
+      const list = document.getElementById('auditList');
+      list.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Loading audit trail...</div>';
+      try {
+        const res = await fetch('/api/audit');
+        const events = await res.json();
+        list.innerHTML = '';
+        (events || []).forEach(ev => {
+          list.innerHTML += `
+            <div class="audit-item">
+              <div class="audit-header">
+                <span class="audit-badge ${ev.status === 'success' ? 'badge-success' : 'badge-failed'}">${ev.action}</span>
+                <span style="color:var(--text-muted);">${new Date(ev.created_at).toLocaleTimeString()}</span>
+              </div>
+              <div style="font-weight:600;">${ev.target}</div>
+              <div style="color:var(--text-muted);">${ev.account_id || ''} ${ev.details ? '• ' + ev.details : ''}</div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        list.innerHTML = `<div style="color:var(--danger)">${err.message}</div>`;
+      }
+    }
+
+    function exportAudit() {
+      window.location.href = '/api/audit/export';
+    }
+
+    // GitHub Sync
+    async function submitSyncPush() {
+      const token = document.getElementById('syncToken').value;
+      const repo = document.getElementById('syncRepo').value;
+      const passphrase = document.getElementById('syncPassphrase').value;
+
+      try {
+        const res = await fetch('/api/sync/github/push', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ token, repo, passphrase })
+        });
+        if (!res.ok) throw new Error('Sync push failed');
+        closeModal('syncModal');
+        showToast('Vault backed up to GitHub successfully!');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function submitSyncPull() {
+      const token = document.getElementById('syncToken').value;
+      const repo = document.getElementById('syncRepo').value;
+      const passphrase = document.getElementById('syncPassphrase').value;
+
+      try {
+        const res = await fetch('/api/sync/github/pull', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ token, repo, passphrase })
+        });
+        if (!res.ok) throw new Error('Sync pull failed');
+        closeModal('syncModal');
+        showToast('Vault restored from GitHub successfully!');
+        await loadAccounts();
+        await loadStats();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Updates
+    async function checkAppUpdates() {
+      const text = document.getElementById('updateStatusText');
+      text.innerText = 'Checking GitHub releases...';
+      try {
+        const res = await fetch('/api/updater/check');
+        const data = await res.json();
+        if (data.update_available) {
+          text.innerHTML = `<span style="color:var(--warning)">New update available: ${data.latest_version}</span> <br><a href="${data.release_url}" target="_blank" style="color:var(--primary)">View Release Notes</a>`;
+        } else {
+          text.innerHTML = `<span style="color:var(--success)">Cloudgate is up to date (v${data.current_version})</span>`;
+        }
+      } catch (err) {
+        text.innerText = 'Failed to check updates: ' + err.message;
+      }
+    }
+
+    // Utilities
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function showToast(msg, type = 'info') {
+      const tc = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerText = msg;
+      if (type === 'error') toast.style.borderLeftColor = 'var(--danger)';
+      tc.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    }
+  </script>
+</body>
+</html>

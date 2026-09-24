@@ -1,0 +1,164 @@
+package server_test
+
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/herliansyah/cloudgate/pkg/db"
+	"github.com/herliansyah/cloudgate/pkg/server"
+	"github.com/herliansyah/cloudgate/pkg/storage"
+)
+
+func TestServerAndAPI(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "cloudgate_server_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	database, err := db.Open(tempDir)
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer database.Close()
+
+	srv := server.NewServer(database, nil)
+	memDriver := storage.NewMemDriver("test_drive", "gdrive", 1024*1024)
+	srv.RegisterDriver(memDriver)
+
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	// 1. Test /api/info (Verifying Author: Herliansyah and Repo)
+	resp, err := http.Get(ts.URL + "/api/info")
+	if err != nil {
+		t.Fatalf("failed to get /api/info: %v", err)
+	}
+	var info map[string]string
+	_ = json.NewDecoder(resp.Body).Decode(&info)
+	resp.Body.Close()
+
+	if info["author"] != "Herliansyah" {
+		t.Fatalf("expected author Herliansyah, got %s", info["author"])
+	}
+	if info["repository"] != "https://github.com/herliansyah/cloudgate" {
+		t.Fatalf("expected repo https://github.com/herliansyah/cloudgate, got %s", info["repository"])
+	}
+
+	// 2. Test /api/stats
+	resp, err = http.Get(ts.URL + "/api/stats")
+	if err != nil {
+		t.Fatalf("failed to get /api/stats: %v", err)
+	}
+	var stats map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&stats)
+	resp.Body.Close()
+	if stats["total_storage"].(float64) <= 0 {
+		t.Fatalf("expected positive total storage")
+	}
+
+	// 3. Test /api/files/upload (Multipart upload)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile("file", "hello.txt")
+	_, _ = part.Write([]byte("Hello Cloudgate World!"))
+	_ = writer.Close()
+
+	uploadReq, _ := http.NewRequest("POST", ts.URL+"/api/files/upload?account_id=test_drive&path=/", body)
+	uploadReq.Header.Set("Content-Type", writer.FormDataContentType())
+	uploadResp, err := http.DefaultClient.Do(uploadReq)
+	if err != nil || uploadResp.StatusCode != http.StatusCreated {
+		t.Fatalf("file upload failed, status: %v, err: %v", uploadResp.StatusCode, err)
+	}
+	uploadResp.Body.Close()
+
+	// 4. Test /api/files/download
+	downResp, err := http.Get(ts.URL + "/api/files/download?account_id=test_drive&path=/hello.txt")
+	if err != nil || downResp.StatusCode != http.StatusOK {
+		t.Fatalf("file download failed, status: %v", downResp.StatusCode)
+	}
+	content, _ := io.ReadAll(downResp.Body)
+	downResp.Body.Close()
+	if string(content) != "Hello Cloudgate World!" {
+		t.Fatalf("unexpected content: %s", string(content))
+	}
+
+	// 5. Test FTS5 Search Indexing & Query
+	_ = database.IndexFiles([]db.IndexedFile{
+		{
+			AccountID: "test_drive",
+			Path:      "/hello.txt",
+			Name:      "hello.txt",
+			Size:      int64(len(content)),
+			IsDir:     false,
+			ModTime:   time.Now().UTC(),
+		},
+	})
+	searchResp, err := http.Get(ts.URL + "/api/search?q=hello")
+	if err != nil {
+		t.Fatalf("search request failed: %v", err)
+	}
+	var searchResults []db.IndexedFile
+	_ = json.NewDecoder(searchResp.Body).Decode(&searchResults)
+	searchResp.Body.Close()
+	if len(searchResults) != 1 || searchResults[0].Name != "hello.txt" {
+		t.Fatalf("expected 1 search result 'hello.txt', got %v", searchResults)
+	}
+
+	// 6. Test Trash & Restore
+	trashBody, _ := json.Marshal(map[string]string{"account_id": "test_drive", "path": "/hello.txt"})
+	trashResp, err := http.Post(ts.URL+"/api/files/trash", "application/json", bytes.NewReader(trashBody))
+	if err != nil || trashResp.StatusCode != http.StatusOK {
+		t.Fatalf("trash failed, status: %v", trashResp.StatusCode)
+	}
+	var trashRec db.TrashRecord
+	_ = json.NewDecoder(trashResp.Body).Decode(&trashRec)
+	trashResp.Body.Close()
+
+	// Restore
+	restoreBody, _ := json.Marshal(map[string]string{"trash_id": trashRec.ID})
+	restoreResp, err := http.Post(ts.URL+"/api/trash/restore", "application/json", bytes.NewReader(restoreBody))
+	if err != nil || restoreResp.StatusCode != http.StatusOK {
+		t.Fatalf("restore failed, status: %v", restoreResp.StatusCode)
+	}
+	restoreResp.Body.Close()
+
+	// 7. Test Audit Trail
+	auditResp, err := http.Get(ts.URL + "/api/audit")
+	if err != nil {
+		t.Fatalf("audit log request failed: %v", err)
+	}
+	var auditEvents []db.AuditEvent
+	_ = json.NewDecoder(auditResp.Body).Decode(&auditEvents)
+	auditResp.Body.Close()
+	if len(auditEvents) < 3 {
+		t.Fatalf("expected audit events recorded, got %d", len(auditEvents))
+	}
+}
+
+func TestPortHunting(t *testing.T) {
+	// Bind to an arbitrary available port
+	l1, port1, err := server.FindAvailableListener("127.0.0.1", 5210, 5220)
+	if err != nil {
+		t.Fatalf("failed to find initial listener: %v", err)
+	}
+	defer l1.Close()
+
+	// Scanning starting at the same port should automatically pick the next port
+	l2, port2, err := server.FindAvailableListener("127.0.0.1", port1, port1+10)
+	if err != nil {
+		t.Fatalf("failed to find second listener: %v", err)
+	}
+	defer l2.Close()
+
+	if port2 <= port1 {
+		t.Fatalf("expected port hunting to advance port: port1=%d, port2=%d", port1, port2)
+	}
+}
