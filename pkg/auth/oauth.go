@@ -72,6 +72,30 @@ var ProviderConfigs = map[string]ProviderConfig{
 		DefaultScopes: []string{"files.content.read", "files.content.write"},
 		DefaultID:     DefaultDropboxClientID,
 	},
+	"box": {
+		AuthEndpoint:  "https://account.box.com/api/oauth2/authorize",
+		TokenEndpoint: "https://api.box.com/oauth2/token",
+		DefaultScopes: []string{},
+		DefaultID:     "box-client-id",
+	},
+	"pcloud": {
+		AuthEndpoint:  "https://my.pcloud.com/oauth2/authorize",
+		TokenEndpoint: "https://api.pcloud.com/oauth2_token",
+		DefaultScopes: []string{},
+		DefaultID:     "pcloud-client-id",
+	},
+	"yandex": {
+		AuthEndpoint:  "https://oauth.yandex.com/authorize",
+		TokenEndpoint: "https://oauth.yandex.com/token",
+		DefaultScopes: []string{},
+		DefaultID:     "yandex-client-id",
+	},
+	"koofr": {
+		AuthEndpoint:  "https://app.koofr.net/oauth2/auth",
+		TokenEndpoint: "https://app.koofr.net/oauth2/token",
+		DefaultScopes: []string{},
+		DefaultID:     "koofr-client-id",
+	},
 }
 
 // GenerateAuthURL builds the standard OAuth2 consent URL for the chosen provider.

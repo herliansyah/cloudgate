@@ -1482,11 +1482,16 @@
       const p = document.getElementById('newAccountProvider').value;
       const oauthSection = document.getElementById('oauthSection');
       const btnOAuthText = document.getElementById('btnOAuthText');
-      if (p === 'gdrive' || p === 'onedrive' || p === 'dropbox') {
+      const oauthProviders = ['gdrive','google','onedrive','dropbox','box','pcloud','yandex','koofr'];
+      if (oauthProviders.includes(p)) {
         oauthSection.style.display = 'flex';
         let name = 'Google Drive';
         if (p === 'onedrive') name = 'Microsoft OneDrive';
         if (p === 'dropbox') name = 'Dropbox';
+        if (p === 'box') name = 'Box';
+        if (p === 'pcloud') name = 'pCloud';
+        if (p === 'yandex') name = 'Yandex Disk';
+        if (p === 'koofr') name = 'Koofr';
         btnOAuthText.innerText = `Masuk dengan Akun ${name}`;
 
         try {

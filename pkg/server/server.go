@@ -198,45 +198,116 @@ func (s *Server) handleGetAccounts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		ID         string `json:"id"`
-		Provider   string `json:"provider"`
-		Name       string `json:"name"`
-		RootFolder string `json:"root_folder"`
-		QuotaTotal int64  `json:"quota_total"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var raw map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request payload")
 		return
 	}
-
-	acc := db.RemoteAccount{
-		ID:         req.ID,
-		Provider:   req.Provider,
-		Name:       req.Name,
-		RootFolder: req.RootFolder,
-		Status:     "connected",
-		QuotaTotal: req.QuotaTotal,
-		QuotaUsed:  0,
-		UpdatedAt:  time.Now().UTC(),
+	getStr := func(k string) string {
+		if v, ok := raw[k]; ok {
+			if s, ok := v.(string); ok {
+				return s
+			}
+		}
+		return ""
 	}
-
+	getInt := func(k string) int64 {
+		if v, ok := raw[k]; ok {
+			switch x := v.(type) {
+			case float64:
+				return int64(x)
+			case int64:
+				return x
+			case int:
+				return int64(x)
+			}
+		}
+		return 0
+	}
+	id := getStr("id")
+	provider := getStr("provider")
+	name := getStr("name")
+	rootFolder := getStr("root_folder")
+	if rootFolder == "" {
+		rootFolder = "/"
+	}
+	quotaTotal := getInt("quota_total")
+	if id == "" {
+		id = fmt.Sprintf("%s_%d", provider, time.Now().Unix())
+	}
+	if provider == "" {
+		writeError(w, http.StatusBadRequest, "provider required")
+		return
+	}
+	if name == "" {
+		name = strings.ToUpper(provider) + " Account"
+	}
+	// Collect provider-specific extra fields into credentials
+	extra := make(map[string]string)
+	for k, v := range raw {
+		switch k {
+		case "id", "provider", "name", "root_folder", "quota_total":
+		default:
+			if s, ok := v.(string); ok {
+				extra[k] = s
+			} else if v != nil {
+				b, _ := json.Marshal(v)
+				extra[k] = string(b)
+			}
+		}
+	}
+	credsJSON := ""
+	if len(extra) > 0 {
+		b, _ := json.Marshal(extra)
+		credsJSON = string(b)
+	}
+	// For S3/WebDAV/Mega synthetic quota
+	if (provider == "s3" || provider == "webdav" || provider == "mega" || provider == "koofr") && quotaTotal == 0 {
+		quotaTotal = 1 << 40 // 1TB synthetic
+	}
+	acc := db.RemoteAccount{
+		ID:          id,
+		Provider:    provider,
+		Name:        name,
+		RootFolder:  rootFolder,
+		Status:      "connected",
+		QuotaTotal:  quotaTotal,
+		QuotaUsed:   0,
+		Credentials: credsJSON,
+		UpdatedAt:   time.Now().UTC(),
+	}
 	if err := s.database.SaveAccount(acc); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	// Register simulated mem driver if not present
 	s.mu.Lock()
 	if _, exists := s.drivers[acc.ID]; !exists {
 		quota := acc.QuotaTotal
 		if quota <= 0 {
-			quota = 15 * 1024 * 1024 * 1024 // 15 GB default
+			quota = 15 * 1024 * 1024 * 1024
 		}
-		s.drivers[acc.ID] = storage.NewMemDriver(acc.ID, acc.Provider, quota)
+		var drv storage.Driver
+		switch provider {
+		case "s3", "webdav", "mega", "koofr", "box", "pcloud", "yandex", "onedrive", "dropbox":
+			// Use RcloneAdapter for all non-gdrive providers (covers manual s3/webdav/mega and any future)
+			drv = storage.NewRcloneAdapterWithExtra(provider, acc.ID, extra["client_id"], extra["client_secret"], extra["access_token"], extra["refresh_token"], "", name, extra)
+		default:
+			drv = storage.NewMemDriver(acc.ID, acc.Provider, quota)
+		}
+		// If adapter has About with synthetic, use it to set quota
+		if ad, ok := drv.(interface{ About(context.Context) (storage.QuotaInfo, error) }); ok {
+			if q, err := ad.About(r.Context()); err == nil && q.Total > 0 {
+				acc.QuotaTotal = q.Total
+				acc.QuotaUsed = q.Used
+				_ = s.database.SaveAccount(acc)
+			}
+		}
+		s.drivers[acc.ID] = drv
+		if allPool, ok := s.pools["all_pool"]; ok {
+			allPool.AddDriver(drv)
+		}
 	}
 	s.mu.Unlock()
-
 	_ = s.database.RecordAudit("connect", acc.Name, acc.ID, "Account connected", "success", 0)
 	writeJSON(w, http.StatusCreated, acc)
 }

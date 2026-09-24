@@ -135,28 +135,45 @@ func runServer(rawArgs []string) {
 		}
 		var d storage.Driver
 		if acc.Credentials != "" {
+			var m map[string]string
+			_ = json.Unmarshal([]byte(acc.Credentials), &m)
 			var creds struct {
 				ClientID     string `json:"client_id"`
 				ClientSecret string `json:"client_secret"`
 				AccessToken  string `json:"access_token"`
 				RefreshToken string `json:"refresh_token"`
 			}
-			if err := json.Unmarshal([]byte(acc.Credentials), &creds); err == nil && (creds.AccessToken != "" || creds.RefreshToken != "") {
-				switch acc.Provider {
-				case "google", "gdrive":
+			_ = json.Unmarshal([]byte(acc.Credentials), &creds)
+			hasToken := creds.AccessToken != "" || creds.RefreshToken != ""
+			hasExtra := len(m) > 0
+			switch acc.Provider {
+			case "google", "gdrive":
+				if hasToken {
 					d = storage.NewGDriveDriver(acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
-				case "onedrive", "dropbox":
-					d = storage.NewRcloneAdapter(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
-				default:
-					// Generic rclone-backed provider (box, pcloud, etc.) — also rehydrated via adapter if provider known
-					if acc.Provider == "box" || acc.Provider == "pcloud" || acc.Provider == "koofr" || acc.Provider == "yandex" || acc.Provider == "onedrive" || acc.Provider == "dropbox" {
-						d = storage.NewRcloneAdapter(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
+				}
+			case "onedrive", "dropbox", "box", "pcloud", "yandex", "koofr":
+				if hasToken || hasExtra {
+					d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, m)
+				}
+			case "s3", "webdav", "mega":
+				if hasExtra || hasToken {
+					d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, m)
+				}
+			default:
+				if hasToken || hasExtra {
+					if acc.Provider == "s3" || acc.Provider == "webdav" || acc.Provider == "mega" || acc.Provider == "koofr" || acc.Provider == "box" || acc.Provider == "pcloud" || acc.Provider == "yandex" {
+						d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, m)
 					}
 				}
 			}
 		}
 		if d == nil {
-			d = storage.NewMemDriver(acc.ID, acc.Provider, quota)
+			// For s3/webdav/mega without credentials (legacy), try to create synthetic adapter from quota
+			if acc.Provider == "s3" || acc.Provider == "webdav" || acc.Provider == "mega" || acc.Provider == "koofr" || acc.Provider == "box" || acc.Provider == "pcloud" || acc.Provider == "yandex" {
+				d = storage.NewRcloneAdapter(acc.Provider, acc.ID, "", "", "", "", "", acc.Name)
+			} else {
+				d = storage.NewMemDriver(acc.ID, acc.Provider, quota)
+			}
 		}
 		srv.RegisterDriver(d)
 		drivers = append(drivers, d)
