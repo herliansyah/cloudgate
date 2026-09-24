@@ -207,6 +207,20 @@ func (d *DB) GetAccounts() ([]RemoteAccount, error) {
 	return accounts, rows.Err()
 }
 
+// GetAccount retrieves a single remote account by ID.
+func (d *DB) GetAccount(id string) (*RemoteAccount, error) {
+	var acc RemoteAccount
+	err := d.conn.QueryRow(`
+		SELECT id, provider, name, root_folder, status, quota_total, quota_used, COALESCE(credentials, ''), updated_at
+		FROM accounts
+		WHERE id = ?
+	`, id).Scan(&acc.ID, &acc.Provider, &acc.Name, &acc.RootFolder, &acc.Status, &acc.QuotaTotal, &acc.QuotaUsed, &acc.Credentials, &acc.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &acc, nil
+}
+
 // DeleteAccount permanently deletes an account from the database.
 func (d *DB) DeleteAccount(id string) error {
 	_, err := d.conn.Exec(`DELETE FROM accounts WHERE id = ?`, id)
