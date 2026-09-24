@@ -477,7 +477,25 @@ func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	// Attempt real token exchange with provider
 	tokenResp, tokenErr := auth.ExchangeCode(r.Context(), provider, code, redirectURI, stateData.ClientID, stateData.ClientSecret)
 	if tokenErr != nil || tokenResp == nil || tokenResp.AccessToken == "" {
-		errMsg := "Gagal mendapatkan token OAuth dari Google."
+		providerName := strings.ToUpper(provider)
+		switch provider {
+		case "gdrive", "google":
+			providerName = "Google Drive"
+		case "onedrive":
+			providerName = "Microsoft OneDrive"
+		case "dropbox":
+			providerName = "Dropbox"
+		case "box":
+			providerName = "Box"
+		case "pcloud":
+			providerName = "pCloud"
+		case "yandex":
+			providerName = "Yandex Disk"
+		case "koofr":
+			providerName = "Koofr"
+		}
+
+		errMsg := fmt.Sprintf("Gagal mendapatkan token OAuth dari %s.", providerName)
 		if tokenErr != nil {
 			errMsg = tokenErr.Error()
 		}
@@ -496,13 +514,13 @@ button:hover { background: #475569; }
 <body>
 <div class="card">
   <h2>Autentikasi Gagal</h2>
-  <p>Cloudgate tidak dapat menyelesaikan token exchange dengan Google OAuth.</p>
+  <p>Cloudgate tidak dapat menyelesaikan token exchange dengan %s OAuth.</p>
   <div class="err">%s</div>
-  <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:20px;">Pastikan <strong>Google OAuth Client ID</strong> dan <strong>Client Secret</strong> dimasukkan dengan benar pada form Add Account.</p>
+  <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:20px;">Pastikan <strong>%s OAuth Client ID</strong> dan <strong>Client Secret</strong> dimasukkan dengan benar pada form Add Account.</p>
   <button onclick="window.close()">Tutup Jendela</button>
 </div>
 </body>
-</html>`, html.EscapeString(errMsg))
+</html>`, html.EscapeString(providerName), html.EscapeString(errMsg), html.EscapeString(providerName))
 		return
 	}
 

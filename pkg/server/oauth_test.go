@@ -185,4 +185,61 @@ func TestDropboxOAuthFlow(t *testing.T) {
 	}
 }
 
+func TestOtherOAuthProviders(t *testing.T) {
+	tempDir, _ := os.MkdirTemp("", "cloudgate_providers_*")
+	defer os.RemoveAll(tempDir)
+	database, _ := db.Open(tempDir)
+	defer database.Close()
+	srv := server.NewServer(database, nil)
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	providers := []struct {
+		name       string
+		urlPrefix  string
+		authDomain string
+	}{
+		{"box", ts.URL + "/api/auth/box/login", "account.box.com"},
+		{"pcloud", ts.URL + "/api/auth/pcloud/login", "my.pcloud.com"},
+		{"yandex", ts.URL + "/api/auth/yandex/login", "oauth.yandex.com"},
+	}
+
+	for _, p := range providers {
+		resp, err := http.Get(p.urlPrefix)
+		if err != nil {
+			t.Fatalf("[%s] failed GET: %v", p.name, err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("[%s] expected 200 OK, got %d", p.name, resp.StatusCode)
+		}
+		var res map[string]string
+		_ = json.NewDecoder(resp.Body).Decode(&res)
+		resp.Body.Close()
+
+		if !strings.Contains(res["auth_url"], p.authDomain) {
+			t.Fatalf("[%s] expected auth_url to contain %s, got %s", p.name, p.authDomain, res["auth_url"])
+		}
+	}
+}
+
+func TestOAuthCallbackErrorMessageDynamism(t *testing.T) {
+	tempDir, _ := os.MkdirTemp("", "cloudgate_err_test_*")
+	defer os.RemoveAll(tempDir)
+	database, _ := db.Open(tempDir)
+	defer database.Close()
+	srv := server.NewServer(database, nil)
+
+	req, _ := http.NewRequest("GET", "/api/auth/onedrive/callback?code=invalid_dummy_code", nil)
+	rr := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, req)
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "Microsoft OneDrive") {
+		t.Fatalf("expected OneDrive specific error text in callback failure, got: %s", body)
+	}
+	if strings.Contains(body, "Google OAuth") {
+		t.Fatalf("unexpected hardcoded Google OAuth text in onedrive callback failure: %s", body)
+	}
+}
+
 
