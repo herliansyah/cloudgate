@@ -529,49 +529,345 @@
       box-shadow: var(--md-sys-elevation-3);
     }
 
-    /* ===== M3 Outlined Cards (Grid View) ===== */
+    /* ===== File Management Controls Bar ===== */
+    .file-controls-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      background-color: var(--md-sys-color-surface-container-lowest);
+      flex-wrap: wrap;
+    }
+    .filter-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex: 1;
+      min-width: 260px;
+    }
+    .filter-chips::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: var(--md-sys-shape-corner-sm);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      background-color: var(--md-sys-color-surface-container-low);
+      color: var(--md-sys-color-on-surface-variant);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all var(--md-sys-motion-duration-short);
+      user-select: none;
+    }
+    .filter-chip:hover {
+      background-color: var(--md-sys-color-surface-container);
+      color: var(--md-sys-color-on-surface);
+    }
+    .filter-chip.active {
+      background-color: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+      border-color: var(--md-sys-color-secondary);
+      font-weight: 700;
+    }
+    .sort-group-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .control-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+    .form-select-sm {
+      background-color: var(--md-sys-color-surface-container-low);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      color: var(--md-sys-color-on-surface);
+      border-radius: var(--md-sys-shape-corner-xs);
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      outline: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .form-select-sm:focus {
+      border-color: var(--md-sys-color-primary);
+    }
+
+    /* ===== Dashboard View Styles ===== */
+    .dashboard-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-bottom: 32px;
+    }
+    .pool-hero-card {
+      background: linear-gradient(135deg, var(--md-sys-color-surface-container-high) 0%, var(--md-sys-color-surface-container) 100%);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-lg);
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: var(--md-sys-elevation-2);
+      position: relative;
+      overflow: hidden;
+    }
+    .pool-hero-card::after {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .pool-hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .pool-hero-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .pool-hero-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--md-sys-shape-corner-md);
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .pool-hero-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      margin: 0;
+    }
+    .pool-hero-subtitle {
+      font-size: 0.82rem;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-top: 2px;
+    }
+    .pool-stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+    }
+    .pool-stat-box {
+      background-color: var(--md-sys-color-surface-container-low);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-md);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .pool-stat-label {
+      font-size: 0.74rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+    .pool-stat-val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+    }
+    .pool-hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Provider Grid */
+    .dashboard-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: -10px;
+    }
+    .dashboard-section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .provider-card {
+      background-color: var(--md-sys-color-surface-container-low);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-lg);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all var(--md-sys-motion-duration-short);
+      box-shadow: var(--md-sys-elevation-1);
+    }
+    .provider-card:hover {
+      background-color: var(--md-sys-color-surface-container);
+      border-color: var(--md-sys-color-outline);
+      box-shadow: var(--md-sys-elevation-2);
+      transform: translateY(-2px);
+    }
+    .provider-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .provider-card-identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .provider-logo-wrap {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--md-sys-shape-corner-md);
+      background-color: var(--md-sys-color-surface-container-highest);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 6px;
+    }
+    .provider-card-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .provider-card-type {
+      font-size: 0.74rem;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+    .provider-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .provider-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--md-sys-shape-corner-full);
+    }
+    .status-badge.connected {
+      background-color: var(--status-success-container);
+      color: var(--status-on-success-container);
+    }
+    .status-badge.error {
+      background-color: var(--md-sys-color-error-container);
+      color: var(--md-sys-color-on-error-container);
+    }
+
+    /* ===== Refined M3 File Grid (Kotak-Kotak View) ===== */
     .file-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 14px;
     }
     .file-card {
       background-color: var(--md-sys-color-surface-container-low);
       border: 1px solid var(--md-sys-color-outline-variant);
       border-radius: var(--md-sys-shape-corner-md);
-      padding: 14px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       cursor: pointer;
       position: relative;
-      transition: background-color var(--md-sys-motion-duration-short), border-color var(--md-sys-motion-duration-short), box-shadow var(--md-sys-motion-duration-short);
+      transition: all var(--md-sys-motion-duration-short);
       overflow: hidden;
       user-select: none;
     }
     .file-card:hover {
       background-color: var(--md-sys-color-surface-container);
       border-color: var(--md-sys-color-outline);
-      box-shadow: var(--md-sys-elevation-1);
+      box-shadow: var(--md-sys-elevation-2);
+      transform: translateY(-2px);
     }
     .file-card.selected {
       background-color: var(--md-sys-color-primary-container);
       border-color: var(--md-sys-color-primary);
-      color: var(--md-sys-color-on-primary-container);
       box-shadow: var(--md-sys-elevation-2);
     }
     .file-card.selected .file-name {
       color: var(--md-sys-color-on-primary-container);
     }
-    .file-card.selected .file-meta,
+    .file-card.selected .file-meta-row,
     .file-card.selected .m3-chip {
       color: var(--md-sys-color-on-primary-container);
-      opacity: 0.85;
+      opacity: 0.9;
     }
-    .file-card-top {
+    .file-card-preview {
+      width: 100%;
+      height: 110px;
+      border-radius: var(--md-sys-shape-corner-sm);
+      background-color: var(--md-sys-color-surface-container);
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .file-card-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform var(--md-sys-motion-duration-medium);
+    }
+    .file-card:hover .file-card-thumb {
+      transform: scale(1.05);
     }
     .file-icon {
       width: 44px;
@@ -583,20 +879,77 @@
       justify-content: center;
     }
     .file-name {
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       font-weight: 600;
-      white-space: nowrap;
+      color: var(--md-sys-color-on-surface);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: var(--md-sys-color-on-surface);
+      min-height: 2.3em;
     }
-    .file-meta {
-      font-size: 0.74rem;
-      color: var(--md-sys-color-on-surface-variant);
+    .file-meta-row {
       display: flex;
+      align-items: center;
       justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-top: auto;
+    }
+
+    /* Grouping Sections */
+    .group-section {
+      margin-bottom: 24px;
+    }
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .group-count-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: var(--md-sys-shape-corner-full);
+      background-color: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    /* Danger Outlined & Small Button Variants */
+    .btn-outline-danger {
+      background-color: transparent;
+      color: var(--md-sys-color-error);
+      border: 1px solid var(--md-sys-color-error);
+      border-radius: var(--md-sys-shape-corner-sm);
+      height: 34px;
+      padding: 0 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
+      cursor: pointer;
+      transition: all var(--md-sys-motion-duration-short);
+    }
+    .btn-outline-danger:hover {
+      background-color: rgba(255, 180, 171, 0.12);
+    }
+    .btn-outline-danger svg { fill: currentColor; }
+    .danger-text {
+      color: var(--md-sys-color-error) !important;
+    }
+    .btn-sm {
+      height: 32px;
+      padding: 0 12px;
+      font-size: 0.8rem;
     }
 
     /* M3 Assist / Filter Chip (Domain attribution) */
@@ -616,7 +969,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 130px;
+      max-width: 140px;
     }
 
     /* ===== M3 List View ===== */
@@ -1085,7 +1438,7 @@
       <button class="btn-icon hamburger" id="btnHamburger" title="Menu" onclick="toggleSidebar()">
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
       </button>
-      <div class="brand" onclick="navigateToPath('/')">
+      <div class="brand" onclick="selectDashboard()">
         <div class="brand-mark">
           <svg width="22" height="22" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
         </div>
@@ -1141,8 +1494,14 @@
       <input type="file" id="hiddenFileInput" style="display:none" onchange="uploadSelectedFile(this)">
 
       <ul class="nav-list" id="sidebarNav">
+        <li class="nav-section-title">Overview</li>
+        <li class="nav-item active" id="navItemDashboard" onclick="selectDashboard(); closeSidebarOnMobile()">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          Dashboard
+        </li>
+
         <li class="nav-section-title">Aggregated Pools</li>
-        <li class="nav-item active" onclick="selectPool('all_pool'); closeSidebarOnMobile()">
+        <li class="nav-item" id="navItemPool" onclick="selectPool('all_pool'); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
           Round-Robin Pool
         </li>
@@ -1155,7 +1514,7 @@
         </li>
 
         <li class="nav-section-title">System</li>
-        <li class="nav-item" onclick="selectTrash(); closeSidebarOnMobile()">
+        <li class="nav-item" id="navItemTrash" onclick="selectTrash(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           Trash Bin
         </li>
@@ -1189,7 +1548,7 @@
       <div class="toolbar">
         <div style="display:flex;align-items:center;overflow:hidden;flex:1;gap:8px;min-width:0;">
           <div class="breadcrumbs" id="breadcrumbs">
-            <span class="breadcrumb-item active">Round-Robin Pool</span>
+            <span class="breadcrumb-item active">Dashboard</span>
           </div>
           <!-- M3 Contextual Action Mode Bar -->
           <div class="selected-action-bar" id="selectedActionBar">
@@ -1199,12 +1558,51 @@
         </div>
 
         <div class="view-toggles">
+          <button class="btn btn-outline-danger btn-sm" id="btnDisconnectActiveAccount" style="display:none;" onclick="promptDisconnectAccount(activeAccountID, activeAccountName)">
+            <svg width="14" height="14" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            Putuskan Akun
+          </button>
           <button class="btn-icon" id="btnRefresh" title="Refresh files" onclick="refreshCurrentView()">
             <svg width="18" height="18" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
           </button>
           <button class="btn-icon" id="btnToggleView" title="Toggle Grid/List" onclick="toggleViewMode()">
             <svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
           </button>
+        </div>
+      </div>
+
+      <!-- File Management Controls Bar (Sort, Filter, Group By) -->
+      <div class="file-controls-bar" id="fileControlsBar" style="display:none;">
+        <div class="filter-chips" id="filterChips">
+          <button class="filter-chip active" data-filter="all" onclick="setFileFilter('all')">Semua</button>
+          <button class="filter-chip" data-filter="folder" onclick="setFileFilter('folder')">📁 Folder</button>
+          <button class="filter-chip" data-filter="image" onclick="setFileFilter('image')">🖼️ Gambar</button>
+          <button class="filter-chip" data-filter="doc" onclick="setFileFilter('doc')">📄 Dokumen</button>
+          <button class="filter-chip" data-filter="media" onclick="setFileFilter('media')">🎬 Media</button>
+          <button class="filter-chip" data-filter="archive" onclick="setFileFilter('archive')">📦 Arsip</button>
+        </div>
+        <div class="sort-group-controls">
+          <div class="control-select-wrap">
+            <label for="sortSelect">Urut:</label>
+            <select id="sortSelect" class="form-select-sm" onchange="setFileSort(this.value)">
+              <option value="name_asc">Nama (A-Z)</option>
+              <option value="name_desc">Nama (Z-A)</option>
+              <option value="size_desc">Ukuran (Besar-Kecil)</option>
+              <option value="size_asc">Ukuran (Kecil-Besar)</option>
+              <option value="date_desc">Tanggal (Terbaru)</option>
+              <option value="date_asc">Tanggal (Terlama)</option>
+              <option value="type_asc">Tipe File</option>
+            </select>
+          </div>
+          <div class="control-select-wrap">
+            <label for="groupSelect">Grup:</label>
+            <select id="groupSelect" class="form-select-sm" onchange="setFileGroup(this.value)">
+              <option value="none">Tanpa Grup</option>
+              <option value="type">Tipe File</option>
+              <option value="date">Waktu Modifikasi</option>
+              <option value="account" id="optGroupAccount" style="display:none;">Akun Cloud</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1315,6 +1713,35 @@
       <div class="modal-footer">
         <button class="btn btn-text" onclick="closeModal('addAccountModal')">Cancel</button>
         <button class="btn btn-secondary" id="btnManualAdd" onclick="submitAddAccount()">Manual / Simulated Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- M3 Basic Dialog: Putuskan Akun Cloud (Safe AccountDisconnection) -->
+  <div class="modal-backdrop" id="disconnectAccountModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="display:inline-flex;padding:6px;border-radius:var(--md-sys-shape-corner-xs);background:rgba(255,180,171,0.2);color:var(--md-sys-color-error);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          </span>
+          <span style="font-weight:700;">Putuskan Remote Account</span>
+        </div>
+        <button class="btn-icon" onclick="closeModal('disconnectAccountModal')">✕</button>
+      </div>
+
+      <div style="font-size:0.86rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;margin-bottom:14px;">
+        Akun <strong id="disconnectTargetNameText" style="color:var(--md-sys-color-on-surface);"></strong> akan dilepas dari Cloudgate. Akun akan dikeluarkan dari <em>StoragePool</em> dan cache metadata lokal akan dibersihkan. File fisik di cloud Anda tetap aman.
+      </div>
+
+      <div class="form-group">
+        <label style="font-size:0.8rem;font-weight:600;">Untuk mengonfirmasi, ketik persis nama akun di bawah ini:</label>
+        <input type="text" class="form-control" id="disconnectConfirmInput" placeholder="Ketik nama akun..." oninput="handleDisconnectInputChange()" autocomplete="off">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-text" onclick="closeModal('disconnectAccountModal')">Batal</button>
+        <button class="btn btn-danger" id="btnConfirmDisconnect" disabled onclick="executeDisconnectAccount()">Putuskan Akun</button>
       </div>
     </div>
   </div>
@@ -1443,7 +1870,7 @@
 
   <script>
     // State
-    let currentMode = 'pool';
+    let currentMode = 'dashboard';
     let activeAccountID = '';
     let activeAccountName = '';
     let currentPath = '/';
@@ -1451,6 +1878,64 @@
     let currentFiles = [];
     let selectedFile = null;
     let activeSheetTab = 'inspector';
+    let cachedAccounts = [];
+    let cachedStats = null;
+    let fileFilter = 'all';
+    let fileSort = 'name_asc';
+    let fileGroup = 'none';
+    let targetDisconnectID = '';
+    let targetDisconnectName = '';
+
+    function initViewMode() {
+      const saved = localStorage.getItem('cloudgate-view-mode');
+      viewMode = saved || 'grid';
+    }
+
+    function getFileType(fileName, isDir) {
+      if (isDir) return 'folder';
+      if (!fileName) return 'file';
+      const ext = fileName.slice((fileName.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
+      if (ext === 'pdf') return 'pdf';
+      if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) return 'image';
+      if (['mp4', 'webm', 'ogv', 'mov', 'mkv', 'avi'].includes(ext)) return 'video';
+      if (['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'].includes(ext)) return 'audio';
+      if (['txt', 'log', 'ini', 'conf', 'env'].includes(ext)) return 'text';
+      if (['json', 'js', 'mjs', 'ts', 'jsx', 'tsx', 'html', 'htm', 'css', 'go', 'py', 'c', 'cpp', 'h', 'java', 'xml', 'yaml', 'yml', 'sh', 'bash', 'sql', 'md', 'markdown'].includes(ext)) return 'code';
+      if (['zip', 'rar', 'tar', 'gz', '7z', 'bz2', 'xz'].includes(ext)) return 'archive';
+      if (['csv', 'xls', 'xlsx', 'ods'].includes(ext)) return 'spreadsheet';
+      if (['doc', 'docx', 'odt', 'rtf'].includes(ext)) return 'document';
+      if (['ppt', 'pptx', 'odp'].includes(ext)) return 'presentation';
+      return 'file';
+    }
+
+    function getFileIconSvg(type, size = 20) {
+      switch (type) {
+        case 'folder':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb955"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+        case 'pdf':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb4ab"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zm4.5 2h1v-3h-1v3zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>`;
+        case 'image':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#dfbbde"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
+        case 'video':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#b4c5ff"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>`;
+        case 'audio':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#78dc9c"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
+        case 'code':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#80d4ff"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`;
+        case 'text':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#c0c6dd"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+        case 'spreadsheet':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#78dc9c"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4h-4V5h4v2zm-6 0H9V5h4v2zm-6 0H5V5h2v2zm-2 4h2v2H5v-2zm4 0h4v2H9v-2zm6 0h4v2h-4v-2zm4 6h-4v-2h4v2zm-6 0H9v-2h4v2zm-6 0H5v-2h2v2z"/></svg>`;
+        case 'document':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#b4c5ff"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+        case 'archive':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb955"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>`;
+        case 'presentation':
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb955"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM8 7h8v2H8zm0 4h8v2H8zm0 4h5v2H8z"/></svg>`;
+        default:
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#8e9099"><path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/></svg>`;
+      }
+    }
 
     // Theme (Light / Dark)
     function initTheme() {
@@ -1567,6 +2052,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
+      initViewMode();
       initApp();
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.search-box')) {
@@ -1580,6 +2066,7 @@
           closeModal('filePreviewModal');
           closeModal('downloadConfirmModal');
           closeModal('addAccountModal');
+          closeModal('disconnectAccountModal');
           closeModal('storageModal');
           closeModal('syncModal');
           closeModal('aboutModal');
@@ -1593,57 +2080,267 @@
       });
     });
 
+    function getProviderIconSvg(provider, size = 32) {
+      const p = (provider || '').toLowerCase();
+      if (p === 'gdrive' || p === 'google') {
+        return `<svg viewBox="0 0 87.3 78" width="${size}" height="${size}"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.9 2.5 3.2 3.3l12.3-21.3H0c0 1.6.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25 29.35 0c-1.4.8-2.5 1.9-3.3 3.2L.45 47.9c-.8 1.4-1.2 2.9-1.2 4.5h26.1z" fill="#00ac47"/><path d="M73.55 76.8c1.3-.8 2.4-1.9 3.2-3.3l1.6-2.75 7.75-13.4c.8-1.4 1.2-2.9 1.2-4.5H61.2l4.8 8.3z" fill="#ea4335"/><path d="m43.65 25 14.3-25c-1.4-.8-2.9-1.2-4.5-1.2H33.85c-1.6 0-3.1.4-4.5 1.2z" fill="#00832d"/><path d="M59.8 53.4h27.5c0-1.6-.4-3.1-1.2-4.5L72.4 25.3c-.8-1.4-1.9-2.5-3.2-3.3L54.9 47.3z" fill="#ffba00"/><path d="m73.55 76.8-12.3-21.3H26.05l-12.3 21.3c1.4.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.1-.4 4.5-1.2z" fill="#2684fc"/></svg>`;
+      }
+      if (p === 'onedrive') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#0078d4"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>`;
+      }
+      if (p === 'dropbox') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#0061ff"><path d="M6 2l6 3.8-6 3.8-6-3.8zm12 0l6 3.8-6 3.8-6-3.8zm-6 9.6l6-3.8 6 3.8-6 3.8zm-12 0l6-3.8 6 3.8-6 3.8zm6 5.8l6-3.8 6 3.8-6 3.8z"/></svg>`;
+      }
+      if (p === 'box') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#0061d5"><path d="M19.5 7.5L12 3 4.5 7.5v9l7.5 4.5 7.5-4.5v-9zm-7.5 1.73l5.06-3.04L12 4.46 6.94 6.19 12 9.23zM6 8.58l5.25 3.15v6.52L6 15.1V8.58zm6.75 9.67v-6.52L18 8.58v6.52l-5.25 3.15z"/></svg>`;
+      }
+      if (p === 'mega') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><circle cx="12" cy="12" r="11" fill="#d9272e"/><path d="M6.5 16V8h2.3l3.2 3.8L15.2 8h2.3v8h-2.1v-4.8l-2.6 3.1h-1.6l-2.6-3.1V16z" fill="#ffffff"/></svg>`;
+      }
+      if (p === 'pcloud') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#1ab7ea"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>`;
+      }
+      if (p === 's3') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#e05243"><path d="M12 2C6.48 2 2 4.24 2 7v10c0 2.76 4.48 5 10 5s10-2.24 10-5V7c0-2.76-4.48-5-10-5zm0 2c4.42 0 8 1.79 8 3s-3.58 3-8 3-8-1.79-8-3 3.58-3 8-3zm0 16c-4.42 0-8-1.79-8-3v-2.18c2.06 1.34 5.01 2.18 8 2.18s5.94-.84 8-2.18V17c0 1.21-3.58 3-8 3z"/></svg>`;
+      }
+      if (p === 'koofr') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#00b4d8"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>`;
+      }
+      if (p === 'webdav') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#0082c9"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5v-9l6 4.5-6 4.5z"/></svg>`;
+      }
+      if (p === 'yandex') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><circle cx="12" cy="12" r="11" fill="#fc3f1d"/><path d="M13.5 16h-2v-4.5L8.5 7h2.2l1.8 3.5L14.3 7h2.2l-3 4.5z" fill="#ffffff"/></svg>`;
+      }
+      return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="var(--md-sys-color-primary)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>`;
+    }
+
     async function initApp() {
       await loadAccounts();
       await loadStats();
-      await loadCurrentView();
+      selectDashboard();
       await updateProviderAuthUI();
     }
 
-    async function loadAccounts() {
-      try {
-        const res = await fetch('/api/accounts');
-        const accounts = (await res.json()) || [];
-        const container = document.getElementById('accountsNavList');
-        container.innerHTML = '';
-        accounts.forEach(acc => {
-          const item = document.createElement('li');
-          item.className = `nav-item ${activeAccountID === acc.id && currentMode === 'account' ? 'active' : ''}`;
-          item.style.display = 'flex';
-          item.style.alignItems = 'center';
-          item.style.justifyContent = 'space-between';
-          item.style.paddingRight = '8px';
-          item.innerHTML = `
-            <div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;" title="${acc.name}">
-              <svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
-              <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${acc.name}</span>
+    function selectDashboard() {
+      currentMode = 'dashboard';
+      activeAccountID = '';
+      activeAccountName = '';
+      currentPath = '/';
+      selectedFile = null;
+      updateNavHighlight();
+      updateBreadcrumbs();
+      updateSelectedActionBar();
+      const fb = document.getElementById('fileControlsBar');
+      if (fb) fb.style.display = 'none';
+      const btnDis = document.getElementById('btnDisconnectActiveAccount');
+      if (btnDis) btnDis.style.display = 'none';
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      const area = document.getElementById('contentArea');
+      const progressBar = document.getElementById('mainProgressBar');
+      if (progressBar) progressBar.classList.remove('active');
+
+      const accounts = cachedAccounts || [];
+      const stats = cachedStats || { total_storage: 0, total_used: 0, accounts: [] };
+      const pct = stats.total_storage > 0 ? Math.round((stats.total_used / stats.total_storage) * 100) : 0;
+      const totalFree = Math.max(0, (stats.total_storage || 0) - (stats.total_used || 0));
+
+      let cardsHtml = '';
+      if (accounts.length === 0) {
+        cardsHtml = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-card" style="max-width: 480px;">
+              <div class="file-icon" style="width:64px;height:64px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+              </div>
+              <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">Belum Ada Akun Cloud Terhubung</h3>
+              <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">Hubungkan akun Google Drive, OneDrive, Dropbox, atau penyedia storage lainnya untuk mulai menggabungkan kapasitas penyimpanan multi-cloud secara otomatis.</p>
+              <button class="btn btn-primary" onclick="openModal('addAccountModal')" style="margin-top:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                + Hubungkan Akun Cloud
+              </button>
             </div>
-            <button class="btn-icon" style="opacity:0.6;width:30px;height:30px;" title="Putuskan Akun" onclick="deleteAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}', event)">✕</button>
+          </div>
+        `;
+      } else {
+        cardsHtml = accounts.map(acc => {
+          const accStat = (stats.accounts || []).find(s => s.id === acc.id) || {};
+          const usedBytes = accStat.used || 0;
+          const totalBytes = accStat.total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 0);
+          const accPct = totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0;
+          const status = accStat.status || 'connected';
+          const meta = PROVIDER_METADATA[acc.provider] || { name: acc.provider };
+
+          return `
+            <div class="provider-card">
+              <div class="provider-card-header">
+                <div class="provider-card-identity">
+                  <div class="provider-logo-wrap" title="${meta.name}">
+                    ${getProviderIconSvg(acc.provider, 28)}
+                  </div>
+                  <div style="overflow:hidden;min-width:0;">
+                    <div class="provider-card-name" title="${acc.name}">${acc.name}</div>
+                    <div class="provider-card-type">${meta.name}</div>
+                  </div>
+                </div>
+                <span class="status-badge ${status === 'connected' ? 'connected' : 'error'}">
+                  ${status === 'connected' ? '● Aktif' : '● Kendala'}
+                </span>
+              </div>
+
+              <div class="provider-card-body">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.76rem;color:var(--md-sys-color-on-surface-variant);">
+                  <span>Kapasitas Digunakan</span>
+                  <span style="font-weight:700;color:var(--md-sys-color-on-surface);">${accPct}%</span>
+                </div>
+                <div class="progress-bar-bg" style="height:6px;margin:4px 0;">
+                  <div class="progress-bar-fill" style="width:${accPct}%;"></div>
+                </div>
+                <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);display:flex;justify-content:space-between;">
+                  <span>${formatBytes(usedBytes)}</span>
+                  <span>dari ${formatBytes(totalBytes)}</span>
+                </div>
+              </div>
+
+              <div class="provider-card-footer">
+                <button class="btn btn-secondary btn-sm" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
+                  <svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                  Buka File
+                </button>
+                <button class="btn btn-text btn-sm danger-text" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan RemoteAccount ini">
+                  Putuskan
+                </button>
+              </div>
+            </div>
           `;
-          item.onclick = (e) => {
-            if (e.target.tagName.toLowerCase() !== 'button') {
-              selectAccount(acc.id, acc.name);
-              closeSidebarOnMobile();
-            }
-          };
-          container.appendChild(item);
-        });
-      } catch (err) {
-        console.error('Failed to load accounts', err);
+        }).join('');
+      }
+
+      area.innerHTML = `
+        <div class="dashboard-container">
+          <!-- All StoragePool Hero Card -->
+          <div class="pool-hero-card">
+            <div class="pool-hero-top">
+              <div class="pool-hero-title-wrap">
+                <div class="pool-hero-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+                </div>
+                <div>
+                  <h2 class="pool-hero-title">Virtual StoragePool (All Pool)</h2>
+                  <div class="pool-hero-subtitle">Agregasi multi-cloud terpadu dengan distribusi beban otomatis (Round-Robin)</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="m3-chip" style="background-color:rgba(180,197,255,0.18);color:var(--md-sys-color-primary);font-weight:700;">
+                  AllocationPolicy: Capacity-Aware
+                </span>
+              </div>
+            </div>
+
+            <!-- Capacity Progress -->
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;font-weight:600;margin-bottom:6px;">
+                <span style="color:var(--md-sys-color-on-surface-variant);">Total Penggunaan Pool</span>
+                <span style="color:var(--md-sys-color-primary);">${pct}% (${formatBytes(stats.total_used)} / ${formatBytes(stats.total_storage)})</span>
+              </div>
+              <div class="progress-bar-bg" style="height:8px;">
+                <div class="progress-bar-fill" style="width:${pct}%;"></div>
+              </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="pool-stats-row">
+              <div class="pool-stat-box">
+                <span class="pool-stat-label">Total Kapasitas</span>
+                <span class="pool-stat-val">${formatBytes(stats.total_storage)}</span>
+              </div>
+              <div class="pool-stat-box">
+                <span class="pool-stat-label">Terpakai</span>
+                <span class="pool-stat-val" style="color:var(--md-sys-color-primary);">${formatBytes(stats.total_used)}</span>
+              </div>
+              <div class="pool-stat-box">
+                <span class="pool-stat-label">Tersedia (Free)</span>
+                <span class="pool-stat-val" style="color:var(--status-success);">${formatBytes(totalFree)}</span>
+              </div>
+              <div class="pool-stat-box">
+                <span class="pool-stat-label">Akun Terhubung</span>
+                <span class="pool-stat-val">${accounts.length} Akun Cloud</span>
+              </div>
+            </div>
+
+            <!-- Hero Actions -->
+            <div class="pool-hero-actions">
+              <button class="btn btn-primary" onclick="selectPool('all_pool')">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+                Jelajahi Pool Virtual
+              </button>
+              <button class="btn btn-secondary" onclick="openModal('addAccountModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                + Tambah Akun Cloud
+              </button>
+              <button class="btn btn-secondary" onclick="openModal('storageModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2 0v8.99H22c-.47-4.74-4.24-8.52-8.99-8.99zm0 11.01V22c4.75-.47 8.52-4.25 8.99-8.99H13z"/></svg>
+                Breakdown Grafik
+              </button>
+            </div>
+          </div>
+
+          <!-- Cloud Providers Grid Header -->
+          <div class="dashboard-section-header">
+            <h3 class="dashboard-section-title">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+              Penyedia Cloud Terhubung (RemoteAccounts)
+            </h3>
+            <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} Akun Aktif</span>
+          </div>
+
+          <!-- Provider Cards Grid -->
+          <div class="provider-grid">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    // Safe AccountDisconnection
+    function promptDisconnectAccount(id, name) {
+      targetDisconnectID = id;
+      targetDisconnectName = name;
+      const targetText = document.getElementById('disconnectTargetNameText');
+      if (targetText) targetText.textContent = `"${name}"`;
+      const input = document.getElementById('disconnectConfirmInput');
+      if (input) input.value = '';
+      const btn = document.getElementById('btnConfirmDisconnect');
+      if (btn) btn.disabled = true;
+      openModal('disconnectAccountModal');
+      setTimeout(() => { if (input) input.focus(); }, 100);
+    }
+
+    function handleDisconnectInputChange() {
+      const input = document.getElementById('disconnectConfirmInput');
+      const btn = document.getElementById('btnConfirmDisconnect');
+      if (input && btn) {
+        btn.disabled = input.value.trim() !== targetDisconnectName;
       }
     }
 
-    async function deleteAccount(id, name, event) {
-      if (event) event.stopPropagation();
-      if (!confirm(`Putuskan akun "${name}" dari Cloudgate?`)) return;
+    async function executeDisconnectAccount() {
+      const input = document.getElementById('disconnectConfirmInput');
+      if (!input || input.value.trim() !== targetDisconnectName) return;
+      const id = targetDisconnectID;
+      const name = targetDisconnectName;
+      closeModal('disconnectAccountModal');
+
       try {
         const res = await fetch(`/api/accounts/${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (res.ok) {
-          showToast(`Akun "${name}" berhasil diputuskan.`);
-          if (activeAccountID === id) selectPool('all_pool');
+          showToast(`RemoteAccount "${name}" berhasil diputuskan.`);
           await loadAccounts();
           await loadStats();
-          await loadCurrentView();
+          selectDashboard();
         } else {
           showToast('Gagal memutuskan akun', 'error');
         }
@@ -1652,15 +2349,55 @@
       }
     }
 
+    async function loadAccounts() {
+      try {
+        const res = await fetch('/api/accounts');
+        cachedAccounts = (await res.json()) || [];
+        const container = document.getElementById('accountsNavList');
+        container.innerHTML = '';
+        cachedAccounts.forEach(acc => {
+          const item = document.createElement('li');
+          item.className = `nav-item ${activeAccountID === acc.id && currentMode === 'account' ? 'active' : ''}`;
+          item.dataset.accountId = acc.id;
+          item.style.display = 'flex';
+          item.style.alignItems = 'center';
+          item.style.justifyContent = 'space-between';
+          item.style.paddingRight = '8px';
+          item.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;" title="${acc.name}">
+              <span style="display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                ${getProviderIconSvg(acc.provider, 18)}
+              </span>
+              <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${acc.name}</span>
+            </div>
+          `;
+          item.onclick = () => {
+            selectAccount(acc.id, acc.name);
+            closeSidebarOnMobile();
+          };
+          container.appendChild(item);
+        });
+
+        if (currentMode === 'dashboard') {
+          renderDashboard();
+        }
+      } catch (err) {
+        console.error('Failed to load accounts', err);
+      }
+    }
+
     async function loadStats() {
       try {
         const res = await fetch('/api/stats');
-        const stats = await res.json();
-        const pct = stats.total_storage > 0 ? Math.round((stats.total_used / stats.total_storage) * 100) : 0;
+        cachedStats = await res.json();
+        const pct = cachedStats.total_storage > 0 ? Math.round((cachedStats.total_used / cachedStats.total_storage) * 100) : 0;
         document.getElementById('capacityPercent').innerText = `${pct}%`;
         document.getElementById('capacityFill').style.width = `${pct}%`;
-        document.getElementById('capacityText').innerText = `${formatBytes(stats.total_used)} of ${formatBytes(stats.total_storage)}`;
-        renderDonutChart(stats);
+        document.getElementById('capacityText').innerText = `${formatBytes(cachedStats.total_used)} of ${formatBytes(cachedStats.total_storage)}`;
+        renderDonutChart(cachedStats);
+        if (currentMode === 'dashboard') {
+          renderDashboard();
+        }
       } catch (err) {
         console.error('Failed to load stats', err);
       }
@@ -1686,6 +2423,11 @@
     }
 
     async function loadCurrentView() {
+      if (currentMode === 'dashboard') {
+        renderDashboard();
+        return;
+      }
+
       const area = document.getElementById('contentArea');
       const progressBar = document.getElementById('mainProgressBar');
       progressBar.classList.add('active');
@@ -1704,7 +2446,7 @@
         progressBar.classList.remove('active');
         if (!res.ok) throw new Error(data.error || 'Failed to load files');
         currentFiles = Array.isArray(data) ? data : [];
-        renderFiles(currentFiles);
+        applyFilesView();
       } catch (err) {
         progressBar.classList.remove('active');
         area.innerHTML = `
@@ -1720,51 +2462,70 @@
       }
     }
 
-    function getFileType(fileName, isDir) {
-      if (isDir) return 'folder';
-      if (!fileName) return 'file';
-      const ext = fileName.slice((fileName.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
-      if (ext === 'pdf') return 'pdf';
-      if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) return 'image';
-      if (['mp4', 'webm', 'ogv', 'mov', 'mkv', 'avi'].includes(ext)) return 'video';
-      if (['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'].includes(ext)) return 'audio';
-      if (['txt', 'log', 'ini', 'conf', 'env'].includes(ext)) return 'text';
-      if (['json', 'js', 'mjs', 'ts', 'jsx', 'tsx', 'html', 'htm', 'css', 'go', 'py', 'c', 'cpp', 'h', 'java', 'xml', 'yaml', 'yml', 'sh', 'bash', 'sql', 'md', 'markdown'].includes(ext)) return 'code';
-      if (['zip', 'rar', 'tar', 'gz', '7z', 'bz2', 'xz'].includes(ext)) return 'archive';
-      if (['csv', 'xls', 'xlsx', 'ods'].includes(ext)) return 'spreadsheet';
-      if (['doc', 'docx', 'odt', 'rtf'].includes(ext)) return 'document';
-      if (['ppt', 'pptx', 'odp'].includes(ext)) return 'presentation';
-      return 'file';
+    // Filter, Sort, Grouping file controls
+    function setFileFilter(filter) {
+      fileFilter = filter;
+      document.querySelectorAll('.filter-chip').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+      applyFilesView();
     }
 
-    function getFileIconSvg(type, size = 20) {
-      switch (type) {
-        case 'folder':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb955"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
-        case 'pdf':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb4ab"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zm4.5 2h1v-3h-1v3zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>`;
-        case 'image':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#dfbbde"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
-        case 'video':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#b4c5ff"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>`;
-        case 'audio':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#78dc9c"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
-        case 'code':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#80d4ff"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`;
-        case 'text':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#c0c6dd"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
-        case 'spreadsheet':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#78dc9c"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4h-4V5h4v2zm-6 0H9V5h4v2zm-6 0H5V5h2v2zm-2 4h2v2H5v-2zm4 0h4v2H9v-2zm6 0h4v2h-4v-2zm4 6h-4v-2h4v2zm-6 0H9v-2h4v2zm-6 0H5v-2h2v2z"/></svg>`;
-        case 'document':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#b4c5ff"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
-        case 'archive':
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb955"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>`;
-        default:
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#8e9099"><path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/></svg>`;
+    function setFileSort(sort) {
+      fileSort = sort;
+      applyFilesView();
+    }
+
+    function setFileGroup(group) {
+      fileGroup = group;
+      applyFilesView();
+    }
+
+    function applyFilesView() {
+      let filtered = [...currentFiles];
+
+      // 1. Filter
+      if (fileFilter !== 'all') {
+        filtered = filtered.filter(f => {
+          const fileName = f.name || f.file_name || '';
+          const type = getFileType(fileName, f.is_dir);
+          if (fileFilter === 'folder') return f.is_dir;
+          if (fileFilter === 'image') return !f.is_dir && type === 'image';
+          if (fileFilter === 'doc') return !f.is_dir && ['pdf', 'document', 'spreadsheet', 'text', 'presentation'].includes(type);
+          if (fileFilter === 'media') return !f.is_dir && ['video', 'audio'].includes(type);
+          if (fileFilter === 'archive') return !f.is_dir && type === 'archive';
+          return true;
+        });
       }
+
+      // 2. Sort
+      filtered.sort((a, b) => {
+        if (fileSort !== 'type_asc') {
+          if (a.is_dir && !b.is_dir) return -1;
+          if (!a.is_dir && b.is_dir) return 1;
+        }
+        const nameA = (a.name || a.file_name || '').toLowerCase();
+        const nameB = (b.name || b.file_name || '').toLowerCase();
+
+        if (fileSort === 'name_asc') return nameA.localeCompare(nameB);
+        if (fileSort === 'name_desc') return nameB.localeCompare(nameA);
+        if (fileSort === 'size_desc') return (b.size || 0) - (a.size || 0);
+        if (fileSort === 'size_asc') return (a.size || 0) - (b.size || 0);
+        if (fileSort === 'date_desc') return new Date(b.mod_time || 0) - new Date(a.mod_time || 0);
+        if (fileSort === 'date_asc') return new Date(a.mod_time || 0) - new Date(b.mod_time || 0);
+        if (fileSort === 'type_asc') {
+          const typeA = getFileType(nameA, a.is_dir);
+          const typeB = getFileType(nameB, b.is_dir);
+          return typeA.localeCompare(typeB) || nameA.localeCompare(nameB);
+        }
+        return 0;
+      });
+
+      // 3. Render
+      renderRenderableFiles(filtered);
     }
 
-    function renderFiles(files) {
+    function renderRenderableFiles(files) {
       const area = document.getElementById('contentArea');
       area.innerHTML = '';
       deselectItem();
@@ -1776,8 +2537,8 @@
               <div class="file-icon" style="width:56px;height:56px;border-radius:var(--md-sys-shape-corner-md);">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--md-sys-color-on-surface-variant)"><path d="M19 13H5v-2h14v2z"/></svg>
               </div>
-              <p style="font-weight:700;font-size:1.05rem;">Folder ini kosong</p>
-              <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);">Upload file baru atau kembali ke direktori induk</p>
+              <p style="font-weight:700;font-size:1.05rem;">Tidak ada file ditemukan</p>
+              <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);">${fileFilter !== 'all' ? 'Coba ubah filter kategori di toolbar atas.' : 'Upload file baru atau kembali ke direktori induk'}</p>
               ${currentPath !== '/' ? '<button class="btn btn-secondary" style="margin-top:8px;" onclick="navigateUp()">← Kembali ke Folder Induk</button>' : ''}
             </div>
           </div>
@@ -1785,33 +2546,94 @@
         return;
       }
 
-      const sorted = [...files].sort((a, b) => {
-        if (a.is_dir && !b.is_dir) return -1;
-        if (!a.is_dir && b.is_dir) return 1;
-        const nameA = (a.name || a.file_name || '').toLowerCase();
-        const nameB = (b.name || b.file_name || '').toLowerCase();
-        return nameA.localeCompare(nameB);
+      if (fileGroup === 'none') {
+        renderFilesChunk(files, area);
+        return;
+      }
+
+      // Grouping
+      const groups = new Map();
+      files.forEach(f => {
+        let key = 'Lainnya';
+        if (fileGroup === 'type') {
+          if (f.is_dir) key = '📁 Folder';
+          else {
+            const type = getFileType(f.name || f.file_name, false);
+            if (type === 'image') key = '🖼️ Gambar';
+            else if (['pdf', 'document', 'spreadsheet', 'text', 'presentation'].includes(type)) key = '📄 Dokumen';
+            else if (['video', 'audio'].includes(type)) key = '🎬 Media Audio & Video';
+            else if (type === 'archive') key = '📦 Arsip';
+            else if (type === 'code') key = '💻 Kode Sumber';
+            else key = '📎 File Lainnya';
+          }
+        } else if (fileGroup === 'date') {
+          const mod = new Date(f.mod_time || 0);
+          const now = new Date();
+          const diffDays = Math.floor((now - mod) / (1000 * 60 * 60 * 24));
+          if (diffDays <= 0) key = '⚡ Hari Ini';
+          else if (diffDays <= 7) key = '🗓️ 7 Hari Terakhir';
+          else if (diffDays <= 30) key = '📅 30 Hari Terakhir';
+          else key = '🗄️ Lebih Lama';
+        } else if (fileGroup === 'account') {
+          key = f.account_id ? `☁️ ${f.account_id}` : '☁️ Round-Robin Pool';
+        }
+
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(f);
       });
 
+      groups.forEach((groupFiles, groupTitle) => {
+        const section = document.createElement('div');
+        section.className = 'group-section';
+        section.innerHTML = `
+          <div class="group-header">
+            <span>${groupTitle}</span>
+            <span class="group-count-badge">${groupFiles.length}</span>
+          </div>
+        `;
+        renderFilesChunk(groupFiles, section);
+        area.appendChild(section);
+      });
+    }
+
+    function renderFilesChunk(files, container) {
       if (viewMode === 'grid') {
         const grid = document.createElement('div');
         grid.className = 'file-grid';
-        sorted.forEach(f => {
+        files.forEach(f => {
           const fileName = f.name || f.file_name;
           const type = getFileType(fileName, f.is_dir);
           const card = document.createElement('div');
           card.className = 'file-card';
           const accLabel = f.account_id || (currentMode === 'account' ? activeAccountName : 'Pool');
+          const isImg = type === 'image';
+          const dlUrl = `/api/files/download?account_id=${encodeURIComponent(f.account_id || activeAccountID)}&path=${encodeURIComponent(f.path || (currentPath === '/' ? '/' + fileName : currentPath + '/' + fileName))}`;
+
           card.innerHTML = `
-            <div class="file-card-top">
-              <div class="file-icon">${getFileIconSvg(type, 24)}</div>
-              <span class="m3-chip" title="RemoteAccount: ${accLabel}">${accLabel}</span>
+            <div class="file-card-preview">
+              ${isImg ? `
+                <img class="file-card-thumb" src="${dlUrl}" loading="lazy" alt="${fileName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                <div class="file-card-fallback-icon" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">
+                  ${getFileIconSvg(type, 38)}
+                </div>
+              ` : `
+                <div class="file-card-fallback-icon" style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;">
+                  ${getFileIconSvg(type, 38)}
+                </div>
+              `}
             </div>
             <div class="file-name" title="${fileName}">${fileName}</div>
-            <div class="file-meta">
+            <div class="file-meta-row">
               <span>${f.is_dir ? 'Folder' : formatBytes(f.size)}</span>
               <span>${f.mod_time ? new Date(f.mod_time).toLocaleDateString() : ''}</span>
             </div>
+            ${currentMode === 'pool' && f.account_id ? `
+              <div style="margin-top:2px;">
+                <span class="m3-chip" style="font-size:0.68rem;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="RemoteAccount: ${f.account_id}">
+                  ${f.account_id}
+                </span>
+              </div>
+            ` : ''}
           `;
           card.onclick = (e) => selectFileCard(f, card, e);
           card.ondblclick = (e) => {
@@ -1822,7 +2644,7 @@
           card.oncontextmenu = (e) => showContextMenu(e, f);
           grid.appendChild(card);
         });
-        area.appendChild(grid);
+        container.appendChild(grid);
       } else {
         const wrap = document.createElement('div');
         wrap.className = 'file-table-wrap';
@@ -1838,7 +2660,7 @@
             </tr>
           </thead>
           <tbody>
-            ${sorted.map(f => {
+            ${files.map(f => {
               const fileName = f.name || f.file_name;
               const type = getFileType(fileName, f.is_dir);
               const jsonStr = JSON.stringify(f).replace(/'/g, "&apos;");
@@ -1862,8 +2684,12 @@
           </tbody>
         `;
         wrap.appendChild(table);
-        area.appendChild(wrap);
+        container.appendChild(wrap);
       }
+    }
+
+    function renderFiles(files) {
+      applyFilesView();
     }
 
     function selectFileCard(f, el, event) {
@@ -1954,6 +2780,11 @@
 
     function updateBreadcrumbs() {
       const container = document.getElementById('breadcrumbs');
+      if (currentMode === 'dashboard') {
+        container.innerHTML = `<span class="breadcrumb-item active">Dashboard</span>`;
+        return;
+      }
+
       let rootName = 'Round-Robin Pool';
       if (currentMode === 'account') {
         rootName = activeAccountName || 'Cloud Account';
@@ -1961,11 +2792,14 @@
         rootName = 'Trash Bin';
       }
       const isRoot = currentPath === '/' || !currentPath;
-      let html = '';
+      let html = `
+        <span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span>
+        <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span>
+      `;
       if (!isRoot) {
         html += `
-          <button class="btn-icon" style="width:30px;height:30px;margin-right:4px;" title="Kembali ke Folder Atas" onclick="navigateUp()">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          <button class="btn-icon" style="width:28px;height:28px;margin-right:4px;" title="Kembali ke Folder Atas" onclick="navigateUp()">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
           </button>
         `;
       }
@@ -1990,7 +2824,8 @@
 
     function toggleViewMode() {
       viewMode = viewMode === 'grid' ? 'list' : 'grid';
-      renderFiles(currentFiles);
+      localStorage.setItem('cloudgate-view-mode', viewMode);
+      applyFilesView();
     }
 
     function selectPool(poolID) {
@@ -1999,6 +2834,12 @@
       currentPath = '/';
       updateBreadcrumbs();
       updateNavHighlight();
+      const fb = document.getElementById('fileControlsBar');
+      if (fb) fb.style.display = 'flex';
+      const btnDis = document.getElementById('btnDisconnectActiveAccount');
+      if (btnDis) btnDis.style.display = 'none';
+      const optAcc = document.getElementById('optGroupAccount');
+      if (optAcc) optAcc.style.display = 'block';
       loadCurrentView();
     }
 
@@ -2009,6 +2850,12 @@
       currentPath = '/';
       updateBreadcrumbs();
       updateNavHighlight();
+      const fb = document.getElementById('fileControlsBar');
+      if (fb) fb.style.display = 'flex';
+      const btnDis = document.getElementById('btnDisconnectActiveAccount');
+      if (btnDis) btnDis.style.display = 'inline-flex';
+      const optAcc = document.getElementById('optGroupAccount');
+      if (optAcc) optAcc.style.display = 'none';
       loadCurrentView();
     }
 
@@ -2018,17 +2865,39 @@
       currentPath = '/';
       updateBreadcrumbs();
       updateNavHighlight();
+      const fb = document.getElementById('fileControlsBar');
+      if (fb) fb.style.display = 'none';
+      const btnDis = document.getElementById('btnDisconnectActiveAccount');
+      if (btnDis) btnDis.style.display = 'none';
       loadCurrentView();
     }
 
     function updateNavHighlight() {
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if (currentMode === 'dashboard') {
+        const el = document.getElementById('navItemDashboard');
+        if (el) el.classList.add('active');
+      } else if (currentMode === 'pool') {
+        const el = document.getElementById('navItemPool');
+        if (el) el.classList.add('active');
+      } else if (currentMode === 'trash') {
+        const el = document.getElementById('navItemTrash');
+        if (el) el.classList.add('active');
+      } else if (currentMode === 'account') {
+        const el = document.querySelector(`.nav-item[data-account-id="${activeAccountID}"]`);
+        if (el) el.classList.add('active');
+      }
     }
 
-    function refreshCurrentView() {
-      loadStats();
-      loadCurrentView();
-      showToast('Refreshed files and storage quotas');
+    async function refreshCurrentView() {
+      await loadAccounts();
+      await loadStats();
+      if (currentMode === 'dashboard') {
+        renderDashboard();
+      } else {
+        await loadCurrentView();
+      }
+      showToast('Data berhasil dimuat ulang');
     }
 
     function showContextMenu(e, file) {
