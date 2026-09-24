@@ -11,6 +11,7 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -260,6 +261,24 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 	if len(extra) > 0 {
 		b, _ := json.Marshal(extra)
 		credsJSON = string(b)
+	}
+	// Validation for provider-specific required fields (synthetic allowed for tests)
+	switch provider {
+	case "s3":
+		if len(extra) > 0 && extra["bucket"] == "" {
+			writeError(w, http.StatusBadRequest, "s3 requires bucket")
+			return
+		}
+	case "webdav", "koofr":
+		if len(extra) > 0 && extra["url"] == "" {
+			writeError(w, http.StatusBadRequest, "webdav requires url")
+			return
+		}
+	case "mega":
+		if len(extra) > 0 && extra["username"] == "" && extra["email"] == "" {
+			writeError(w, http.StatusBadRequest, "mega requires username/email and password")
+			return
+		}
 	}
 	// For S3/WebDAV/Mega synthetic quota
 	if (provider == "s3" || provider == "webdav" || provider == "mega" || provider == "koofr") && quotaTotal == 0 {
@@ -573,8 +592,85 @@ button:hover { background: #475569; }
 		}
 		adapter := storage.NewRcloneAdapter("dropbox", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
 		liveDriver = adapter
+	case "box":
+		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://api.box.com/2.0/users/me", nil)
+		if err == nil {
+			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
+			userResp, err := http.DefaultClient.Do(userReq)
+			if err == nil {
+				defer userResp.Body.Close()
+				var userInfo struct {
+					Name  string `json:"name"`
+					Login string `json:"login"`
+				}
+				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
+					userEmail = userInfo.Login
+					userName = userInfo.Name
+					if userInfo.Name != "" && userInfo.Login != "" {
+						accName = fmt.Sprintf("%s (%s)", userInfo.Name, userInfo.Login)
+					} else if userInfo.Login != "" {
+						accName = userInfo.Login
+					}
+				}
+			}
+		}
+		adapter := storage.NewRcloneAdapter("box", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
+		liveDriver = adapter
+	case "pcloud":
+		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://api.pcloud.com/userinfo?auth="+url.QueryEscape(tokenResp.AccessToken), nil)
+		if err == nil {
+			userResp, err := http.DefaultClient.Do(userReq)
+			if err == nil {
+				defer userResp.Body.Close()
+				var userInfo struct {
+					Email    string `json:"email"`
+					Username string `json:"username"`
+				}
+				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
+					userEmail = userInfo.Email
+					userName = userInfo.Username
+					if userInfo.Username != "" && userInfo.Email != "" {
+						accName = fmt.Sprintf("%s (%s)", userInfo.Username, userInfo.Email)
+					} else if userInfo.Email != "" {
+						accName = userInfo.Email
+					}
+				}
+			}
+		}
+		adapter := storage.NewRcloneAdapter("pcloud", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
+		liveDriver = adapter
+	case "yandex":
+		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://cloud-api.yandex.net/v1/disk", nil)
+		if err == nil {
+			userReq.Header.Set("Authorization", "OAuth "+tokenResp.AccessToken)
+			userResp, err := http.DefaultClient.Do(userReq)
+			if err == nil {
+				defer userResp.Body.Close()
+				var info struct {
+					User struct {
+						Login string `json:"login"`
+						DisplayName string `json:"display_name"`
+					} `json:"user"`
+				}
+				if err := json.NewDecoder(userResp.Body).Decode(&info); err == nil {
+					userEmail = info.User.Login
+					userName = info.User.DisplayName
+					if info.User.DisplayName != "" && info.User.Login != "" {
+						accName = fmt.Sprintf("%s (%s)", info.User.DisplayName, info.User.Login)
+					} else if info.User.Login != "" {
+						accName = info.User.Login
+					}
+				}
+			}
+		}
+		adapter := storage.NewRcloneAdapter("yandex", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
+		liveDriver = adapter
+	case "koofr":
+		// Koofr WebDAV — no dedicated userinfo endpoint, use token as identity
+		adapter := storage.NewRcloneAdapter("koofr", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, "", accName)
+		liveDriver = adapter
 	default:
-		// Fallback: treat as generic dropbox-style rclone adapter if provider is known to auth
+		// Fallback: generic rclone adapter for any provider known to auth
 		adapter := storage.NewRcloneAdapter(provider, accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, "", "")
 		liveDriver = adapter
 	}

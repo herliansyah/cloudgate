@@ -135,43 +135,44 @@ func runServer(rawArgs []string) {
 		}
 		var d storage.Driver
 		if acc.Credentials != "" {
-			var m map[string]string
-			_ = json.Unmarshal([]byte(acc.Credentials), &m)
-			var creds struct {
-				ClientID     string `json:"client_id"`
-				ClientSecret string `json:"client_secret"`
-				AccessToken  string `json:"access_token"`
-				RefreshToken string `json:"refresh_token"`
+			var credMap map[string]string
+			if err := json.Unmarshal([]byte(acc.Credentials), &credMap); err != nil {
+				credMap = make(map[string]string)
 			}
-			_ = json.Unmarshal([]byte(acc.Credentials), &creds)
+			creds := storage.RcloneCredentials{
+				Provider:     storage.Provider(acc.Provider),
+				AccountID:    acc.ID,
+				ClientID:     credMap["client_id"],
+				ClientSecret: credMap["client_secret"],
+				AccessToken:  credMap["access_token"],
+				RefreshToken: credMap["refresh_token"],
+				UserName:     acc.Name,
+				Extra:        credMap,
+			}
 			hasToken := creds.AccessToken != "" || creds.RefreshToken != ""
-			hasExtra := len(m) > 0
-			switch acc.Provider {
-			case "google", "gdrive":
+			hasExtra := len(credMap) > 0
+			switch creds.Provider {
+			case storage.ProviderGDrive:
 				if hasToken {
 					d = storage.NewGDriveDriver(acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
 				}
-			case "onedrive", "dropbox", "box", "pcloud", "yandex", "koofr":
+			case storage.ProviderOneDrive, storage.ProviderDropbox, storage.ProviderBox, storage.ProviderPCloud, storage.ProviderYandex, storage.ProviderKoofr, storage.ProviderS3, storage.ProviderWebDAV, storage.ProviderMega:
 				if hasToken || hasExtra {
-					d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, m)
-				}
-			case "s3", "webdav", "mega":
-				if hasExtra || hasToken {
-					d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, m)
+					d = storage.NewRcloneAdapterWithExtra(string(creds.Provider), acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, credMap)
 				}
 			default:
+				// Unknown provider with credentials — try generic rclone adapter
 				if hasToken || hasExtra {
-					if acc.Provider == "s3" || acc.Provider == "webdav" || acc.Provider == "mega" || acc.Provider == "koofr" || acc.Provider == "box" || acc.Provider == "pcloud" || acc.Provider == "yandex" {
-						d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, m)
-					}
+					d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, credMap)
 				}
 			}
 		}
 		if d == nil {
-			// For s3/webdav/mega without credentials (legacy), try to create synthetic adapter from quota
-			if acc.Provider == "s3" || acc.Provider == "webdav" || acc.Provider == "mega" || acc.Provider == "koofr" || acc.Provider == "box" || acc.Provider == "pcloud" || acc.Provider == "yandex" {
+			// Synthetic adapter for known rclone providers without credentials (legacy or pre-auth)
+			switch storage.Provider(acc.Provider) {
+			case storage.ProviderS3, storage.ProviderWebDAV, storage.ProviderMega, storage.ProviderKoofr, storage.ProviderBox, storage.ProviderPCloud, storage.ProviderYandex, storage.ProviderOneDrive, storage.ProviderDropbox:
 				d = storage.NewRcloneAdapter(acc.Provider, acc.ID, "", "", "", "", "", acc.Name)
-			} else {
+			default:
 				d = storage.NewMemDriver(acc.ID, acc.Provider, quota)
 			}
 		}

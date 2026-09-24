@@ -528,6 +528,25 @@
           <span id="btnOAuthText">Masuk dengan Akun Google</span>
         </button>
       </div>
+      <div id="s3ExtraFields" style="display:none;flex-direction:column;gap:12px;background:#0f172a;padding:12px;border-radius:10px;border:1px solid var(--border);">
+        <div style="font-size:0.8rem;color:var(--text-muted);">S3 / S3-Compatible — isi endpoint & bucket. Kosongkan untuk synthetic test (1TB).</div>
+        <div class="form-group"><label>S3 Endpoint (e.g. https://s3.amazonaws.com)</label><input type="text" class="form-control" id="s3Endpoint" placeholder="https://s3.amazonaws.com"></div>
+        <div class="form-group"><label>Bucket</label><input type="text" class="form-control" id="s3Bucket" placeholder="my-bucket"></div>
+        <div class="form-group"><label>Access Key ID</label><input type="text" class="form-control" id="s3AccessKey" placeholder="AKIA..."></div>
+        <div class="form-group"><label>Secret Access Key</label><input type="password" class="form-control" id="s3SecretKey" placeholder="••••••••"></div>
+        <div class="form-group"><label>Region</label><input type="text" class="form-control" id="s3Region" placeholder="us-east-1"></div>
+      </div>
+      <div id="webdavExtraFields" style="display:none;flex-direction:column;gap:12px;background:#0f172a;padding:12px;border-radius:10px;border:1px solid var(--border);">
+        <div style="font-size:0.8rem;color:var(--text-muted);">Nextcloud / WebDAV — URL + kredensial.</div>
+        <div class="form-group"><label>WebDAV URL (e.g. https://cloud.example.com/remote.php/webdav)</label><input type="text" class="form-control" id="webdavUrl" placeholder="https://..."></div>
+        <div class="form-group"><label>Username</label><input type="text" class="form-control" id="webdavUser" placeholder="user"></div>
+        <div class="form-group"><label>Password / App Token</label><input type="password" class="form-control" id="webdavPass" placeholder="••••••••"></div>
+      </div>
+      <div id="megaExtraFields" style="display:none;flex-direction:column;gap:12px;background:#0f172a;padding:12px;border-radius:10px;border:1px solid var(--border);">
+        <div style="font-size:0.8rem;color:var(--text-muted);">Mega — email & password (crypto ditangani rclone).</div>
+        <div class="form-group"><label>Email / Username</label><input type="text" class="form-control" id="megaUser" placeholder="user@example.com"></div>
+        <div class="form-group"><label>Password</label><input type="password" class="form-control" id="megaPass" placeholder="••••••••"></div>
+      </div>
       <div class="form-group">
         <label>Account Label / Name (Optional)</label>
         <input type="text" class="form-control" id="newAccountName" placeholder="e.g. Personal Google Drive">
@@ -1482,6 +1501,9 @@
       const p = document.getElementById('newAccountProvider').value;
       const oauthSection = document.getElementById('oauthSection');
       const btnOAuthText = document.getElementById('btnOAuthText');
+      const s3Extra = document.getElementById('s3ExtraFields');
+      const webdavExtra = document.getElementById('webdavExtraFields');
+      const megaExtra = document.getElementById('megaExtraFields');
       const oauthProviders = ['gdrive','google','onedrive','dropbox','box','pcloud','yandex','koofr'];
       if (oauthProviders.includes(p)) {
         oauthSection.style.display = 'flex';
@@ -1504,6 +1526,9 @@
       } else {
         oauthSection.style.display = 'none';
       }
+      s3Extra.style.display = p === 's3' ? 'flex' : 'none';
+      webdavExtra.style.display = (p === 'webdav' || p === 'koofr') ? 'flex' : 'none';
+      megaExtra.style.display = p === 'mega' ? 'flex' : 'none';
     }
 
     async function startOAuthConnect() {
@@ -1548,18 +1573,34 @@
       const provider = document.getElementById('newAccountProvider').value;
       const name = document.getElementById('newAccountName').value || `${provider} Account`;
       const quota = parseInt(document.getElementById('newAccountQuota').value) || 15;
+      const payload = {
+        id: 'acc_' + Date.now(),
+        provider,
+        name,
+        root_folder: '/',
+        quota_total: quota * 1024 * 1024 * 1024
+      };
+      if (provider === 's3') {
+        payload.endpoint = document.getElementById('s3Endpoint').value.trim();
+        payload.bucket = document.getElementById('s3Bucket').value.trim();
+        payload.access_key_id = document.getElementById('s3AccessKey').value.trim();
+        payload.secret_access_key = document.getElementById('s3SecretKey').value.trim();
+        payload.region = document.getElementById('s3Region').value.trim();
+      } else if (provider === 'webdav' || provider === 'koofr') {
+        payload.url = document.getElementById('webdavUrl').value.trim();
+        payload.username = document.getElementById('webdavUser').value.trim();
+        payload.password = document.getElementById('webdavPass').value.trim();
+      } else if (provider === 'mega') {
+        payload.username = document.getElementById('megaUser').value.trim();
+        payload.password = document.getElementById('megaPass').value.trim();
+        payload.email = payload.username;
+      }
 
       try {
         const res = await fetch('/api/accounts', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            id: 'acc_' + Date.now(),
-            provider,
-            name,
-            root_folder: '/',
-            quota_total: quota * 1024 * 1024 * 1024
-          })
+          body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('Failed to connect drive');
         closeModal('addAccountModal');

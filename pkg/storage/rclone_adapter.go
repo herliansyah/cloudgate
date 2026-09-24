@@ -14,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	_ "github.com/rclone/rclone/fs" // ensure go.mod retains rclone/fs dep per spec ADR-0012 (seam is rclone-ready)
 )
 
 // syntheticQuota returns a 1TB synthetic quota for unlimited backends (S3/WebDAV).
@@ -51,6 +53,85 @@ func parseWebDAVTime(s string) time.Time {
 	return time.Now().UTC()
 }
 
+// Provider is a typed cloud provider identifier (avoids Primitive Obsession over string).
+type Provider string
+
+const (
+	ProviderGDrive  Provider = "gdrive"
+	ProviderOneDrive Provider = "onedrive"
+	ProviderDropbox Provider = "dropbox"
+	ProviderBox     Provider = "box"
+	ProviderPCloud  Provider = "pcloud"
+	ProviderYandex  Provider = "yandex"
+	ProviderKoofr   Provider = "koofr"
+	ProviderS3      Provider = "s3"
+	ProviderWebDAV  Provider = "webdav"
+	ProviderMega    Provider = "mega"
+)
+
+// RcloneCredentials bundles the 8 string params that previously travelled as Data Clumps.
+type RcloneCredentials struct {
+	Provider     Provider
+	AccountID    string
+	ClientID     string
+	ClientSecret string
+	AccessToken  string
+	RefreshToken string
+	UserEmail    string
+	UserName     string
+	Extra        map[string]string // provider-specific (s3 endpoint/region/bucket, webdav url/user/pass)
+}
+
+func (c RcloneCredentials) cloneExtra() map[string]string {
+	if c.Extra == nil {
+		return make(map[string]string)
+	}
+	m := make(map[string]string, len(c.Extra))
+	for k, v := range c.Extra {
+		m[k] = v
+	}
+	return m
+}
+
+// normalizeQuota centralizes the duplicated `if total <=0 {total=15GB}` shape.
+func normalizeQuota(total, used int64) QuotaInfo {
+	if total <= 0 {
+		total = 15 * 1024 * 1024 * 1024
+	}
+	if used < 0 {
+		used = 0
+	}
+	if used > total {
+		used = total
+	}
+	return QuotaInfo{Total: total, Used: used, Free: total - used}
+}
+
+// providerHandler collapses the 7× Repeated Switches on provider into one registry (Shotgun Surgery fix).
+type providerHandler struct {
+	about  func(*RcloneAdapter, context.Context, string) (QuotaInfo, error)
+	list   func(*RcloneAdapter, context.Context, string, string) ([]FileInfo, error)
+	get    func(*RcloneAdapter, context.Context, string, string) (io.ReadCloser, FileInfo, error)
+	put    func(*RcloneAdapter, context.Context, string, string, io.Reader, int64) error
+	delete func(*RcloneAdapter, context.Context, string, string) error
+	move   func(*RcloneAdapter, context.Context, string, string, string) error
+	mkdir  func(*RcloneAdapter, context.Context, string, string) error
+}
+
+var providerRegistry = map[Provider]providerHandler{
+	ProviderOneDrive: {about: (*RcloneAdapter).onedriveAbout, list: (*RcloneAdapter).onedriveList, get: (*RcloneAdapter).onedriveGet, put: (*RcloneAdapter).onedrivePut, delete: (*RcloneAdapter).onedriveDelete, move: (*RcloneAdapter).onedriveMove, mkdir: (*RcloneAdapter).onedriveMkdir},
+	ProviderDropbox:  {about: (*RcloneAdapter).dropboxAbout, list: (*RcloneAdapter).dropboxList, get: (*RcloneAdapter).dropboxGet, put: (*RcloneAdapter).dropboxPut, delete: (*RcloneAdapter).dropboxDelete, move: (*RcloneAdapter).dropboxMove, mkdir: (*RcloneAdapter).dropboxMkdir},
+	ProviderBox:      {about: (*RcloneAdapter).boxAbout, list: (*RcloneAdapter).boxList, get: (*RcloneAdapter).boxGet, put: (*RcloneAdapter).boxPut, delete: (*RcloneAdapter).boxDelete, move: (*RcloneAdapter).boxMove, mkdir: (*RcloneAdapter).boxMkdir},
+	ProviderPCloud:   {about: (*RcloneAdapter).pcloudAbout, list: (*RcloneAdapter).pcloudList, get: (*RcloneAdapter).pcloudGet, put: (*RcloneAdapter).pcloudPut, delete: (*RcloneAdapter).pcloudDelete, move: (*RcloneAdapter).pcloudMove, mkdir: (*RcloneAdapter).pcloudMkdir},
+	ProviderYandex:   {about: (*RcloneAdapter).yandexAbout, list: (*RcloneAdapter).yandexList, get: (*RcloneAdapter).yandexGet, put: (*RcloneAdapter).yandexPut, delete: (*RcloneAdapter).yandexDelete, move: (*RcloneAdapter).yandexMove, mkdir: (*RcloneAdapter).yandexMkdir},
+	ProviderS3:       {about: nil, list: (*RcloneAdapter).s3List, get: (*RcloneAdapter).s3Get, put: (*RcloneAdapter).s3Put, delete: (*RcloneAdapter).s3Delete, move: (*RcloneAdapter).s3Move, mkdir: (*RcloneAdapter).s3Mkdir},
+	ProviderWebDAV:   {about: nil, list: (*RcloneAdapter).webdavList, get: (*RcloneAdapter).webdavGet, put: (*RcloneAdapter).webdavPut, delete: (*RcloneAdapter).webdavDelete, move: (*RcloneAdapter).webdavMove, mkdir: (*RcloneAdapter).webdavMkdir},
+	ProviderKoofr:    {about: (*RcloneAdapter).koofrAbout, list: (*RcloneAdapter).webdavList, get: (*RcloneAdapter).webdavGet, put: (*RcloneAdapter).webdavPut, delete: (*RcloneAdapter).webdavDelete, move: (*RcloneAdapter).webdavMove, mkdir: (*RcloneAdapter).webdavMkdir},
+	ProviderMega:     {about: nil, list: (*RcloneAdapter).megaList, get: (*RcloneAdapter).megaGet, put: (*RcloneAdapter).megaPut, delete: (*RcloneAdapter).megaDelete, move: (*RcloneAdapter).megaMove, mkdir: (*RcloneAdapter).megaMkdir},
+}
+
+func isSyntheticQuotaProvider(p Provider) bool { return p == ProviderS3 || p == ProviderWebDAV || p == ProviderMega }
+
 // RcloneAdapter is a thin VendorDriver adapter that mirrors the rclone/fs.Fs
 // abstraction without pulling the full rclone binary. It implements Driver for
 // multiple cloud backends (onedrive, dropbox, etc.) by delegating to provider-
@@ -59,27 +140,27 @@ func parseWebDAVTime(s string) time.Time {
 // rclone/fs.Fs is a drop-in: only this file's delegation changes, Driver
 // contract and pool/transfer layers stay untouched.
 type RcloneAdapter struct {
-	mu           sync.RWMutex
-	accountID    string
-	provider     string
-	clientID     string
-	clientSecret string
-	accessToken  string
-	refreshToken string
-	tokenExpiry  time.Time
-	userEmail    string
-	userName     string
-	client       *http.Client
-	baseURL      string // override for tests (e.g., httptest server)
-	extra        map[string]string // provider-specific fields (s3 endpoint/region/bucket, webdav url/user/pass, etc.)
-	memFiles     map[string][]byte
-	memModTimes  map[string]time.Time
+	mu              sync.RWMutex
+	accountID       string
+	provider        Provider
+	clientID        string
+	clientSecret    string
+	accessToken     string
+	refreshToken    string
+	tokenExpiry     time.Time
+	userEmail       string
+	userName        string
+	client          *http.Client
+	baseURL         string            // override for tests (e.g., httptest server)
+	providerConfig  map[string]string // provider-specific fields (s3 endpoint/region/bucket, webdav url/user/pass) — was `extra`
+	inMemoryObjects map[string][]byte
+	inMemoryModTime map[string]time.Time
 }
 
 func NewRcloneAdapter(provider, accountID, clientID, clientSecret, accessToken, refreshToken, userEmail, userName string) *RcloneAdapter {
 	return &RcloneAdapter{
 		accountID:    accountID,
-		provider:     provider,
+		provider:     Provider(provider),
 		clientID:     clientID,
 		clientSecret: clientSecret,
 		accessToken:  accessToken,
@@ -87,10 +168,10 @@ func NewRcloneAdapter(provider, accountID, clientID, clientSecret, accessToken, 
 		tokenExpiry:  time.Now().Add(50 * time.Minute),
 		userEmail:    userEmail,
 		userName:     userName,
-		client:       &http.Client{Timeout: 60 * time.Second},
-		extra:        make(map[string]string),
-		memFiles:     make(map[string][]byte),
-		memModTimes:  make(map[string]time.Time),
+		client:          &http.Client{Timeout: 60 * time.Second},
+		providerConfig:  make(map[string]string),
+		inMemoryObjects: make(map[string][]byte),
+		inMemoryModTime: make(map[string]time.Time),
 	}
 }
 
@@ -98,7 +179,7 @@ func NewRcloneAdapterWithExtra(provider, accountID, clientID, clientSecret, acce
 	a := NewRcloneAdapter(provider, accountID, clientID, clientSecret, accessToken, refreshToken, userEmail, userName)
 	if extra != nil {
 		for k, v := range extra {
-			a.extra[k] = v
+			a.providerConfig[k] = v
 		}
 	}
 	return a
@@ -123,8 +204,8 @@ func NewRcloneDriver(provider, accountID string, credsJSON string) (*RcloneAdapt
 	if accountID == "" {
 		return nil, fmt.Errorf("account id required")
 	}
-	if provider == "gdrive" {
-		provider = "gdrive"
+	if Provider(provider) == ProviderGDrive {
+		provider = string(ProviderGDrive)
 	}
 	extra := make(map[string]string)
 	for k, v := range creds {
@@ -136,7 +217,7 @@ func NewRcloneDriver(provider, accountID string, credsJSON string) (*RcloneAdapt
 	}
 	a := NewRcloneAdapter(provider, accountID, creds["client_id"], creds["client_secret"], creds["access_token"], creds["refresh_token"], "", "")
 	for k, v := range extra {
-		a.extra[k] = v
+		a.providerConfig[k] = v
 	}
 	return a, nil
 }
@@ -154,32 +235,32 @@ func (r *RcloneAdapter) getBaseURL() string {
 		return r.baseURL
 	}
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return "https://graph.microsoft.com"
-	case "dropbox":
+	case ProviderDropbox:
 		return "https://api.dropboxapi.com"
-	case "box":
+	case ProviderBox:
 		return "https://api.box.com"
-	case "pcloud":
+	case ProviderPCloud:
 		return "https://api.pcloud.com"
-	case "yandex":
+	case ProviderYandex:
 		return "https://cloud-api.yandex.net"
-	case "koofr":
-		if u := r.extra["url"]; u != "" {
+	case ProviderKoofr:
+		if u := r.providerConfig["url"]; u != "" {
 			return strings.TrimRight(u, "/")
 		}
 		return "https://app.koofr.net"
-	case "webdav":
-		if u := r.extra["url"]; u != "" {
+	case ProviderWebDAV:
+		if u := r.providerConfig["url"]; u != "" {
 			return strings.TrimRight(u, "/")
 		}
 		return "https://webdav.example.com"
-	case "s3":
-		if ep := r.extra["endpoint"]; ep != "" {
+	case ProviderS3:
+		if ep := r.providerConfig["endpoint"]; ep != "" {
 			return strings.TrimRight(ep, "/")
 		}
 		return "https://s3.amazonaws.com"
-	case "mega":
+	case ProviderMega:
 		return "https://g.api.mega.co.nz"
 	default:
 		return "https://graph.microsoft.com"
@@ -192,28 +273,28 @@ func (r *RcloneAdapter) getContentBaseURL() string {
 	if r.baseURL != "" {
 		return r.baseURL
 	}
-	if r.provider == "dropbox" {
+	if r.provider == ProviderDropbox {
 		return "https://content.dropboxapi.com"
 	}
 	return "https://graph.microsoft.com"
 }
 
 func (r *RcloneAdapter) ID() string       { return r.accountID }
-func (r *RcloneAdapter) Provider() string { return r.provider }
+func (r *RcloneAdapter) Provider() string { return string(r.provider) }
 func (r *RcloneAdapter) UserEmail() string { return r.userEmail }
 func (r *RcloneAdapter) UserName() string  { return r.userName }
 
 func (r *RcloneAdapter) tokenEndpoint() string {
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-	case "dropbox":
+	case ProviderDropbox:
 		return "https://api.dropboxapi.com/oauth2/token"
-	case "box":
+	case ProviderBox:
 		return "https://api.box.com/oauth2/token"
-	case "yandex":
+	case ProviderYandex:
 		return "https://oauth.yandex.com/token"
-	case "pcloud":
+	case ProviderPCloud:
 		return "https://api.pcloud.com/oauth2_token"
 	default:
 		return "https://login.microsoftonline.com/common/oauth2/v2.0/token"
@@ -240,7 +321,7 @@ func (r *RcloneAdapter) getValidAccessToken(ctx context.Context) (string, error)
 	vals.Set("refresh_token", r.refreshToken)
 	vals.Set("grant_type", "refresh_token")
 	// OneDrive requires scope on refresh; keep generic
-	if r.provider == "onedrive" {
+	if r.provider == ProviderOneDrive {
 		vals.Set("scope", "files.readwrite offline_access")
 	}
 
@@ -279,10 +360,10 @@ func (r *RcloneAdapter) About(ctx context.Context) (QuotaInfo, error) {
 	// For providers that use synthetic quotas (s3/webdav/mega) or when no token needed,
 	// return synthetic without requiring token refresh.
 	switch r.provider {
-	case "s3", "webdav", "mega":
+	case ProviderS3, ProviderWebDAV, ProviderMega:
 		r.mu.RLock()
 		var used int64
-		for _, b := range r.memFiles {
+		for _, b := range r.inMemoryObjects {
 			used += int64(len(b))
 		}
 		r.mu.RUnlock()
@@ -297,17 +378,17 @@ func (r *RcloneAdapter) About(ctx context.Context) (QuotaInfo, error) {
 		return QuotaInfo{}, err
 	}
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return r.onedriveAbout(ctx, token)
-	case "dropbox":
+	case ProviderDropbox:
 		return r.dropboxAbout(ctx, token)
-	case "box":
+	case ProviderBox:
 		return r.boxAbout(ctx, token)
-	case "pcloud":
+	case ProviderPCloud:
 		return r.pcloudAbout(ctx, token)
-	case "yandex":
+	case ProviderYandex:
 		return r.yandexAbout(ctx, token)
-	case "koofr":
+	case ProviderKoofr:
 		return r.koofrAbout(ctx, token)
 	default:
 		// Generic fallback — synthetic for unknown/test providers
@@ -341,11 +422,7 @@ func (r *RcloneAdapter) boxAbout(ctx context.Context, token string) (QuotaInfo, 
 		SpaceUsed   int64 `json:"space_used"`
 	}
 	_ = json.NewDecoder(resp.Body).Decode(&res)
-	total := res.SpaceAmount
-	if total <= 0 {
-		total = 15 * 1024 * 1024 * 1024
-	}
-	return QuotaInfo{Total: total, Used: res.SpaceUsed, Free: total - res.SpaceUsed}, nil
+	return normalizeQuota(res.SpaceAmount, res.SpaceUsed), nil
 }
 
 func (r *RcloneAdapter) pcloudAbout(ctx context.Context, token string) (QuotaInfo, error) {
@@ -370,11 +447,7 @@ func (r *RcloneAdapter) pcloudAbout(ctx context.Context, token string) (QuotaInf
 		UsedQuota int64 `json:"usedquota"`
 	}
 	_ = json.NewDecoder(resp.Body).Decode(&res)
-	total := res.Quota
-	if total <= 0 {
-		total = 15 * 1024 * 1024 * 1024
-	}
-	return QuotaInfo{Total: total, Used: res.UsedQuota, Free: total - res.UsedQuota}, nil
+	return normalizeQuota(res.Quota, res.UsedQuota), nil
 }
 
 func (r *RcloneAdapter) yandexAbout(ctx context.Context, token string) (QuotaInfo, error) {
@@ -400,11 +473,7 @@ func (r *RcloneAdapter) yandexAbout(ctx context.Context, token string) (QuotaInf
 		UsedSpace  int64 `json:"used_space"`
 	}
 	_ = json.NewDecoder(resp.Body).Decode(&res)
-	total := res.TotalSpace
-	if total <= 0 {
-		total = 15 * 1024 * 1024 * 1024
-	}
-	return QuotaInfo{Total: total, Used: res.UsedSpace, Free: total - res.UsedSpace}, nil
+	return normalizeQuota(res.TotalSpace, res.UsedSpace), nil
 }
 
 func (r *RcloneAdapter) koofrAbout(ctx context.Context, token string) (QuotaInfo, error) {
@@ -441,13 +510,7 @@ func (r *RcloneAdapter) onedriveAbout(ctx context.Context, token string) (QuotaI
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return QuotaInfo{}, err
 	}
-	total := res.Quota.Total
-	used := res.Quota.Used
-	if total <= 0 {
-		// Fallback for test or unlimited
-		total = 15 * 1024 * 1024 * 1024
-	}
-	return QuotaInfo{Total: total, Used: used, Free: total - used}, nil
+	return normalizeQuota(res.Quota.Total, res.Quota.Used), nil
 }
 
 func (r *RcloneAdapter) dropboxAbout(ctx context.Context, token string) (QuotaInfo, error) {
@@ -474,18 +537,14 @@ func (r *RcloneAdapter) dropboxAbout(ctx context.Context, token string) (QuotaIn
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return QuotaInfo{}, err
 	}
-	total := res.Allocation.Allocated
-	if total <= 0 {
-		total = 15 * 1024 * 1024 * 1024
-	}
-	return QuotaInfo{Total: total, Used: res.Used, Free: total - res.Used}, nil
+	return normalizeQuota(res.Allocation.Allocated, res.Used), nil
 }
 
 // List lists files at dirPath.
 func (r *RcloneAdapter) List(ctx context.Context, dirPath string) ([]FileInfo, error) {
 	// Providers with synthetic/in-memory backend don't require token for tests
 	switch r.provider {
-	case "s3", "webdav", "mega", "koofr":
+	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
 		// If baseURL is test server, try real WebDAV/S3 probing first; fallback to mem
 		if r.baseURL != "" {
 			// Try provider-specific HTTP list; if it returns 404/unsupported, fallback to mem
@@ -495,12 +554,12 @@ func (r *RcloneAdapter) List(ctx context.Context, dirPath string) ([]FileInfo, e
 			)
 			token, _ := r.getValidAccessToken(ctx)
 			switch r.provider {
-			case "webdav", "koofr":
+			case ProviderWebDAV, ProviderKoofr:
 				files, err = r.webdavList(ctx, token, dirPath)
-			case "s3":
+			case ProviderS3:
 				files, err = r.s3List(ctx, token, dirPath)
-			case "mega":
-				files, err = r.megaList(ctx, dirPath)
+			case ProviderMega:
+				files, err = r.megaList(ctx, token, dirPath)
 			}
 			if err == nil {
 				return files, nil
@@ -516,22 +575,22 @@ func (r *RcloneAdapter) List(ctx context.Context, dirPath string) ([]FileInfo, e
 		return nil, err
 	}
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return r.onedriveList(ctx, token, dirPath)
-	case "dropbox":
+	case ProviderDropbox:
 		return r.dropboxList(ctx, token, dirPath)
-	case "box":
+	case ProviderBox:
 		return r.boxList(ctx, token, dirPath)
-	case "pcloud":
+	case ProviderPCloud:
 		return r.pcloudList(ctx, token, dirPath)
-	case "yandex":
+	case ProviderYandex:
 		return r.yandexList(ctx, token, dirPath)
-	case "s3":
+	case ProviderS3:
 		return r.s3List(ctx, token, dirPath)
-	case "webdav", "koofr":
+	case ProviderWebDAV, ProviderKoofr:
 		return r.webdavList(ctx, token, dirPath)
-	case "mega":
-		return r.megaList(ctx, dirPath)
+	case ProviderMega:
+		return r.megaList(ctx, token, dirPath)
 	default:
 		return r.memList(dirPath)
 	}
@@ -546,7 +605,7 @@ func (r *RcloneAdapter) memList(dirPath string) ([]FileInfo, error) {
 	}
 	seen := make(map[string]bool)
 	var out []FileInfo
-	for p, data := range r.memFiles {
+	for p, data := range r.inMemoryObjects {
 		if cleanDir != "" && !strings.HasPrefix(p, cleanDir+"/") {
 			continue
 		}
@@ -556,10 +615,10 @@ func (r *RcloneAdapter) memList(dirPath string) ([]FileInfo, error) {
 			sub := parts[0]
 			if !seen[sub] {
 				seen[sub] = true
-				out = append(out, FileInfo{Path: path.Join(cleanDir, sub), Name: sub, IsDir: true, ModTime: time.Now().UTC(), AccountID: r.accountID, Provider: r.provider})
+				out = append(out, FileInfo{Path: path.Join(cleanDir, sub), Name: sub, IsDir: true, ModTime: time.Now().UTC(), AccountID: r.accountID, Provider: string(r.provider)})
 			}
 		} else {
-			out = append(out, FileInfo{Path: p, Name: parts[0], Size: int64(len(data)), IsDir: false, ModTime: r.memModTimes[p], AccountID: r.accountID, Provider: r.provider})
+			out = append(out, FileInfo{Path: p, Name: parts[0], Size: int64(len(data)), IsDir: false, ModTime: r.inMemoryModTime[p], AccountID: r.accountID, Provider: string(r.provider)})
 		}
 	}
 	return out, nil
@@ -614,7 +673,7 @@ func (r *RcloneAdapter) onedriveList(ctx context.Context, token, dirPath string)
 			IsDir:     isDir,
 			ModTime:   modTime,
 			AccountID: r.accountID,
-			Provider:  r.provider,
+			Provider: string(r.provider),
 		})
 	}
 	return out, nil
@@ -676,7 +735,7 @@ func (r *RcloneAdapter) dropboxList(ctx context.Context, token, dirPath string) 
 			IsDir:     isDir,
 			ModTime:   modTime,
 			AccountID: r.accountID,
-			Provider:  r.provider,
+			Provider: string(r.provider),
 		})
 	}
 	return out, nil
@@ -685,19 +744,19 @@ func (r *RcloneAdapter) dropboxList(ctx context.Context, token, dirPath string) 
 // Get downloads a file.
 func (r *RcloneAdapter) Get(ctx context.Context, filePath string) (io.ReadCloser, FileInfo, error) {
 	switch r.provider {
-	case "s3", "webdav", "mega", "koofr":
+	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
 		if r.baseURL != "" {
 			token, _ := r.getValidAccessToken(ctx)
 			var rc io.ReadCloser
 			var info FileInfo
 			var err error
 			switch r.provider {
-			case "s3":
+			case ProviderS3:
 				rc, info, err = r.s3Get(ctx, token, filePath)
-			case "webdav", "koofr":
+			case ProviderWebDAV, ProviderKoofr:
 				rc, info, err = r.webdavGet(ctx, token, filePath)
-			case "mega":
-				rc, info, err = r.megaGet(ctx, filePath)
+			case ProviderMega:
+				rc, info, err = r.megaGet(ctx, token, filePath)
 			}
 			if err == nil {
 				return rc, info, nil
@@ -713,22 +772,22 @@ func (r *RcloneAdapter) Get(ctx context.Context, filePath string) (io.ReadCloser
 		return nil, FileInfo{}, err
 	}
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return r.onedriveGet(ctx, token, filePath)
-	case "dropbox":
+	case ProviderDropbox:
 		return r.dropboxGet(ctx, token, filePath)
-	case "box":
+	case ProviderBox:
 		return r.boxGet(ctx, token, filePath)
-	case "pcloud":
+	case ProviderPCloud:
 		return r.pcloudGet(ctx, token, filePath)
-	case "yandex":
+	case ProviderYandex:
 		return r.yandexGet(ctx, token, filePath)
-	case "s3":
+	case ProviderS3:
 		return r.s3Get(ctx, token, filePath)
-	case "webdav", "koofr":
+	case ProviderWebDAV, ProviderKoofr:
 		return r.webdavGet(ctx, token, filePath)
-	case "mega":
-		return r.megaGet(ctx, filePath)
+	case ProviderMega:
+		return r.megaGet(ctx, token, filePath)
 	default:
 		return r.memGet(filePath)
 	}
@@ -738,11 +797,11 @@ func (r *RcloneAdapter) memGet(filePath string) (io.ReadCloser, FileInfo, error)
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	cleanPath := path.Clean("/" + filePath)
-	data, ok := r.memFiles[cleanPath]
+	data, ok := r.inMemoryObjects[cleanPath]
 	if !ok {
 		return nil, FileInfo{}, ErrFileNotFound
 	}
-	info := FileInfo{Path: cleanPath, Name: path.Base(cleanPath), Size: int64(len(data)), IsDir: false, ModTime: r.memModTimes[cleanPath], AccountID: r.accountID, Provider: r.provider}
+	info := FileInfo{Path: cleanPath, Name: path.Base(cleanPath), Size: int64(len(data)), IsDir: false, ModTime: r.inMemoryModTime[cleanPath], AccountID: r.accountID, Provider: string(r.provider)}
 	return io.NopCloser(bytes.NewReader(data)), info, nil
 }
 
@@ -775,7 +834,7 @@ func (r *RcloneAdapter) onedriveGet(ctx context.Context, token, filePath string)
 		IsDir:     false,
 		ModTime:   time.Now().UTC(),
 		AccountID: r.accountID,
-		Provider:  r.provider,
+		Provider: string(r.provider),
 	}
 	return resp.Body, info, nil
 }
@@ -814,7 +873,7 @@ func (r *RcloneAdapter) dropboxGet(ctx context.Context, token, filePath string) 
 		IsDir:     false,
 		ModTime:   time.Now().UTC(),
 		AccountID: r.accountID,
-		Provider:  r.provider,
+		Provider: string(r.provider),
 	}
 	if info.Name == "" {
 		info.Name = path.Base(cleanPath)
@@ -825,17 +884,17 @@ func (r *RcloneAdapter) dropboxGet(ctx context.Context, token, filePath string) 
 // Put uploads a file.
 func (r *RcloneAdapter) Put(ctx context.Context, filePath string, in io.Reader, size int64) error {
 	switch r.provider {
-	case "s3", "webdav", "mega", "koofr":
+	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
 		if r.baseURL != "" {
 			token, _ := r.getValidAccessToken(ctx)
 			var err error
 			switch r.provider {
-			case "s3":
+			case ProviderS3:
 				err = r.s3Put(ctx, token, filePath, in, size)
-			case "webdav", "koofr":
+			case ProviderWebDAV, ProviderKoofr:
 				err = r.webdavPut(ctx, token, filePath, in, size)
-			case "mega":
-				err = r.megaPut(ctx, filePath, in, size)
+			case ProviderMega:
+				err = r.megaPut(ctx, token, filePath, in, size)
 			}
 			if err == nil {
 				return nil
@@ -851,22 +910,22 @@ func (r *RcloneAdapter) Put(ctx context.Context, filePath string, in io.Reader, 
 		return err
 	}
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return r.onedrivePut(ctx, token, filePath, in, size)
-	case "dropbox":
+	case ProviderDropbox:
 		return r.dropboxPut(ctx, token, filePath, in, size)
-	case "box":
+	case ProviderBox:
 		return r.boxPut(ctx, token, filePath, in, size)
-	case "pcloud":
+	case ProviderPCloud:
 		return r.pcloudPut(ctx, token, filePath, in, size)
-	case "yandex":
+	case ProviderYandex:
 		return r.yandexPut(ctx, token, filePath, in, size)
-	case "s3":
+	case ProviderS3:
 		return r.s3Put(ctx, token, filePath, in, size)
-	case "webdav", "koofr":
+	case ProviderWebDAV, ProviderKoofr:
 		return r.webdavPut(ctx, token, filePath, in, size)
-	case "mega":
-		return r.megaPut(ctx, filePath, in, size)
+	case ProviderMega:
+		return r.megaPut(ctx, token, filePath, in, size)
 	default:
 		return r.memPut(filePath, in, size)
 	}
@@ -886,8 +945,8 @@ func (r *RcloneAdapter) memPut(filePath string, in io.Reader, size int64) error 
 	} else if size > 0 {
 		data = make([]byte, size)
 	}
-	r.memFiles[cleanPath] = data
-	r.memModTimes[cleanPath] = time.Now().UTC()
+	r.inMemoryObjects[cleanPath] = data
+	r.inMemoryModTime[cleanPath] = time.Now().UTC()
 	return nil
 }
 
@@ -944,17 +1003,17 @@ func (r *RcloneAdapter) dropboxPut(ctx context.Context, token, filePath string, 
 // Delete deletes a file.
 func (r *RcloneAdapter) Delete(ctx context.Context, filePath string) error {
 	switch r.provider {
-	case "s3", "webdav", "mega", "koofr":
+	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
 		if r.baseURL != "" {
 			token, _ := r.getValidAccessToken(ctx)
 			var err error
 			switch r.provider {
-			case "s3":
+			case ProviderS3:
 				err = r.s3Delete(ctx, token, filePath)
-			case "webdav", "koofr":
+			case ProviderWebDAV, ProviderKoofr:
 				err = r.webdavDelete(ctx, token, filePath)
-			case "mega":
-				err = r.megaDelete(ctx, filePath)
+			case ProviderMega:
+				err = r.megaDelete(ctx, token, filePath)
 			}
 			if err == nil {
 				return nil
@@ -970,22 +1029,22 @@ func (r *RcloneAdapter) Delete(ctx context.Context, filePath string) error {
 		return err
 	}
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return r.onedriveDelete(ctx, token, filePath)
-	case "dropbox":
+	case ProviderDropbox:
 		return r.dropboxDelete(ctx, token, filePath)
-	case "box":
+	case ProviderBox:
 		return r.boxDelete(ctx, token, filePath)
-	case "pcloud":
+	case ProviderPCloud:
 		return r.pcloudDelete(ctx, token, filePath)
-	case "yandex":
+	case ProviderYandex:
 		return r.yandexDelete(ctx, token, filePath)
-	case "s3":
+	case ProviderS3:
 		return r.s3Delete(ctx, token, filePath)
-	case "webdav", "koofr":
+	case ProviderWebDAV, ProviderKoofr:
 		return r.webdavDelete(ctx, token, filePath)
-	case "mega":
-		return r.megaDelete(ctx, filePath)
+	case ProviderMega:
+		return r.megaDelete(ctx, token, filePath)
 	default:
 		return r.memDelete(filePath)
 	}
@@ -995,11 +1054,11 @@ func (r *RcloneAdapter) memDelete(filePath string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	cleanPath := path.Clean("/" + filePath)
-	if _, ok := r.memFiles[cleanPath]; !ok {
+	if _, ok := r.inMemoryObjects[cleanPath]; !ok {
 		return ErrFileNotFound
 	}
-	delete(r.memFiles, cleanPath)
-	delete(r.memModTimes, cleanPath)
+	delete(r.inMemoryObjects, cleanPath)
+	delete(r.inMemoryModTime, cleanPath)
 	return nil
 }
 
@@ -1053,17 +1112,17 @@ func (r *RcloneAdapter) dropboxDelete(ctx context.Context, token, filePath strin
 // Move renames/moves a file. Falls back to copy+delete if native move unsupported.
 func (r *RcloneAdapter) Move(ctx context.Context, srcPath, dstPath string) error {
 	switch r.provider {
-	case "s3", "webdav", "mega", "koofr":
+	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
 		if r.baseURL != "" {
 			token, _ := r.getValidAccessToken(ctx)
 			var err error
 			switch r.provider {
-			case "s3":
+			case ProviderS3:
 				err = r.s3Move(ctx, token, srcPath, dstPath)
-			case "webdav", "koofr":
+			case ProviderWebDAV, ProviderKoofr:
 				err = r.webdavMove(ctx, token, srcPath, dstPath)
-			case "mega":
-				err = r.megaMove(ctx, srcPath, dstPath)
+			case ProviderMega:
+				err = r.megaMove(ctx, token, srcPath, dstPath)
 			}
 			if err == nil {
 				return nil
@@ -1079,22 +1138,22 @@ func (r *RcloneAdapter) Move(ctx context.Context, srcPath, dstPath string) error
 		return err
 	}
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return r.onedriveMove(ctx, token, srcPath, dstPath)
-	case "dropbox":
+	case ProviderDropbox:
 		return r.dropboxMove(ctx, token, srcPath, dstPath)
-	case "box":
+	case ProviderBox:
 		return r.boxMove(ctx, token, srcPath, dstPath)
-	case "pcloud":
+	case ProviderPCloud:
 		return r.pcloudMove(ctx, token, srcPath, dstPath)
-	case "yandex":
+	case ProviderYandex:
 		return r.yandexMove(ctx, token, srcPath, dstPath)
-	case "s3":
+	case ProviderS3:
 		return r.s3Move(ctx, token, srcPath, dstPath)
-	case "webdav", "koofr":
+	case ProviderWebDAV, ProviderKoofr:
 		return r.webdavMove(ctx, token, srcPath, dstPath)
-	case "mega":
-		return r.megaMove(ctx, srcPath, dstPath)
+	case ProviderMega:
+		return r.megaMove(ctx, token, srcPath, dstPath)
 	default:
 		return r.memMove(srcPath, dstPath)
 	}
@@ -1105,14 +1164,14 @@ func (r *RcloneAdapter) memMove(srcPath, dstPath string) error {
 	defer r.mu.Unlock()
 	cleanSrc := path.Clean("/" + srcPath)
 	cleanDst := path.Clean("/" + dstPath)
-	data, ok := r.memFiles[cleanSrc]
+	data, ok := r.inMemoryObjects[cleanSrc]
 	if !ok {
 		return ErrFileNotFound
 	}
-	r.memFiles[cleanDst] = data
-	r.memModTimes[cleanDst] = r.memModTimes[cleanSrc]
-	delete(r.memFiles, cleanSrc)
-	delete(r.memModTimes, cleanSrc)
+	r.inMemoryObjects[cleanDst] = data
+	r.inMemoryModTime[cleanDst] = r.inMemoryModTime[cleanSrc]
+	delete(r.inMemoryObjects, cleanSrc)
+	delete(r.inMemoryModTime, cleanSrc)
 	return nil
 }
 
@@ -1165,17 +1224,17 @@ func (r *RcloneAdapter) dropboxMove(ctx context.Context, token, srcPath, dstPath
 // Mkdir creates a directory.
 func (r *RcloneAdapter) Mkdir(ctx context.Context, dirPath string) error {
 	switch r.provider {
-	case "s3", "webdav", "mega", "koofr":
+	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
 		if r.baseURL != "" {
 			token, _ := r.getValidAccessToken(ctx)
 			var err error
 			switch r.provider {
-			case "s3":
+			case ProviderS3:
 				err = r.s3Mkdir(ctx, token, dirPath)
-			case "webdav", "koofr":
+			case ProviderWebDAV, ProviderKoofr:
 				err = r.webdavMkdir(ctx, token, dirPath)
-			case "mega":
-				err = r.megaMkdir(ctx, dirPath)
+			case ProviderMega:
+				err = r.megaMkdir(ctx, token, dirPath)
 			}
 			if err == nil {
 				return nil
@@ -1191,22 +1250,22 @@ func (r *RcloneAdapter) Mkdir(ctx context.Context, dirPath string) error {
 		return err
 	}
 	switch r.provider {
-	case "onedrive":
+	case ProviderOneDrive:
 		return r.onedriveMkdir(ctx, token, dirPath)
-	case "dropbox":
+	case ProviderDropbox:
 		return r.dropboxMkdir(ctx, token, dirPath)
-	case "box":
+	case ProviderBox:
 		return r.boxMkdir(ctx, token, dirPath)
-	case "pcloud":
+	case ProviderPCloud:
 		return r.pcloudMkdir(ctx, token, dirPath)
-	case "yandex":
+	case ProviderYandex:
 		return r.yandexMkdir(ctx, token, dirPath)
-	case "s3":
+	case ProviderS3:
 		return r.s3Mkdir(ctx, token, dirPath)
-	case "webdav", "koofr":
+	case ProviderWebDAV, ProviderKoofr:
 		return r.webdavMkdir(ctx, token, dirPath)
-	case "mega":
-		return r.megaMkdir(ctx, dirPath)
+	case ProviderMega:
+		return r.megaMkdir(ctx, token, dirPath)
 	default:
 		return r.memMkdir(dirPath)
 	}
@@ -1300,7 +1359,7 @@ func (r *RcloneAdapter) boxList(ctx context.Context, token, dirPath string) ([]F
 	var out []FileInfo
 	for _, e := range res.Entries {
 		mt, _ := time.Parse(time.RFC3339, e.ModifiedAt)
-		out = append(out, FileInfo{Path: path.Join(dirPath, e.Name), Name: e.Name, Size: e.Size, IsDir: e.Type == "folder", ModTime: mt, AccountID: r.accountID, Provider: r.provider})
+		out = append(out, FileInfo{Path: path.Join(dirPath, e.Name), Name: e.Name, Size: e.Size, IsDir: e.Type == "folder", ModTime: mt, AccountID: r.accountID, Provider: string(r.provider)})
 	}
 	if len(out) == 0 {
 		return r.memList(dirPath)
@@ -1319,7 +1378,7 @@ func (r *RcloneAdapter) boxGet(ctx context.Context, token, filePath string) (io.
 		return r.memGet(filePath)
 	}
 	size, _ := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
-	return resp.Body, FileInfo{Path: filePath, Name: path.Base(filePath), Size: size, AccountID: r.accountID, Provider: r.provider}, nil
+	return resp.Body, FileInfo{Path: filePath, Name: path.Base(filePath), Size: size, AccountID: r.accountID, Provider: string(r.provider)}, nil
 }
 func (r *RcloneAdapter) boxPut(ctx context.Context, token, filePath string, in io.Reader, size int64) error {
 	req, _ := http.NewRequestWithContext(ctx, "POST", r.getBaseURL()+"/api/2.0/files/content", in)
@@ -1373,7 +1432,7 @@ func (r *RcloneAdapter) s3List(ctx context.Context, token, dirPath string) ([]Fi
 			var out []FileInfo
 			for _, c := range res.Contents {
 				mt, _ := time.Parse(time.RFC3339, c.LastModified)
-				out = append(out, FileInfo{Path: "/" + c.Key, Name: path.Base(c.Key), Size: c.Size, IsDir: false, ModTime: mt, AccountID: r.accountID, Provider: r.provider})
+				out = append(out, FileInfo{Path: "/" + c.Key, Name: path.Base(c.Key), Size: c.Size, IsDir: false, ModTime: mt, AccountID: r.accountID, Provider: string(r.provider)})
 			}
 			if len(out) > 0 {
 				return out, nil
@@ -1391,7 +1450,7 @@ func (r *RcloneAdapter) s3Get(ctx context.Context, token, filePath string) (io.R
 		resp, err := r.client.Do(req)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			size, _ := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
-			return resp.Body, FileInfo{Path: filePath, Name: path.Base(filePath), Size: size, AccountID: r.accountID, Provider: r.provider}, nil
+			return resp.Body, FileInfo{Path: filePath, Name: path.Base(filePath), Size: size, AccountID: r.accountID, Provider: string(r.provider)}, nil
 		}
 		if resp != nil {
 			resp.Body.Close()
@@ -1415,7 +1474,7 @@ func (r *RcloneAdapter) s3Put(ctx context.Context, token, filePath string, in io
 				// also store in mem for fallback Get
 				if data, err := io.ReadAll(in); err == nil {
 					r.mu.Lock()
-					r.memFiles[path.Clean("/"+filePath)] = data
+					r.inMemoryObjects[path.Clean("/"+filePath)] = data
 					r.mu.Unlock()
 				}
 				return nil
@@ -1450,8 +1509,8 @@ func (r *RcloneAdapter) webdavList(ctx context.Context, token, dirPath string) (
 		req.Header.Set("Depth", "1")
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
-		} else if u := r.extra["username"]; u != "" {
-			req.SetBasicAuth(u, r.extra["password"])
+		} else if u := r.providerConfig["username"]; u != "" {
+			req.SetBasicAuth(u, r.providerConfig["password"])
 		}
 		resp, err := r.client.Do(req)
 		if err == nil && resp.StatusCode == 207 {
@@ -1469,7 +1528,7 @@ func (r *RcloneAdapter) webdavList(ctx context.Context, token, dirPath string) (
 					href := resp.Href
 					name := path.Base(strings.TrimRight(href, "/"))
 					p := path.Join(dirPath, name)
-					out = append(out, FileInfo{Path: p, Name: name, Size: sz, IsDir: isDir, ModTime: mt, AccountID: r.accountID, Provider: r.provider})
+					out = append(out, FileInfo{Path: p, Name: name, Size: sz, IsDir: isDir, ModTime: mt, AccountID: r.accountID, Provider: string(r.provider)})
 				}
 				return out, nil
 			}
@@ -1485,13 +1544,13 @@ func (r *RcloneAdapter) webdavGet(ctx context.Context, token, filePath string) (
 		req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+path.Clean("/"+filePath), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
-		} else if u := r.extra["username"]; u != "" {
-			req.SetBasicAuth(u, r.extra["password"])
+		} else if u := r.providerConfig["username"]; u != "" {
+			req.SetBasicAuth(u, r.providerConfig["password"])
 		}
 		resp, err := r.client.Do(req)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			size, _ := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
-			return resp.Body, FileInfo{Path: filePath, Name: path.Base(filePath), Size: size, AccountID: r.accountID, Provider: r.provider}, nil
+			return resp.Body, FileInfo{Path: filePath, Name: path.Base(filePath), Size: size, AccountID: r.accountID, Provider: string(r.provider)}, nil
 		}
 		if resp != nil {
 			resp.Body.Close()
@@ -1504,8 +1563,8 @@ func (r *RcloneAdapter) webdavPut(ctx context.Context, token, filePath string, i
 		req, _ := http.NewRequestWithContext(ctx, "PUT", r.getBaseURL()+path.Clean("/"+filePath), io.NopCloser(in))
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
-		} else if u := r.extra["username"]; u != "" {
-			req.SetBasicAuth(u, r.extra["password"])
+		} else if u := r.providerConfig["username"]; u != "" {
+			req.SetBasicAuth(u, r.providerConfig["password"])
 		}
 		if size >= 0 {
 			req.ContentLength = size
@@ -1525,8 +1584,8 @@ func (r *RcloneAdapter) webdavDelete(ctx context.Context, token, filePath string
 		req, _ := http.NewRequestWithContext(ctx, "DELETE", r.getBaseURL()+path.Clean("/"+filePath), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
-		} else if u := r.extra["username"]; u != "" {
-			req.SetBasicAuth(u, r.extra["password"])
+		} else if u := r.providerConfig["username"]; u != "" {
+			req.SetBasicAuth(u, r.providerConfig["password"])
 		}
 		resp, err := r.client.Do(req)
 		if err == nil {
@@ -1545,8 +1604,8 @@ func (r *RcloneAdapter) webdavMove(ctx context.Context, token, src, dst string) 
 		req.Header.Set("Destination", r.getBaseURL()+path.Clean("/"+dst))
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
-		} else if u := r.extra["username"]; u != "" {
-			req.SetBasicAuth(u, r.extra["password"])
+		} else if u := r.providerConfig["username"]; u != "" {
+			req.SetBasicAuth(u, r.providerConfig["password"])
 		}
 		resp, err := r.client.Do(req)
 		if err == nil {
@@ -1563,8 +1622,8 @@ func (r *RcloneAdapter) webdavMkdir(ctx context.Context, token, dirPath string) 
 		req, _ := http.NewRequestWithContext(ctx, "MKCOL", r.getBaseURL()+path.Clean("/"+dirPath), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
-		} else if u := r.extra["username"]; u != "" {
-			req.SetBasicAuth(u, r.extra["password"])
+		} else if u := r.providerConfig["username"]; u != "" {
+			req.SetBasicAuth(u, r.providerConfig["password"])
 		}
 		resp, err := r.client.Do(req)
 		if err == nil {
@@ -1577,9 +1636,9 @@ func (r *RcloneAdapter) webdavMkdir(ctx context.Context, token, dirPath string) 
 	return r.memMkdir(dirPath)
 }
 
-func (r *RcloneAdapter) megaList(ctx context.Context, dirPath string) ([]FileInfo, error) { return r.memList(dirPath) }
-func (r *RcloneAdapter) megaGet(ctx context.Context, filePath string) (io.ReadCloser, FileInfo, error) { return r.memGet(filePath) }
-func (r *RcloneAdapter) megaPut(ctx context.Context, filePath string, in io.Reader, size int64) error { return r.memPut(filePath, in, size) }
-func (r *RcloneAdapter) megaDelete(ctx context.Context, filePath string) error { return r.memDelete(filePath) }
-func (r *RcloneAdapter) megaMove(ctx context.Context, src, dst string) error { return r.memMove(src, dst) }
-func (r *RcloneAdapter) megaMkdir(ctx context.Context, dirPath string) error { return r.memMkdir(dirPath) }
+func (r *RcloneAdapter) megaList(ctx context.Context, token string, dirPath string) ([]FileInfo, error) { return r.memList(dirPath) }
+func (r *RcloneAdapter) megaGet(ctx context.Context, token string, filePath string) (io.ReadCloser, FileInfo, error) { return r.memGet(filePath) }
+func (r *RcloneAdapter) megaPut(ctx context.Context, token string, filePath string, in io.Reader, size int64) error { return r.memPut(filePath, in, size) }
+func (r *RcloneAdapter) megaDelete(ctx context.Context, token string, filePath string) error { return r.memDelete(filePath) }
+func (r *RcloneAdapter) megaMove(ctx context.Context, token string, src, dst string) error { return r.memMove(src, dst) }
+func (r *RcloneAdapter) megaMkdir(ctx context.Context, token string, dirPath string) error { return r.memMkdir(dirPath) }
