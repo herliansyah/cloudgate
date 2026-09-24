@@ -1558,6 +1558,10 @@
         </div>
 
         <div class="view-toggles">
+          <button class="btn btn-outline btn-sm" id="btnEditActiveAccount" style="display:none;" onclick="promptEditAccount(activeAccountID)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            Edit Akun
+          </button>
           <button class="btn btn-outline-danger btn-sm" id="btnDisconnectActiveAccount" style="display:none;" onclick="promptDisconnectAccount(activeAccountID, activeAccountName)">
             <svg width="14" height="14" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
             Putuskan Akun
@@ -1742,6 +1746,49 @@
       <div class="modal-footer">
         <button class="btn btn-text" onclick="closeModal('disconnectAccountModal')">Batal</button>
         <button class="btn btn-danger" id="btnConfirmDisconnect" disabled onclick="executeDisconnectAccount()">Putuskan Akun</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- M3 Basic Dialog: Edit RemoteAccount -->
+  <div class="modal-backdrop" id="editAccountModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="display:inline-flex;padding:6px;border-radius:var(--md-sys-shape-corner-xs);background:rgba(180,197,255,0.2);color:var(--md-sys-color-primary);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </span>
+          <span style="font-weight:700;">Edit RemoteAccount</span>
+        </div>
+        <button class="btn-icon" onclick="closeModal('editAccountModal')">✕</button>
+      </div>
+
+      <div style="font-size:0.86rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;margin-bottom:14px;">
+        Perbarui label nama, folder mount root, atau alokasi kuota akun ini.
+      </div>
+
+      <input type="hidden" id="editAccountID">
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Nama Akun (Label)</label>
+        <input type="text" class="form-control" id="editAccountName" placeholder="Contoh: My Google Drive" autocomplete="off">
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Root Folder</label>
+        <input type="text" class="form-control" id="editAccountRootFolder" placeholder="/" autocomplete="off">
+        <span style="font-size:0.72rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;display:block;">Mengubah root folder akan mereset cache indeks metadata lokal untuk akun ini.</span>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Total Quota (GB)</label>
+        <input type="number" step="any" min="0" class="form-control" id="editAccountQuotaGB" placeholder="Contoh: 15" autocomplete="off">
+        <span style="font-size:0.72rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;display:block;">Kapasitas penyimpanan total dalam Gigabyte.</span>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-text" onclick="closeModal('editAccountModal')">Batal</button>
+        <button class="btn btn-primary" id="btnSaveEditAccount" onclick="executeEditAccount()">Simpan Perubahan</button>
       </div>
     </div>
   </div>
@@ -2066,6 +2113,7 @@
           closeModal('filePreviewModal');
           closeModal('downloadConfirmModal');
           closeModal('addAccountModal');
+          closeModal('editAccountModal');
           closeModal('disconnectAccountModal');
           closeModal('storageModal');
           closeModal('syncModal');
@@ -2135,6 +2183,8 @@
       if (fb) fb.style.display = 'none';
       const btnDis = document.getElementById('btnDisconnectActiveAccount');
       if (btnDis) btnDis.style.display = 'none';
+      const btnEdit = document.getElementById('btnEditActiveAccount');
+      if (btnEdit) btnEdit.style.display = 'none';
       renderDashboard();
     }
 
@@ -2210,9 +2260,15 @@
                   <svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
                   Buka File
                 </button>
-                <button class="btn btn-text btn-sm danger-text" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan RemoteAccount ini">
-                  Putuskan
-                </button>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <button class="btn btn-text btn-sm" onclick="promptEditAccount('${acc.id}')" title="Edit RemoteAccount ini">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    Edit
+                  </button>
+                  <button class="btn btn-text btn-sm danger-text" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan RemoteAccount ini">
+                    Putuskan
+                  </button>
+                </div>
               </div>
             </div>
           `;
@@ -2343,6 +2399,73 @@
           selectDashboard();
         } else {
           showToast('Gagal memutuskan akun', 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // RemoteAccountUpdate
+    function promptEditAccount(id) {
+      const acc = (cachedAccounts || []).find(a => a.id === id);
+      if (!acc) return;
+      document.getElementById('editAccountID').value = acc.id;
+      document.getElementById('editAccountName').value = acc.name || '';
+      document.getElementById('editAccountRootFolder').value = acc.root_folder || '/';
+      const quotaGB = acc.quota_total ? (acc.quota_total / (1024 * 1024 * 1024)).toFixed(2) : 0;
+      document.getElementById('editAccountQuotaGB').value = parseFloat(quotaGB);
+      openModal('editAccountModal');
+      setTimeout(() => {
+        const inp = document.getElementById('editAccountName');
+        if (inp) inp.focus();
+      }, 100);
+    }
+
+    async function executeEditAccount() {
+      const id = document.getElementById('editAccountID').value;
+      const name = document.getElementById('editAccountName').value.trim();
+      const rootFolder = document.getElementById('editAccountRootFolder').value.trim() || '/';
+      const quotaGB = parseFloat(document.getElementById('editAccountQuotaGB').value) || 0;
+      const quotaTotal = Math.round(quotaGB * 1024 * 1024 * 1024);
+
+      if (!name) {
+        showToast('Nama akun tidak boleh kosong', 'error');
+        return;
+      }
+      if (quotaTotal < 0) {
+        showToast('Quota tidak boleh negatif', 'error');
+        return;
+      }
+
+      closeModal('editAccountModal');
+
+      try {
+        const res = await fetch(`/api/accounts/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            root_folder: rootFolder,
+            quota_total: quotaTotal
+          })
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          showToast(`RemoteAccount "${updated.name}" berhasil diperbarui.`);
+          if (activeAccountID === id) {
+            activeAccountName = updated.name;
+          }
+          await loadAccounts();
+          await loadStats();
+          if (currentMode === 'dashboard') {
+            renderDashboard();
+          } else if (activeAccountID === id) {
+            updateBreadcrumbs();
+            refreshCurrentView();
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || 'Gagal memperbarui akun', 'error');
         }
       } catch (err) {
         showToast(err.message, 'error');
@@ -2838,6 +2961,8 @@
       if (fb) fb.style.display = 'flex';
       const btnDis = document.getElementById('btnDisconnectActiveAccount');
       if (btnDis) btnDis.style.display = 'none';
+      const btnEdit = document.getElementById('btnEditActiveAccount');
+      if (btnEdit) btnEdit.style.display = 'none';
       const optAcc = document.getElementById('optGroupAccount');
       if (optAcc) optAcc.style.display = 'block';
       loadCurrentView();
@@ -2854,6 +2979,8 @@
       if (fb) fb.style.display = 'flex';
       const btnDis = document.getElementById('btnDisconnectActiveAccount');
       if (btnDis) btnDis.style.display = 'inline-flex';
+      const btnEdit = document.getElementById('btnEditActiveAccount');
+      if (btnEdit) btnEdit.style.display = 'inline-flex';
       const optAcc = document.getElementById('optGroupAccount');
       if (optAcc) optAcc.style.display = 'none';
       loadCurrentView();
@@ -2869,6 +2996,8 @@
       if (fb) fb.style.display = 'none';
       const btnDis = document.getElementById('btnDisconnectActiveAccount');
       if (btnDis) btnDis.style.display = 'none';
+      const btnEdit = document.getElementById('btnEditActiveAccount');
+      if (btnEdit) btnEdit.style.display = 'none';
       loadCurrentView();
     }
 

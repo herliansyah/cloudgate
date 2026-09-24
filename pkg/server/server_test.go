@@ -162,3 +162,119 @@ func TestPortHunting(t *testing.T) {
 		t.Fatalf("expected port hunting to advance port: port1=%d, port2=%d", port1, port2)
 	}
 }
+
+func TestUpdateAccount(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "cloudgate_update_account_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	database, err := db.Open(tempDir)
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer database.Close()
+
+	srv := server.NewServer(database, nil)
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	// 1. Seed initial RemoteAccount
+	initialAcc := db.RemoteAccount{
+		ID:         "acc_123",
+		Provider:   "s3",
+		Name:       "Old Bucket Account",
+		RootFolder: "/",
+		Status:     "connected",
+		QuotaTotal: 1000,
+		QuotaUsed:  200,
+	}
+	if err := database.SaveAccount(initialAcc); err != nil {
+		t.Fatalf("failed to save account: %v", err)
+	}
+
+	// Index a file for this account
+	_ = database.IndexFiles([]db.IndexedFile{
+		{AccountID: "acc_123", Path: "/doc.pdf", Name: "doc.pdf", Size: 10, ModTime: time.Now().UTC()},
+	})
+
+	// 2. Successful PATCH to update name, root_folder, and quota_total
+	updatePayload := map[string]any{
+		"name":        "New Primary S3",
+		"root_folder": "/backups",
+		"quota_total": 5000,
+	}
+	payloadBytes, _ := json.Marshal(updatePayload)
+	req, _ := http.NewRequest(http.MethodPatch, ts.URL+"/api/accounts/acc_123", bytes.NewReader(payloadBytes))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK, got code: %v, err: %v", resp.StatusCode, err)
+	}
+
+	var updated db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&updated)
+	resp.Body.Close()
+
+	if updated.Name != "New Primary S3" {
+		t.Fatalf("expected updated name, got %s", updated.Name)
+	}
+	if updated.RootFolder != "/backups" {
+		t.Fatalf("expected updated root folder, got %s", updated.RootFolder)
+	}
+	if updated.QuotaTotal != 5000 {
+		t.Fatalf("expected quota 5000, got %d", updated.QuotaTotal)
+	}
+
+	// 3. Verify MetadataIndex was cleared due to root_folder change
+	searchReq, _ := http.Get(ts.URL + "/api/search?q=doc")
+	var searchResults []db.IndexedFile
+	_ = json.NewDecoder(searchReq.Body).Decode(&searchResults)
+	searchReq.Body.Close()
+	if len(searchResults) != 0 {
+		t.Fatalf("expected index to be cleared after root_folder change, got %d results", len(searchResults))
+	}
+
+	// 4. Test validation: Empty name should return 400
+	badNameReq, _ := http.NewRequest(http.MethodPatch, ts.URL+"/api/accounts/acc_123", bytes.NewReader([]byte(`{"name":"   "}`)))
+	badNameResp, _ := http.DefaultClient.Do(badNameReq)
+	if badNameResp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 for empty name, got %d", badNameResp.StatusCode)
+	}
+	badNameResp.Body.Close()
+
+	// 5. Test validation: Negative quota should return 400
+	badQuotaReq, _ := http.NewRequest(http.MethodPatch, ts.URL+"/api/accounts/acc_123", bytes.NewReader([]byte(`{"quota_total":-100}`)))
+	badQuotaResp, _ := http.DefaultClient.Do(badQuotaReq)
+	if badQuotaResp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 for negative quota, got %d", badQuotaResp.StatusCode)
+	}
+	badQuotaResp.Body.Close()
+
+	// 6. Test 404 on unknown account ID
+	notFoundReq, _ := http.NewRequest(http.MethodPatch, ts.URL+"/api/accounts/non_existent", bytes.NewReader([]byte(`{"name":"X"}`)))
+	notFoundResp, _ := http.DefaultClient.Do(notFoundReq)
+	if notFoundResp.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected 404 for unknown account, got %d", notFoundResp.StatusCode)
+	}
+	notFoundResp.Body.Close()
+
+	// 7. Verify Audit Log contains "update"
+	auditResp, _ := http.Get(ts.URL + "/api/audit")
+	var auditEvents []db.AuditEvent
+	_ = json.NewDecoder(auditResp.Body).Decode(&auditEvents)
+	auditResp.Body.Close()
+
+	foundAudit := false
+	for _, ev := range auditEvents {
+		if ev.Action == "update" && ev.AccountID == "acc_123" {
+			foundAudit = true
+			break
+		}
+	}
+	if !foundAudit {
+		t.Fatalf("expected audit event with action 'update' for acc_123")
+	}
+}
+

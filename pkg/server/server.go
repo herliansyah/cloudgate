@@ -69,6 +69,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/stats", s.handleStats)
 	mux.HandleFunc("GET /api/accounts", s.handleGetAccounts)
 	mux.HandleFunc("POST /api/accounts", s.handleAddAccount)
+	mux.HandleFunc("PATCH /api/accounts/{id}", s.handleUpdateAccount)
 	mux.HandleFunc("DELETE /api/accounts/{id}", s.handleDeleteAccount)
 
 	// OAuth Routes
@@ -329,6 +330,72 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 	_ = s.database.RecordAudit("connect", acc.Name, acc.ID, "Account connected", "success", 0)
 	writeJSON(w, http.StatusCreated, acc)
+}
+
+func (s *Server) handleUpdateAccount(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "missing account id")
+		return
+	}
+
+	acc, err := s.database.GetAccount(id)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "account not found")
+		return
+	}
+
+	var req struct {
+		Name       *string `json:"name"`
+		RootFolder *string `json:"root_folder"`
+		QuotaTotal *int64  `json:"quota_total"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	rootFolderChanged := false
+	if req.Name != nil {
+		trimmed := strings.TrimSpace(*req.Name)
+		if trimmed == "" {
+			writeError(w, http.StatusBadRequest, "name cannot be empty")
+			return
+		}
+		acc.Name = trimmed
+	}
+
+	if req.RootFolder != nil {
+		rf := strings.TrimSpace(*req.RootFolder)
+		if rf == "" {
+			rf = "/"
+		}
+		if rf != acc.RootFolder {
+			rootFolderChanged = true
+			acc.RootFolder = rf
+		}
+	}
+
+	if req.QuotaTotal != nil {
+		if *req.QuotaTotal < 0 {
+			writeError(w, http.StatusBadRequest, "quota_total cannot be negative")
+			return
+		}
+		acc.QuotaTotal = *req.QuotaTotal
+	}
+
+	acc.UpdatedAt = time.Now().UTC()
+	if err := s.database.SaveAccount(*acc); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if rootFolderChanged {
+		_ = s.database.ClearAccountIndex(id)
+	}
+
+	_ = s.database.RecordAudit("update", acc.Name, acc.ID, fmt.Sprintf("Updated RemoteAccount: name='%s', root_folder='%s'", acc.Name, acc.RootFolder), "success", 0)
+	writeJSON(w, http.StatusOK, acc)
 }
 
 func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {

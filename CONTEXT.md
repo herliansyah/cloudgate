@@ -76,3 +76,7 @@ _Avoid_: Token cache, session store, rclone.conf file
 The coordinated teardown process that detaches a RemoteAccount, evicts its active Driver from all StoragePools, wipes its cached MetadataIndex entries, and purges its stored credentials.
 _Avoid_: Account removal, unmount
 
+**RemoteAccountUpdate**:
+The process of modifying non-sensitive configuration parameters (such as display alias, root mount folder, and allocated quota) of an existing RemoteAccount, triggering selective cache invalidation without severing active provider authentication.
+_Avoid_: Account edit, profile update
+
