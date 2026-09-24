@@ -152,7 +152,7 @@ func runServer(rawArgs []string) {
 			hasToken := creds.AccessToken != "" || creds.RefreshToken != ""
 			hasExtra := len(credMap) > 0
 			switch creds.Provider {
-			case storage.ProviderGDrive:
+			case storage.ProviderGDrive, storage.Provider("google"):
 				if hasToken {
 					d = storage.NewGDriveDriver(acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
 				}
