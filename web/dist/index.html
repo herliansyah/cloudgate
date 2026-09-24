@@ -1251,46 +1251,38 @@
           <option value="gdrive">Google Drive (OAuth2)</option>
           <option value="onedrive">Microsoft OneDrive (OAuth2)</option>
           <option value="dropbox">Dropbox (OAuth2)</option>
-          <option value="box">Box</option>
-          <option value="mega">Mega</option>
-          <option value="pcloud">pCloud</option>
+          <option value="box">Box (OAuth2)</option>
+          <option value="mega">Mega (Direct Credentials)</option>
+          <option value="pcloud">pCloud (OAuth2)</option>
           <option value="webdav">Nextcloud / WebDAV</option>
           <option value="s3">S3 / S3-Compatible (MinIO, R2, Wasabi)</option>
-          <option value="koofr">Koofr</option>
-          <option value="yandex">Yandex Disk / SFTP</option>
+          <option value="koofr">Koofr (WebDAV / App Password)</option>
+          <option value="yandex">Yandex Disk (OAuth2)</option>
         </select>
       </div>
 
       <div id="oauthSection" style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);display:flex;flex-direction:column;gap:12px;">
-        <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);">
-          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Google Drive:</strong><br>
-          1. <strong>Wajib:</strong> Pastikan <a href="https://console.developers.google.com/apis/api/drive.googleapis.com/overview" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Google Drive API di-ENABLE (Aktif) ↗</a>.<br>
-          2. Masuk ke <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Google Cloud Console Credentials ↗</a>.<br>
-          3. Buat <em>OAuth 2.0 Client ID</em>.<br>
-          4. Atur <strong>Authorized redirect URI</strong> persis seperti di bawah:<br>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <input type="text" id="gdriveRedirectUriDisplay" readonly value="http://localhost:5210/api/auth/google/callback" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
-            <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('gdriveRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
-          </div>
+        <div id="oauthGuideCard" style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);">
+          <!-- Dynamic OAuth guide rendered via JS -->
         </div>
 
-        <div class="form-group">
-          <label>OAuth Client ID</label>
-          <input type="text" class="form-control" id="newAccountClientID" placeholder="contoh: 123456789-xxx.apps.googleusercontent.com">
+        <div class="form-group" id="groupOAuthClientID">
+          <label id="lblOAuthClientID">OAuth Client ID</label>
+          <input type="text" class="form-control" id="newAccountClientID" placeholder="OAuth Client ID">
         </div>
-        <div class="form-group">
-          <label>OAuth Client Secret</label>
-          <input type="password" class="form-control" id="newAccountClientSecret" placeholder="contoh: GOCSPX-xxxxxxxxxxxxxxxxx">
+        <div class="form-group" id="groupOAuthClientSecret">
+          <label id="lblOAuthClientSecret">OAuth Client Secret</label>
+          <input type="password" class="form-control" id="newAccountClientSecret" placeholder="OAuth Client Secret">
         </div>
 
         <button class="btn btn-primary" id="btnOAuthAction" onclick="startOAuthConnect()">
           <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
-          <span id="btnOAuthText">Masuk dengan Akun Google</span>
+          <span id="btnOAuthText">Masuk dengan Akun Cloud</span>
         </button>
       </div>
 
       <div id="s3ExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:12px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
-        <div style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">S3 / S3-Compatible credentials:</div>
+        <div style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);font-weight:600;">S3 / S3-Compatible credentials:</div>
         <div class="form-group"><label>Endpoint</label><input type="text" class="form-control" id="s3Endpoint" placeholder="https://s3.amazonaws.com"></div>
         <div class="form-group"><label>Bucket</label><input type="text" class="form-control" id="s3Bucket" placeholder="my-bucket"></div>
         <div class="form-group"><label>Access Key ID</label><input type="text" class="form-control" id="s3AccessKey" placeholder="AKIA..."></div>
@@ -1299,21 +1291,21 @@
       </div>
 
       <div id="webdavExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:12px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
-        <div style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">WebDAV / Nextcloud:</div>
+        <div id="webdavGuideBox"></div>
         <div class="form-group"><label>WebDAV URL</label><input type="text" class="form-control" id="webdavUrl" placeholder="https://..."></div>
         <div class="form-group"><label>Username</label><input type="text" class="form-control" id="webdavUser" placeholder="user"></div>
         <div class="form-group"><label>Password / App Token</label><input type="password" class="form-control" id="webdavPass" placeholder="••••••••"></div>
       </div>
 
       <div id="megaExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:12px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
-        <div style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">Mega Email & Password:</div>
+        <div style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);font-weight:600;">Mega Email & Password:</div>
         <div class="form-group"><label>Email / Username</label><input type="text" class="form-control" id="megaUser" placeholder="user@example.com"></div>
         <div class="form-group"><label>Password</label><input type="password" class="form-control" id="megaPass" placeholder="••••••••"></div>
       </div>
 
       <div class="form-group">
         <label>Account Label / Name (Optional)</label>
-        <input type="text" class="form-control" id="newAccountName" placeholder="e.g. Personal Google Drive">
+        <input type="text" class="form-control" id="newAccountName" placeholder="e.g. My Cloud Account">
       </div>
       <div class="form-group">
         <label>Allocated Quota (GB)</label>
@@ -2292,48 +2284,256 @@
       }
     }
 
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    const PROVIDER_METADATA = {
+      gdrive: {
+        name: 'Google Drive',
+        type: 'oauth',
+        defaultQuota: 15,
+        namePlaceholder: 'e.g. Personal Google Drive',
+        clientIdPlaceholder: 'contoh: 123456789-xxx.apps.googleusercontent.com',
+        clientSecretPlaceholder: 'contoh: GOCSPX-xxxxxxxxxxxxxxxxx',
+        requiresCredentials: true,
+        guideHtml: (redirectUri) => `
+          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Google Drive:</strong><br>
+          1. <strong>Wajib:</strong> Pastikan <a href="https://console.developers.google.com/apis/api/drive.googleapis.com/overview" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Google Drive API di-ENABLE (Aktif) ↗</a>.<br>
+          2. Masuk ke <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Google Cloud Console Credentials ↗</a>.<br>
+          3. Buat <em>OAuth 2.0 Client ID</em> (Web Application).<br>
+          4. Atur <strong>Authorized redirect URI</strong> persis seperti di bawah:<br>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+            <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
+          </div>
+        `
+      },
+      onedrive: {
+        name: 'Microsoft OneDrive',
+        type: 'oauth',
+        defaultQuota: 5,
+        namePlaceholder: 'e.g. Personal / Work OneDrive',
+        clientIdPlaceholder: 'Application (client) ID / kosongkan jika default',
+        clientSecretPlaceholder: 'Client secret value / kosongkan jika default',
+        requiresCredentials: false,
+        guideHtml: (redirectUri) => `
+          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Microsoft OneDrive:</strong><br>
+          1. Buka <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Azure Portal / App Registrations ↗</a>.<br>
+          2. Daftarkan aplikasi baru (pilih <em>Personal Microsoft accounts</em> atau multi-tenant).<br>
+          3. Tambahkan <strong>Redirect URI (Web)</strong> persis seperti di bawah:<br>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+            <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
+          </div>
+          <div style="font-size:0.75rem;margin-top:6px;color:var(--md-sys-color-on-surface-variant);">* Jika menggunakan default Cloudgate, kolom Client ID & Secret di bawah dapat dikosongkan.</div>
+        `
+      },
+      dropbox: {
+        name: 'Dropbox',
+        type: 'oauth',
+        defaultQuota: 2,
+        namePlaceholder: 'e.g. My Dropbox Account',
+        clientIdPlaceholder: 'App key / kosongkan jika default',
+        clientSecretPlaceholder: 'App secret / kosongkan jika default',
+        requiresCredentials: false,
+        guideHtml: (redirectUri) => `
+          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Dropbox:</strong><br>
+          1. Buka <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Dropbox App Console ↗</a> lalu buat App baru (Scoped access).<br>
+          2. Pada tab <em>Permissions</em>, aktifkan <code>files.content.read</code> dan <code>files.content.write</code>.<br>
+          3. Tambahkan <strong>Redirect URI</strong> persis seperti di bawah:<br>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+            <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
+          </div>
+          <div style="font-size:0.75rem;margin-top:6px;color:var(--md-sys-color-on-surface-variant);">* Jika menggunakan default Cloudgate, kolom App Key & Secret di bawah dapat dikosongkan.</div>
+        `
+      },
+      box: {
+        name: 'Box',
+        type: 'oauth',
+        defaultQuota: 10,
+        namePlaceholder: 'e.g. Box Cloud Drive',
+        clientIdPlaceholder: 'OAuth 2.0 Client ID',
+        clientSecretPlaceholder: 'OAuth 2.0 Client Secret',
+        requiresCredentials: false,
+        guideHtml: (redirectUri) => `
+          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Box:</strong><br>
+          1. Masuk ke <a href="https://app.box.com/developers/console" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Box Developer Console ↗</a> & buat Custom App.<br>
+          2. Pilih metode <em>User Authentication (OAuth 2.0)</em>.<br>
+          3. Tambahkan <strong>OAuth 2.0 Redirect URI</strong> di bawah dan simpan:<br>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+            <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
+          </div>
+        `
+      },
+      pcloud: {
+        name: 'pCloud',
+        type: 'oauth',
+        defaultQuota: 10,
+        namePlaceholder: 'e.g. pCloud Drive',
+        clientIdPlaceholder: 'pCloud App Key / Client ID',
+        clientSecretPlaceholder: 'pCloud App Secret',
+        requiresCredentials: false,
+        guideHtml: (redirectUri) => `
+          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi pCloud:</strong><br>
+          1. Masuk ke <a href="https://docs.pcloud.com/my_apps/" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">pCloud Developer Apps ↗</a> & daftarkan aplikasi.<br>
+          2. Masukkan <strong>Redirect URI</strong> persis seperti di bawah:<br>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+            <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
+          </div>
+        `
+      },
+      yandex: {
+        name: 'Yandex Disk',
+        type: 'oauth',
+        defaultQuota: 10,
+        namePlaceholder: 'e.g. Yandex Disk',
+        clientIdPlaceholder: 'Yandex ClientID',
+        clientSecretPlaceholder: 'Yandex ClientSecret',
+        requiresCredentials: false,
+        guideHtml: (redirectUri) => `
+          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Yandex Disk:</strong><br>
+          1. Buka <a href="https://oauth.yandex.com/client/new" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Yandex OAuth App Registration ↗</a>.<br>
+          2. Beri izin pada API <em>Yandex Disk REST API</em> (read & write).<br>
+          3. Masukkan <strong>Callback URL</strong> persis seperti di bawah:<br>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+            <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
+          </div>
+        `
+      },
+      koofr: {
+        name: 'Koofr',
+        type: 'webdav',
+        defaultQuota: 10,
+        namePlaceholder: 'e.g. Koofr Cloud',
+        webdavDefaultUrl: 'https://app.koofr.net/dav/Koofr',
+        webdavGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <strong style="color:var(--md-sys-color-on-surface);">Panduan Koneksi Koofr (WebDAV):</strong><br>
+            1. Buka <a href="https://app.koofr.net/app/admin/preferences/password" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Koofr Preferences &rarr; Password ↗</a>.<br>
+            2. Generate <strong>App Password</strong> baru untuk Cloudgate.<br>
+            3. Masukkan email Koofr dan App Password di bawah.
+          </div>
+        `
+      },
+      webdav: {
+        name: 'Nextcloud / WebDAV',
+        type: 'webdav',
+        defaultQuota: 50,
+        namePlaceholder: 'e.g. Personal Nextcloud',
+        webdavDefaultUrl: '',
+        webdavGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <strong style="color:var(--md-sys-color-on-surface);">Panduan Koneksi Nextcloud / WebDAV:</strong><br>
+            1. Untuk Nextcloud, format URL WebDAV: <code>https://domain-anda.com/remote.php/dav/files/username/</code><br>
+            2. Buat <em>App Password / Device Token</em> di menu Settings &rarr; Security pada Nextcloud Anda.
+          </div>
+        `
+      },
+      s3: {
+        name: 'S3 / S3-Compatible',
+        type: 's3',
+        defaultQuota: 50,
+        namePlaceholder: 'e.g. AWS S3 / Cloudflare R2 / Wasabi'
+      },
+      mega: {
+        name: 'Mega',
+        type: 'mega',
+        defaultQuota: 20,
+        namePlaceholder: 'e.g. Mega Cloud Storage'
+      }
+    };
+
+    function openModal(id) {
+      document.getElementById(id).style.display = 'flex';
+      if (id === 'addAccountModal') {
+        updateProviderAuthUI();
+      }
+    }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     async function updateProviderAuthUI() {
       const p = document.getElementById('newAccountProvider').value;
+      const meta = PROVIDER_METADATA[p] || { name: p.toUpperCase(), type: 'oauth', defaultQuota: 15 };
+      
       const oauthSection = document.getElementById('oauthSection');
+      const oauthGuideCard = document.getElementById('oauthGuideCard');
       const btnOAuthText = document.getElementById('btnOAuthText');
       const s3Extra = document.getElementById('s3ExtraFields');
       const webdavExtra = document.getElementById('webdavExtraFields');
+      const webdavGuideBox = document.getElementById('webdavGuideBox');
       const megaExtra = document.getElementById('megaExtraFields');
-      const oauthProviders = ['gdrive','google','onedrive','dropbox','box','pcloud','yandex','koofr'];
-      if (oauthProviders.includes(p)) {
+      const nameInput = document.getElementById('newAccountName');
+      const quotaInput = document.getElementById('newAccountQuota');
+      const clientIdInput = document.getElementById('newAccountClientID');
+      const clientSecretInput = document.getElementById('newAccountClientSecret');
+
+      if (nameInput && meta.namePlaceholder) {
+        nameInput.placeholder = meta.namePlaceholder;
+      }
+      if (quotaInput && meta.defaultQuota) {
+        quotaInput.value = meta.defaultQuota;
+      }
+
+      if (meta.type === 'oauth') {
         oauthSection.style.display = 'flex';
-        let name = 'Google Drive';
-        if (p === 'onedrive') name = 'Microsoft OneDrive';
-        if (p === 'dropbox') name = 'Dropbox';
-        if (p === 'box') name = 'Box';
-        if (p === 'pcloud') name = 'pCloud';
-        if (p === 'yandex') name = 'Yandex Disk';
-        if (p === 'koofr') name = 'Koofr';
-        btnOAuthText.innerText = `Masuk dengan Akun ${name}`;
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'none';
+
+        btnOAuthText.innerText = `Masuk dengan Akun ${meta.name}`;
+        if (clientIdInput) clientIdInput.placeholder = meta.clientIdPlaceholder || 'OAuth Client ID';
+        if (clientSecretInput) clientSecretInput.placeholder = meta.clientSecretPlaceholder || 'OAuth Client Secret';
+
+        let redirectUri = `${window.location.origin}/api/auth/${p === 'gdrive' ? 'google' : p}/callback`;
         try {
           const res = await fetch(`/api/auth/${p}/login`);
           const data = await res.json();
-          if (data.redirect_uri) {
-            document.getElementById('gdriveRedirectUriDisplay').value = data.redirect_uri;
+          if (data && data.redirect_uri) {
+            redirectUri = data.redirect_uri;
           }
         } catch(e) {}
-      } else {
+
+        if (oauthGuideCard && typeof meta.guideHtml === 'function') {
+          oauthGuideCard.innerHTML = meta.guideHtml(redirectUri);
+        }
+      } else if (meta.type === 'webdav') {
         oauthSection.style.display = 'none';
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'flex';
+        megaExtra.style.display = 'none';
+
+        if (webdavGuideBox) {
+          webdavGuideBox.innerHTML = meta.webdavGuideHtml || '';
+        }
+        const webdavUrlInput = document.getElementById('webdavUrl');
+        if (webdavUrlInput) {
+          if (meta.webdavDefaultUrl && !webdavUrlInput.value) {
+            webdavUrlInput.value = meta.webdavDefaultUrl;
+          } else if (!meta.webdavDefaultUrl && webdavUrlInput.value === 'https://app.koofr.net/dav/Koofr') {
+            webdavUrlInput.value = '';
+          }
+        }
+      } else if (meta.type === 's3') {
+        oauthSection.style.display = 'none';
+        s3Extra.style.display = 'flex';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'none';
+      } else if (meta.type === 'mega') {
+        oauthSection.style.display = 'none';
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'flex';
       }
-      s3Extra.style.display = p === 's3' ? 'flex' : 'none';
-      webdavExtra.style.display = (p === 'webdav' || p === 'koofr') ? 'flex' : 'none';
-      megaExtra.style.display = p === 'mega' ? 'flex' : 'none';
     }
 
     async function startOAuthConnect() {
       const provider = document.getElementById('newAccountProvider').value;
+      const meta = PROVIDER_METADATA[provider] || { name: provider.toUpperCase() };
       const clientId = (document.getElementById('newAccountClientID').value || '').trim();
       const clientSecret = (document.getElementById('newAccountClientSecret').value || '').trim();
-      if ((provider === 'google' || provider === 'gdrive') && (!clientId || !clientSecret)) {
-        showToast('Wajib memasukkan Client ID dan Client Secret dari Google Cloud Console.', 'error');
+      if (meta.requiresCredentials && (!clientId || !clientSecret)) {
+        showToast(`Wajib memasukkan Client ID dan Client Secret untuk ${meta.name}.`, 'error');
         return;
       }
       const width = 600, height = 700;
@@ -2344,9 +2544,9 @@
         const data = await res.json();
         if (data.auth_url) {
           window.open(data.auth_url, 'CloudgateOAuth', `width=${width},height=${height},top=${top},left=${left}`);
-          showToast(`Opening official ${provider.toUpperCase()} login screen...`);
+          showToast(`Membuka layar login resmi ${meta.name}...`);
         } else {
-          showToast('Failed to generate OAuth URL', 'error');
+          showToast('Gagal membuat OAuth URL', 'error');
         }
       } catch (err) {
         showToast(err.message, 'error');
@@ -2365,8 +2565,9 @@
 
     async function submitAddAccount() {
       const provider = document.getElementById('newAccountProvider').value;
-      const name = document.getElementById('newAccountName').value || `${provider} Account`;
-      const quota = parseInt(document.getElementById('newAccountQuota').value) || 15;
+      const meta = PROVIDER_METADATA[provider] || { name: provider };
+      const name = document.getElementById('newAccountName').value.trim() || `${meta.name} Account`;
+      const quota = parseInt(document.getElementById('newAccountQuota').value) || meta.defaultQuota || 15;
       const payload = {
         id: 'acc_' + Date.now(),
         provider,
