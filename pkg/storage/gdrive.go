@@ -38,7 +38,9 @@ func NewGDriveDriver(accountID, clientID, clientSecret, accessToken, refreshToke
 		clientSecret: clientSecret,
 		accessToken:  accessToken,
 		refreshToken: refreshToken,
-		tokenExpiry:  time.Now().Add(50 * time.Minute),
+		// ponytail: zero expiry forces refresh on first use — stale DB tokens
+		// were causing 401s because the old code assumed 50min freshness.
+		tokenExpiry:  time.Time{},
 		userEmail:    userEmail,
 		userName:     userName,
 		client:       &http.Client{Timeout: 60 * time.Second},
