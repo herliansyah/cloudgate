@@ -136,5 +136,18 @@ func TestEmbeddedModalHierarchyAndButtonConsistency(t *testing.T) {
 	if strings.Contains(content, "+ Add Storage") {
 		t.Errorf("found redundant '+ Add Storage' text next to plus icon")
 	}
+
+	// 4. Verify formatPercent and Storage Hub usage progress bar
+	if !strings.Contains(content, "formatPercent") {
+		t.Errorf("formatPercent helper function missing from index.html")
+	}
+	if !strings.Contains(content, "storageHubUsageBar") {
+		t.Errorf("storageHubUsageBar missing from Storage Hub in index.html")
+	}
+
+	// 5. Verify provider-card-footer uses structured layout preventing overflow
+	if !strings.Contains(content, "grid-template-columns:1fr 1fr") {
+		t.Errorf("provider-card-footer missing 2-tier structured button grid")
+	}
 }
 

@@ -194,7 +194,22 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 			status = "disabled"
 		} else if err != nil {
 			status = "error"
+			if accInfo.QuotaTotal > 0 {
+				quota.Total = accInfo.QuotaTotal
+				quota.Used = accInfo.QuotaUsed
+				free := accInfo.QuotaTotal - accInfo.QuotaUsed
+				if free < 0 {
+					free = 0
+				}
+				quota.Free = free
+				totalStorage += quota.Total
+				totalUsed += quota.Used
+				totalFree += quota.Free
+			}
 		} else {
+			if quota.Total <= 0 && accInfo.QuotaTotal > 0 {
+				quota.Total = accInfo.QuotaTotal
+			}
 			totalStorage += quota.Total
 			totalUsed += quota.Used
 			totalFree += quota.Free

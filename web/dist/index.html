@@ -2736,7 +2736,7 @@
 
       const accounts = cachedAccounts || [];
       const stats = cachedStats || { total_storage: 0, total_used: 0, accounts: [] };
-      const pct = stats.total_storage > 0 ? Math.round((stats.total_used / stats.total_storage) * 100) : 0;
+      const heroUsage = formatPercent(stats.total_used, stats.total_storage);
       const totalFree = Math.max(0, (stats.total_storage || 0) - (stats.total_used || 0));
 
       // Provider segments calculation
@@ -2766,9 +2766,9 @@
       } else {
         cardsHtml = accounts.map(acc => {
           const accStat = (stats.accounts || []).find(s => s.id === acc.id) || {};
-          const usedBytes = accStat.used || 0;
-          const totalBytes = accStat.total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 0);
-          const accPct = totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0;
+          const usedBytes = accStat.used || acc.quota_used || 0;
+          const totalBytes = accStat.total || acc.quota_total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 15 * 1024 * 1024 * 1024);
+          const accUsage = formatPercent(usedBytes, totalBytes);
           const isEnabled = acc.enabled !== false;
           let statusLabel = isEnabled ? '● Aktif' : '● Dinonaktifkan';
           let statusCls = isEnabled ? 'connected' : 'disabled';
@@ -2799,10 +2799,10 @@
               <div class="provider-card-body">
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.76rem;color:var(--md-sys-color-on-surface-variant);">
                   <span>Kapasitas Digunakan</span>
-                  <span style="font-weight:700;color:var(--md-sys-color-on-surface);">${accPct}%</span>
+                  <span style="font-weight:700;color:var(--md-sys-color-on-surface);">${accUsage.text}</span>
                 </div>
                 <div class="progress-bar-bg" style="height:6px;margin:4px 0;">
-                  <div class="progress-bar-fill" style="width:${accPct}%;"></div>
+                  <div class="progress-bar-fill" style="width:${accUsage.fillWidth}%;"></div>
                 </div>
                 <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);display:flex;justify-content:space-between;">
                   <span>${formatBytes(usedBytes)}</span>
@@ -2810,17 +2810,17 @@
                 </div>
               </div>
 
-              <div class="provider-card-footer">
-                <button class="btn btn-secondary btn-sm" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
+              <div class="provider-card-footer" style="flex-direction:column;gap:8px;align-items:stretch;">
+                <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
                   <svg width="15" height="15" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
                   Buka Folder
                 </button>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <button class="btn btn-secondary btn-sm" onclick="promptEditAccount('${acc.id}')" title="Edit Akun ini">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <button class="btn btn-secondary btn-sm" style="justify-content:center;" onclick="promptEditAccount('${acc.id}')" title="Edit Akun ini">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                     Edit
                   </button>
-                  <button class="btn btn-outline-danger btn-sm" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan Akun ini">
+                  <button class="btn btn-outline-danger btn-sm" style="justify-content:center;" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan Akun ini">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>
                     Putuskan
                   </button>
@@ -2856,10 +2856,10 @@
             <div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;font-weight:600;margin-bottom:6px;">
                 <span style="color:var(--md-sys-color-on-surface-variant);">Total Penggunaan Agregat</span>
-                <span style="color:var(--md-sys-color-primary);">${pct}% (${formatBytes(stats.total_used)} / ${formatBytes(stats.total_storage)})</span>
+                <span style="color:var(--md-sys-color-primary);">${heroUsage.text} (${formatBytes(stats.total_used)} / ${formatBytes(stats.total_storage)})</span>
               </div>
               <div class="progress-bar-bg" style="height:8px;">
-                <div class="progress-bar-fill" style="width:${pct}%;"></div>
+                <div class="progress-bar-fill" style="width:${heroUsage.fillWidth}%;"></div>
               </div>
             </div>
 
@@ -2924,21 +2924,23 @@
       const area = document.getElementById('contentArea');
       const accounts = cachedAccounts || [];
       const stats = cachedStats || { total_storage: 0, total_used: 0, accounts: [] };
-      const pct = stats.total_storage > 0 ? Math.round((stats.total_used / stats.total_storage) * 100) : 0;
+      const hubUsage = formatPercent(stats.total_used, stats.total_storage);
       const totalFree = Math.max(0, (stats.total_storage || 0) - (stats.total_used || 0));
 
       // Build breakdown segments and legend
       const segments = [];
       const legend = [];
-      (stats.accounts || []).forEach(acc => {
-        const segPct = stats.total_storage > 0 ? ((acc.total || 0) / stats.total_storage) * 100 : 0;
+      (accounts || []).forEach(acc => {
+        const accStat = (stats.accounts || []).find(s => s.id === acc.id) || {};
+        const accTotal = accStat.total || acc.quota_total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 15 * 1024 * 1024 * 1024);
+        const segPct = stats.total_storage > 0 ? (accTotal / stats.total_storage) * 100 : 0;
         const color = PROVIDER_COLORS[acc.provider] || '#3859FF';
-        segments.push(`<div class="breakdown-segment" style="width:${segPct}%;background-color:${color};" title="${acc.name} (${acc.provider}): ${formatBytes(acc.total || 0)}"></div>`);
+        segments.push(`<div class="breakdown-segment" style="width:${segPct}%;background-color:${color};" title="${acc.name} (${acc.provider}): ${formatBytes(accTotal)}"></div>`);
         legend.push(`
           <div class="legend-item">
             <span class="legend-color-dot" style="background-color:${color};"></span>
             <span style="font-weight:600;">${acc.name}</span>
-            <span style="color:var(--md-sys-color-on-surface-variant);">(${formatBytes(acc.total || 0)} • ${Math.round(segPct)}%)</span>
+            <span style="color:var(--md-sys-color-on-surface-variant);">(${formatBytes(accTotal)} • ${Math.round(segPct)}%)</span>
           </div>
         `);
       });
@@ -2946,9 +2948,9 @@
       // Build fleet table rows
       const rowsHtml = accounts.map(acc => {
         const accStat = (stats.accounts || []).find(s => s.id === acc.id) || {};
-        const usedBytes = accStat.used || 0;
-        const totalBytes = accStat.total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 0);
-        const accPct = totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0;
+        const usedBytes = accStat.used || acc.quota_used || 0;
+        const totalBytes = accStat.total || acc.quota_total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 15 * 1024 * 1024 * 1024);
+        const accUsage = formatPercent(usedBytes, totalBytes);
         const meta = PROVIDER_METADATA[acc.provider] || { name: acc.provider };
         const isEnabled = acc.enabled !== false;
         let statusBadge = isEnabled 
@@ -2980,10 +2982,10 @@
             <td style="min-width:180px;">
               <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;">
                 <span>${formatBytes(usedBytes)} / ${formatBytes(totalBytes)}</span>
-                <span style="font-weight:700;">${accPct}%</span>
+                <span style="font-weight:700;">${accUsage.text}</span>
               </div>
               <div class="progress-bar-bg" style="height:6px;">
-                <div class="progress-bar-fill" style="width:${accPct}%;"></div>
+                <div class="progress-bar-fill" style="width:${accUsage.fillWidth}%;"></div>
               </div>
             </td>
             <td>${statusBadge}</td>
@@ -3049,12 +3051,27 @@
             <div class="pool-stat-box" style="padding:16px;">
               <span class="pool-stat-label">Kapasitas Terpakai</span>
               <span class="pool-stat-val" style="color:var(--md-sys-color-primary);">${formatBytes(stats.total_used)}</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${pct}% Utilisasi Keseluruhan</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${hubUsage.text} Utilisasi Keseluruhan</div>
             </div>
             <div class="pool-stat-box" style="padding:16px;">
               <span class="pool-stat-label">Ruang Tersedia (Free)</span>
               <span class="pool-stat-val" style="color:var(--status-success);">${formatBytes(totalFree)}</span>
               <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Siap menampung file baru</div>
+            </div>
+          </div>
+
+          <!-- Aggregated Storage Utilization Bar -->
+          <div class="storage-breakdown-card" id="storageHubUsageBar">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:700;font-size:0.95rem;">Penggunaan Kapasitas Teragregasi</span>
+              <span style="font-weight:700;color:var(--md-sys-color-primary);font-size:0.9rem;">${hubUsage.text} (${formatBytes(stats.total_used)} dari ${formatBytes(stats.total_storage)})</span>
+            </div>
+            <div class="progress-bar-bg" style="height:12px;margin:2px 0;">
+              <div class="progress-bar-fill" style="width:${hubUsage.fillWidth}%;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.76rem;color:var(--md-sys-color-on-surface-variant);">
+              <span>Terpakai: ${formatBytes(stats.total_used)}</span>
+              <span>Tersedia: ${formatBytes(totalFree)}</span>
             </div>
           </div>
 
@@ -3833,13 +3850,18 @@
       try {
         const res = await fetch('/api/stats');
         cachedStats = await res.json();
-        const pct = cachedStats.total_storage > 0 ? Math.round((cachedStats.total_used / cachedStats.total_storage) * 100) : 0;
-        document.getElementById('capacityPercent').innerText = `${pct}%`;
-        document.getElementById('capacityFill').style.width = `${pct}%`;
-        document.getElementById('capacityText').innerText = `${formatBytes(cachedStats.total_used)} of ${formatBytes(cachedStats.total_storage)}`;
+        const pInfo = formatPercent(cachedStats.total_used, cachedStats.total_storage);
+        const capPct = document.getElementById('capacityPercent');
+        const capFill = document.getElementById('capacityFill');
+        const capTxt = document.getElementById('capacityText');
+        if (capPct) capPct.innerText = pInfo.text;
+        if (capFill) capFill.style.width = `${pInfo.fillWidth}%`;
+        if (capTxt) capTxt.innerText = `${formatBytes(cachedStats.total_used)} of ${formatBytes(cachedStats.total_storage)}`;
         renderDonutChart(cachedStats);
         if (currentMode === 'dashboard') {
           renderDashboard();
+        } else if (currentMode === 'storage') {
+          renderStorageHub();
         }
       } catch (err) {
         console.error('Failed to load stats', err);
@@ -3848,20 +3870,64 @@
 
     function renderDonutChart(stats) {
       const container = document.getElementById('storageAccountsBreakdown');
-      container.innerHTML = '';
-      if (!stats.accounts) return;
-      const colors = ['#b4c5ff', '#78dc9c', '#ffb955', '#ffb4ab', '#dfbbde', '#80d4ff'];
-      stats.accounts.forEach((acc, i) => {
-        const color = colors[i % colors.length];
-        container.innerHTML += `
-          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.84rem; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); background-color:var(--md-sys-color-surface-container); border:1px solid var(--md-sys-color-outline-variant);">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span style="width:10px;height:10px;border-radius:50%;background:${color};"></span>
-              <span style="font-weight:600;">${acc.name} (${acc.provider})</span>
-            </div>
-            <span style="color:var(--md-sys-color-on-surface-variant);">${formatBytes(acc.used)} / ${formatBytes(acc.total)}</span>
-          </div>
+      const svg = document.getElementById('donutChartSvg');
+      if (container) container.innerHTML = '';
+      if (!stats || !stats.accounts) return;
+
+      const colors = ['#3859FF', '#2684fc', '#0078d4', '#0061ff', '#e05243', '#1ab7ea', '#00b4d8'];
+      const total = stats.total_storage || 1;
+      const usedTotal = stats.total_used || 0;
+      const pInfo = formatPercent(usedTotal, total);
+
+      // Draw SVG Donut Chart
+      if (svg) {
+        let cumulativePct = 0;
+        const circumference = 2 * Math.PI * 38; // r = 38 => ~238.76
+        let pathsHtml = `
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--md-sys-color-surface-container-highest)" stroke-width="12" />
         `;
+
+        stats.accounts.forEach((acc, i) => {
+          const accTotal = acc.total || 0;
+          if (accTotal > 0) {
+            const accShare = accTotal / total;
+            const dashLength = accShare * circumference;
+            const dashOffset = -cumulativePct * circumference;
+            const color = PROVIDER_COLORS[acc.provider] || colors[i % colors.length];
+            pathsHtml += `
+              <circle cx="50" cy="50" r="38" fill="none" stroke="${color}" stroke-width="12"
+                stroke-dasharray="${dashLength} ${circumference}"
+                stroke-dashoffset="${dashOffset}"
+                transform="rotate(-90 50 50)" />
+            `;
+            cumulativePct += accShare;
+          }
+        });
+
+        pathsHtml += `
+          <text x="50" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="var(--md-sys-color-on-surface)">${pInfo.text}</text>
+          <text x="50" y="59" text-anchor="middle" font-size="6.5" fill="var(--md-sys-color-on-surface-variant)">Used</text>
+        `;
+        svg.innerHTML = pathsHtml;
+      }
+
+      stats.accounts.forEach((acc, i) => {
+        const color = PROVIDER_COLORS[acc.provider] || colors[i % colors.length];
+        const accUsage = formatPercent(acc.used || 0, acc.total || 0);
+        if (container) {
+          container.innerHTML += `
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.84rem; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); background-color:var(--md-sys-color-surface-container); border:1px solid var(--md-sys-color-outline-variant);">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="width:10px;height:10px;border-radius:50%;background:${color};"></span>
+                <span style="font-weight:600;">${acc.name} (${acc.provider})</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--md-sys-color-surface-container-high);font-weight:600;">${accUsage.text}</span>
+                <span style="color:var(--md-sys-color-on-surface-variant);">${formatBytes(acc.used)} / ${formatBytes(acc.total)}</span>
+              </div>
+            </div>
+          `;
+        }
       });
     }
 
@@ -5225,6 +5291,26 @@
       const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function formatPercent(used, total) {
+      if (!total || total <= 0) return { text: '0%', fillWidth: 0, rawPct: 0 };
+      const rawPct = (used / total) * 100;
+      let text = '0%';
+      let fillWidth = 0;
+      if (used > 0) {
+        if (rawPct < 0.1) {
+          text = '< 0.1%';
+          fillWidth = 1.5;
+        } else if (rawPct < 1) {
+          text = rawPct.toFixed(1) + '%';
+          fillWidth = Math.max(2, parseFloat(rawPct.toFixed(1)));
+        } else {
+          text = Math.round(rawPct) + '%';
+          fillWidth = Math.min(100, Math.round(rawPct));
+        }
+      }
+      return { text, fillWidth, rawPct };
     }
 
     function showToast(msg, type = 'info') {
