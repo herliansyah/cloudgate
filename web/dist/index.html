@@ -2489,22 +2489,63 @@
 
   <!-- GatewayAuth Lock Screen Overlay -->
   <div id="gatewayLockOverlay" style="display:none; position:fixed; inset:0; z-index:999999; background:var(--md-sys-color-surface); flex-direction:column; align-items:center; justify-content:center; padding:20px;">
-    <div style="background:var(--md-sys-color-surface-container-high); border:1px solid var(--md-sys-color-outline-variant); border-radius:var(--md-sys-shape-corner-xl); padding:36px; max-width:420px; width:100%; box-shadow:0 12px 40px rgba(0,0,0,0.3); text-align:center;">
-      <div style="width:64px; height:64px; border-radius:50%; background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-      </div>
-      <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:8px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.lockedTitle">Cloudgate Terkunci</h2>
-      <p style="font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); margin-bottom:24px; line-height:1.4;" data-i18n="gateway.lockedDesc">Masukkan MasterPassword untuk mengakses gateway penyimpanan cloud Anda.</p>
+    <div style="background:var(--md-sys-color-surface-container-high); border:1px solid var(--md-sys-color-outline-variant); border-radius:var(--md-sys-shape-corner-xl); padding:36px; max-width:440px; width:100%; box-shadow:0 12px 40px rgba(0,0,0,0.3); text-align:center;">
       
-      <form onsubmit="submitGatewayUnlock(event)">
-        <div style="margin-bottom:16px; text-align:left;">
-          <input type="password" id="gatewayUnlockPassword" placeholder="MasterPassword" style="width:100%; padding:14px 16px; border-radius:var(--md-sys-shape-corner-md); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font-size:1rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--md-sys-color-primary)'" onblur="this.style.borderColor='var(--md-sys-color-outline)'">
+      <!-- Section 1: Standard Unlock Screen -->
+      <div id="gatewayUnlockSection">
+        <div style="width:64px; height:64px; border-radius:50%; background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
         </div>
-        <div id="gatewayUnlockError" style="display:none; color:var(--md-sys-color-error); font-size:0.82rem; margin-bottom:16px; text-align:left;"></div>
-        <button type="submit" id="btnGatewayUnlock" class="btn btn-primary" style="width:100%; padding:12px; font-size:1rem; justify-content:center;" data-i18n="gateway.unlock">
-          Buka Kunci
-        </button>
-      </form>
+        <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:8px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.lockedTitle">Cloudgate Terkunci</h2>
+        <p style="font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); margin-bottom:24px; line-height:1.4;" data-i18n="gateway.lockedDesc">Masukkan MasterPassword untuk mengakses gateway penyimpanan cloud Anda.</p>
+        
+        <form onsubmit="submitGatewayUnlock(event)">
+          <div style="margin-bottom:16px; text-align:left;">
+            <input type="password" id="gatewayUnlockPassword" placeholder="MasterPassword" style="width:100%; padding:14px 16px; border-radius:var(--md-sys-shape-corner-md); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font-size:1rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--md-sys-color-primary)'" onblur="this.style.borderColor='var(--md-sys-color-outline)'">
+          </div>
+          <div id="gatewayUnlockError" style="display:none; color:var(--md-sys-color-error); font-size:0.82rem; margin-bottom:16px; text-align:left;"></div>
+          <button type="submit" id="btnGatewayUnlock" class="btn btn-primary" style="width:100%; padding:12px; font-size:1rem; justify-content:center;" data-i18n="gateway.unlock">
+            Buka Kunci
+          </button>
+        </form>
+      </div>
+
+      <!-- Section 2: First-Run Setup on Localhost -->
+      <div id="gatewaySetupSection" style="display:none;">
+        <div style="width:64px; height:64px; border-radius:50%; background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        </div>
+        <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:8px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.firstRunTitle">Inisialisasi MasterPassword</h2>
+        <p style="font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); margin-bottom:24px; line-height:1.4;" data-i18n="gateway.firstRunDesc">Selamat datang di Cloudgate. Harap buat MasterPassword untuk mengamankan data dan REST API Anda.</p>
+        
+        <form onsubmit="submitFirstRunSetup(event)">
+          <div style="margin-bottom:14px; text-align:left;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.newPasswordLabel">Kata Sandi Baru (Min. 4 karakter)</label>
+            <input type="password" id="firstRunMasterPwd" placeholder="••••••••" style="width:100%; padding:12px 14px; border-radius:var(--md-sys-shape-corner-md); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font-size:1rem; outline:none;" required>
+          </div>
+          <div style="margin-bottom:16px; text-align:left;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.confirmPasswordLabel">Konfirmasi Kata Sandi</label>
+            <input type="password" id="firstRunMasterPwdConfirm" placeholder="••••••••" style="width:100%; padding:12px 14px; border-radius:var(--md-sys-shape-corner-md); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font-size:1rem; outline:none;" required>
+          </div>
+          <div id="firstRunSetupError" style="display:none; color:var(--md-sys-color-error); font-size:0.82rem; margin-bottom:16px; text-align:left;"></div>
+          <button type="submit" id="btnFirstRunSetupSubmit" class="btn btn-primary" style="width:100%; padding:12px; font-size:1rem; justify-content:center;" data-i18n="gateway.firstRunBtn">
+            Simpan & Buka Cloudgate
+          </button>
+        </form>
+      </div>
+
+      <!-- Section 3: Remote Locked Notice -->
+      <div id="gatewayRemoteNoticeSection" style="display:none;">
+        <div style="width:64px; height:64px; border-radius:50%; background:var(--md-sys-color-error-container); color:var(--md-sys-color-on-error-container); display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        </div>
+        <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:8px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.remoteLockedTitle">Inisialisasi Diperlukan</h2>
+        <p style="font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); margin-bottom:20px; line-height:1.5;" data-i18n="gateway.remoteLockedDesc">Demi keamanan, MasterPassword awal hanya dapat disetel langsung dari mesin lokal (localhost) atau melalui terminal server dengan perintah: cloudgate auth setup &lt;password&gt;</p>
+        <div style="background:var(--md-sys-color-surface-container); border:1px solid var(--md-sys-color-outline-variant); border-radius:var(--md-sys-shape-corner-md); padding:12px; font-family:monospace; font-size:0.85rem; color:var(--md-sys-color-primary); word-break:break-all;">
+          cloudgate auth setup &lt;password&gt;
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2573,32 +2614,6 @@
     </div>
   </div>
 
-  <!-- Modal: Disable GatewayAuth -->
-  <div class="modal-backdrop" id="disableGatewayModal" onclick="if(event.target===this)closeModal('disableGatewayModal')">
-    <div class="modal" style="max-width:440px;">
-      <div class="modal-header">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);background-color:var(--md-sys-color-error-container);color:var(--md-sys-color-error);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-          </div>
-          <span data-i18n="gateway.disableModalTitle">Nonaktifkan GatewayAuth?</span>
-        </div>
-        <button class="btn-icon" onclick="closeModal('disableGatewayModal')">✕</button>
-      </div>
-      <div style="margin:12px 0; font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); line-height:1.5;">
-        <p style="margin-bottom:12px;" data-i18n="gateway.disableModalDesc">Menonaktifkan proteksi ini akan membuat dashboard dan API Cloudgate dapat diakses secara bebas tanpa kata sandi oleh siapapun di jaringan.</p>
-        <div>
-          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.confirmWithPasswordLabel">Masukkan MasterPassword untuk Konfirmasi</label>
-          <input type="password" id="disableGatewayPwdInput" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
-        </div>
-        <div id="disableGatewayPwdError" style="display:none; color:var(--md-sys-color-error); font-size:0.8rem; margin-top:8px;"></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('disableGatewayModal')" data-i18n="gateway.cancel">Batal</button>
-        <button class="btn btn-primary" style="background-color:var(--md-sys-color-error);color:#fff;" onclick="submitDisableGateway()" data-i18n="gateway.disableBtn">Nonaktifkan</button>
-      </div>
-    </div>
-  </div>
 
   <!-- M3 Context Menu -->
   <div class="context-menu" id="contextMenu"></div>
@@ -2800,6 +2815,11 @@
         'gateway.disableModalDesc': 'Disabling this protection will allow anyone on the network to freely access the Cloudgate dashboard and API without a password.',
         'gateway.confirmWithPasswordLabel': 'Enter MasterPassword to Confirm',
         'gateway.disableBtn': 'Disable',
+        'gateway.firstRunTitle': 'Initialize MasterPassword',
+        'gateway.firstRunDesc': 'Welcome to Cloudgate. Please create a MasterPassword to secure your cloud gateway and REST API.',
+        'gateway.firstRunBtn': 'Set MasterPassword & Unlock',
+        'gateway.remoteLockedTitle': 'Initialization Required',
+        'gateway.remoteLockedDesc': 'For security, the initial MasterPassword can only be configured directly from localhost or via the server terminal using: cloudgate auth setup <password>',
       },
       id: {
         'topbar.search': 'Cari file di semua akun cloud…',
@@ -2924,6 +2944,11 @@
         'gateway.disableModalDesc': 'Menonaktifkan proteksi ini akan membuat dashboard dan API Cloudgate dapat diakses secara bebas tanpa kata sandi oleh siapapun di jaringan.',
         'gateway.confirmWithPasswordLabel': 'Masukkan MasterPassword untuk Konfirmasi',
         'gateway.disableBtn': 'Nonaktifkan',
+        'gateway.firstRunTitle': 'Inisialisasi MasterPassword',
+        'gateway.firstRunDesc': 'Selamat datang di Cloudgate. Harap buat MasterPassword untuk mengamankan gateway penyimpanan cloud dan REST API Anda.',
+        'gateway.firstRunBtn': 'Simpan & Buka Cloudgate',
+        'gateway.remoteLockedTitle': 'Inisialisasi Diperlukan',
+        'gateway.remoteLockedDesc': 'Demi keamanan, MasterPassword awal hanya dapat disetel langsung dari mesin lokal (localhost) atau melalui terminal server dengan perintah: cloudgate auth setup <password>',
       }
     };
 
@@ -3261,13 +3286,16 @@
       } catch (e) {
         console.error('Failed to check gateway auth status:', e);
       }
-      return { enabled: false, authenticated: true };
+      return { enabled: true, authenticated: false, setup_required: false, can_setup: false };
     }
 
     function showLockScreen() {
       const overlay = document.getElementById('gatewayLockOverlay');
       if (overlay) {
         overlay.style.display = 'flex';
+        document.getElementById('gatewayUnlockSection').style.display = 'block';
+        document.getElementById('gatewaySetupSection').style.display = 'none';
+        document.getElementById('gatewayRemoteNoticeSection').style.display = 'none';
         const inp = document.getElementById('gatewayUnlockPassword');
         if (inp) {
           inp.value = '';
@@ -3275,6 +3303,86 @@
         }
         const errDiv = document.getElementById('gatewayUnlockError');
         if (errDiv) errDiv.style.display = 'none';
+      }
+    }
+
+    function showSetupScreen() {
+      const overlay = document.getElementById('gatewayLockOverlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        document.getElementById('gatewayUnlockSection').style.display = 'none';
+        document.getElementById('gatewaySetupSection').style.display = 'block';
+        document.getElementById('gatewayRemoteNoticeSection').style.display = 'none';
+        const inp = document.getElementById('firstRunMasterPwd');
+        if (inp) {
+          inp.value = '';
+          document.getElementById('firstRunMasterPwdConfirm').value = '';
+          setTimeout(() => inp.focus(), 100);
+        }
+        const errDiv = document.getElementById('firstRunSetupError');
+        if (errDiv) errDiv.style.display = 'none';
+      }
+    }
+
+    function showRemoteLockedScreen() {
+      const overlay = document.getElementById('gatewayLockOverlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        document.getElementById('gatewayUnlockSection').style.display = 'none';
+        document.getElementById('gatewaySetupSection').style.display = 'none';
+        document.getElementById('gatewayRemoteNoticeSection').style.display = 'block';
+      }
+    }
+
+    async function submitFirstRunSetup(e) {
+      if (e) e.preventDefault();
+      const p1 = document.getElementById('firstRunMasterPwd').value;
+      const p2 = document.getElementById('firstRunMasterPwdConfirm').value;
+      const errDiv = document.getElementById('firstRunSetupError');
+      const btn = document.getElementById('btnFirstRunSetupSubmit');
+
+      if (!p1 || p1.length < 4) {
+        errDiv.textContent = 'Kata sandi minimal 4 karakter';
+        errDiv.style.display = 'block';
+        return;
+      }
+      if (p1 !== p2) {
+        errDiv.textContent = 'Konfirmasi kata sandi tidak cocok';
+        errDiv.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+      errDiv.style.display = 'none';
+      try {
+        const res = await fetch('/api/auth/gateway/setup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: p1 })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          gatewayAuthEnabled = true;
+          gatewayAuthenticated = true;
+          hideLockScreen();
+          const btnLock = document.getElementById('btnGatewayLock');
+          if (btnLock) btnLock.style.display = 'inline-flex';
+          showToast('MasterPassword berhasil diaktifkan! Cloudgate siap digunakan.');
+          await loadAccounts();
+          await loadStats();
+          selectDashboard();
+          await updateProviderAuthUI();
+        } else {
+          errDiv.textContent = data.error || 'Gagal mengaktifkan MasterPassword';
+          errDiv.style.display = 'block';
+        }
+      } catch (err) {
+        errDiv.textContent = 'Error: ' + err.message;
+        errDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = t('gateway.firstRunBtn') || 'Simpan & Buka Cloudgate';
       }
     }
 
@@ -3432,45 +3540,18 @@
       }
     }
 
-    async function submitDisableGateway() {
-      const pwd = document.getElementById('disableGatewayPwdInput').value;
-      const errDiv = document.getElementById('disableGatewayPwdError');
-
-      if (!pwd) {
-        errDiv.textContent = 'Masukkan kata sandi untuk konfirmasi';
-        errDiv.style.display = 'block';
-        return;
-      }
-
-      errDiv.style.display = 'none';
-      try {
-        const res = await fetch('/api/auth/gateway/disable', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pwd })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          closeModal('disableGatewayModal');
-          gatewayAuthEnabled = false;
-          gatewayAuthenticated = true;
-          const btnLock = document.getElementById('btnGatewayLock');
-          if (btnLock) btnLock.style.display = 'none';
-          showToast('GatewayAuth telah dinonaktifkan. Akses kembali terbuka.');
-          if (currentMode === 'storage') renderStorageHub();
-        } else {
-          errDiv.textContent = data.error || 'Kata sandi salah';
-          errDiv.style.display = 'block';
-        }
-      } catch (err) {
-        errDiv.textContent = 'Error: ' + err.message;
-        errDiv.style.display = 'block';
-      }
-    }
 
     async function initApp() {
       const authStatus = await checkGatewayAuthStatus();
-      if (authStatus && authStatus.enabled && !authStatus.authenticated) {
+      if (!authStatus.enabled) {
+        if (authStatus.can_setup) {
+          showSetupScreen();
+        } else {
+          showRemoteLockedScreen();
+        }
+        return;
+      }
+      if (!authStatus.authenticated) {
         showLockScreen();
         return;
       }
@@ -4025,9 +4106,6 @@
                   ${gatewayAuthEnabled ? `
                     <button class="btn btn-secondary btn-sm" onclick="openModal('changeMasterPasswordModal')">
                       ${t('gateway.changePassword')}
-                    </button>
-                    <button class="btn btn-text btn-sm" style="color:var(--md-sys-color-error);" onclick="openModal('disableGatewayModal')">
-                      ${t('gateway.disableProtection')}
                     </button>
                   ` : `
                     <button class="btn btn-primary btn-sm" onclick="openModal('setupMasterPasswordModal')">

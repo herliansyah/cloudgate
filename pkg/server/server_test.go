@@ -35,6 +35,7 @@ func TestServerAndAPI(t *testing.T) {
 
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 
 	// 1. Test /api/info (Verifying Author: Herliansyah and Repo)
 	resp, err := http.Get(ts.URL + "/api/info")
@@ -179,6 +180,7 @@ func TestUpdateAccount(t *testing.T) {
 	srv := server.NewServer(database, nil)
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 
 	// 1. Seed initial RemoteAccount
 	initialAcc := db.RemoteAccount{
@@ -299,6 +301,7 @@ func TestUnifiedStorageHubAndFiles(t *testing.T) {
 
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 
 	// 1. Create Account
 	_ = database.SaveAccount(db.RemoteAccount{
@@ -406,6 +409,7 @@ func TestAccountPrincipalAndDefaultNaming(t *testing.T) {
 	srv := server.NewServer(database, nil)
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 
 	// 1. S3 without name should default to "Amazon S3 (bucket-test)" and have Email = "bucket-test"
 	s3Payload := map[string]any{

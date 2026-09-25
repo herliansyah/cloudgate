@@ -93,6 +93,9 @@ cloudgate serve            Start server in current terminal
   --port int               Starting port (default 5210, auto-hunts if occupied)
 cloudgate accounts         List connected cloud storage accounts
 cloudgate audit            View recent 100 audit events
+cloudgate auth status     Check GatewayAuth protection status
+cloudgate auth setup <pw>  Set initial MasterPassword from terminal
+cloudgate auth reset       Reset MasterPassword and return to setup state
 cloudgate version          Show version and author information
 cloudgate help             Show command help
 ```
@@ -105,7 +108,7 @@ cloudgate help             Show command help
 .
 ├── cmd/cloudgate/         # Main binary entrypoint and CLI commands
 ├── pkg/
-│   ├── auth/              # OAuth2 consent URL generation & token exchange
+│   ├── auth/              # OAuth2 consent URL generation, token exchange, & bcrypt MasterPassword
 │   ├── config/            # Config path resolver & single-instance lockfile
 │   ├── db/                # Pure-Go SQLite schema, migrations, & FTS5 search
 │   ├── server/            # REST API, static asset server, & port hunting
@@ -115,7 +118,7 @@ cloudgate help             Show command help
 │   └── vault/             # PBKDF2 + AES-256-GCM encrypted vault
 ├── web/                   # Embedded SPA frontend (Google Drive dark-mode UI)
 ├── docs/
-│   ├── adr/               # Architectural Decision Records (0001 - 0011)
+│   ├── adr/               # Architectural Decision Records (0001 - 0021)
 │   └── agents/            # Domain conventions and agent triage specifications
 ├── CONTEXT.md             # Canonical ubiquitous language and domain glossary
 └── AGENTS.md              # Agent behavioral rules and skill map

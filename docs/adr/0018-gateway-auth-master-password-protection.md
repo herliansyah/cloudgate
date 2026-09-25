@@ -4,7 +4,7 @@ Date: 2026-09-25
 
 ## Status
 
-Accepted
+Accepted (Partially superseded by [ADR 0021](0021-mandatory-first-run-master-password-setup.md) regarding opt-in activation)
 
 ## Context
 

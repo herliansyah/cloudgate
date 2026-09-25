@@ -30,6 +30,7 @@ func TestGoogleOAuthFlow(t *testing.T) {
 	srv := server.NewServer(database, nil)
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 
 	// 1. Request OAuth authorization URL for Google Drive
 	resp, err := http.Get(ts.URL + "/api/auth/google/login")
@@ -73,8 +74,10 @@ func TestGoogleOAuthPrivateIPNormalization(t *testing.T) {
 	defer database.Close()
 
 	srv := server.NewServer(database, nil)
+	authCookie := setupTestAuth(t, database, "")
 
 	req, _ := http.NewRequest("GET", "/api/auth/google/login", nil)
+	req.AddCookie(authCookie)
 	req.Host = "192.168.7.8:5210" // Simulating access from LAN IP
 
 	rr := httptest.NewRecorder()
@@ -104,8 +107,10 @@ func TestRedirectURIConsistency(t *testing.T) {
 	database, _ := db.Open(tempDir)
 	defer database.Close()
 	srv := server.NewServer(database, nil)
+	authCookie := setupTestAuth(t, database, "")
 
 	req, _ := http.NewRequest("GET", "/api/auth/gdrive/login", nil)
+	req.AddCookie(authCookie)
 	rr := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rr, req)
 
@@ -132,6 +137,7 @@ func TestOneDriveOAuthFlow(t *testing.T) {
 	srv := server.NewServer(database, nil)
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 	resp, err := http.Get(ts.URL + "/api/auth/onedrive/login")
 	if err != nil {
 		t.Fatalf("failed to request onedrive oauth login: %v", err)
@@ -167,6 +173,7 @@ func TestDropboxOAuthFlow(t *testing.T) {
 	srv := server.NewServer(database, nil)
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 	resp, err := http.Get(ts.URL + "/api/auth/dropbox/login")
 	if err != nil {
 		t.Fatalf("failed to request dropbox oauth login: %v", err)
@@ -193,6 +200,7 @@ func TestOtherOAuthProviders(t *testing.T) {
 	srv := server.NewServer(database, nil)
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 
 	providers := []struct {
 		name       string
