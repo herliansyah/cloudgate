@@ -112,4 +112,12 @@ _Avoid_: Favorite item, pinned file, bookmark
 A temporary or direct access URL generated for a VirtualFile, utilizing native provider sharing capabilities or Cloudgate's authenticated streaming gateway.
 _Avoid_: Public URL, download link
 
+**GatewayAuth**:
+The local access control system that restricts access to Cloudgate's web interface and REST API endpoints until a valid session is established.
+_Avoid_: Login page, user account system, web guard
+
+**MasterPassword**:
+The primary user-configured secret, cryptographically hashed and stored in the local SQLite database, used to unlock GatewayAuth and gain full administrative control of Cloudgate.
+_Avoid_: User password, login credential, account pin
+
 

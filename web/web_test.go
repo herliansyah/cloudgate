@@ -154,3 +154,44 @@ func TestEmbeddedModalHierarchyAndButtonConsistency(t *testing.T) {
 	}
 }
 
+func TestGatewayAuthUIComponents(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	requiredAuthMarkers := []string{
+		"btnGatewayLock",
+		"gatewayLockOverlay",
+		"setupMasterPasswordModal",
+		"changeMasterPasswordModal",
+		"disableGatewayModal",
+		"function checkGatewayAuthStatus",
+		"function showLockScreen",
+		"function submitGatewayUnlock",
+		"function lockGateway",
+		"function submitSetupMasterPassword",
+		"function submitChangeMasterPassword",
+		"function submitDisableGateway",
+	}
+
+	for _, marker := range requiredAuthMarkers {
+		if !strings.Contains(content, marker) {
+			t.Errorf("expected embedded index.html to contain GatewayAuth marker %q, but was not found", marker)
+		}
+	}
+}
+
+

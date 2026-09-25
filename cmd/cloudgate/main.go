@@ -38,6 +38,9 @@ func main() {
 		case "audit":
 			listAudit()
 			return
+		case "auth":
+			handleAuthCLI(args[1:])
+			return
 		case "serve", "server":
 			runServer(args[1:])
 			return
@@ -65,6 +68,8 @@ func printHelp() {
 	fmt.Println("      --port int             Starting port (default 5210, auto-scans if occupied)")
 	fmt.Println("  cloudgate accounts         List connected cloud storage accounts")
 	fmt.Println("  cloudgate audit            View recent 100 audit events")
+	fmt.Println("  cloudgate auth status      Check GatewayAuth protection status")
+	fmt.Println("  cloudgate auth reset       Reset MasterPassword and disable GatewayAuth")
 	fmt.Println("  cloudgate version          Show version and author information")
 	fmt.Println("  cloudgate help             Show this help screen")
 }
@@ -320,3 +325,51 @@ func openBrowser(url string) {
 		_ = cmd.Start()
 	}
 }
+
+func handleAuthCLI(subArgs []string) {
+	if len(subArgs) == 0 {
+		fmt.Println("Usage: cloudgate auth <command>")
+		fmt.Println("Commands:")
+		fmt.Println("  status     Check if GatewayAuth is enabled")
+		fmt.Println("  reset      Clear MasterPassword and disable GatewayAuth")
+		return
+	}
+
+	configDir, err := config.Dir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error resolving config directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	database, err := db.Open(configDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening database: %v\n", err)
+		os.Exit(1)
+	}
+	defer database.Close()
+
+	switch subArgs[0] {
+	case "status":
+		enabled, err := database.HasMasterPassword()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error checking status: %v\n", err)
+			os.Exit(1)
+		}
+		if enabled {
+			fmt.Println("GatewayAuth: AKTIF (Protected with MasterPassword)")
+		} else {
+			fmt.Println("GatewayAuth: NONAKTIF (Open access)")
+		}
+	case "reset":
+		if err := database.ClearMasterPassword(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error resetting MasterPassword: %v\n", err)
+			os.Exit(1)
+		}
+		_ = database.RecordAudit("auth", "gateway", "cli", "MasterPassword di-reset via CLI", "success", 0)
+		fmt.Println("Berhasil: MasterPassword telah dihapus dan GatewayAuth dinonaktifkan.")
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown auth command: %s. Use 'status' or 'reset'.\n", subArgs[0])
+		os.Exit(1)
+	}
+}
+
