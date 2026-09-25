@@ -390,4 +390,126 @@ func TestUnifiedStorageHubAndFiles(t *testing.T) {
 	}
 }
 
+func TestAccountPrincipalAndDefaultNaming(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "cloudgate-principal-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	database, err := db.Open(tmpDir)
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer database.Close()
+
+	srv := server.NewServer(database, nil)
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	// 1. S3 without name should default to "Amazon S3 (bucket-test)" and have Email = "bucket-test"
+	s3Payload := map[string]any{
+		"provider":   "s3",
+		"bucket":     "bucket-test",
+		"access_key": "AKIA123",
+		"secret_key": "sec123",
+	}
+	s3Bytes, _ := json.Marshal(s3Payload)
+	resp, err := http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(s3Bytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create s3 account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var s3Acc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&s3Acc)
+	resp.Body.Close()
+
+	if s3Acc.Name != "Amazon S3 (bucket-test)" {
+		t.Errorf("expected name 'Amazon S3 (bucket-test)', got '%s'", s3Acc.Name)
+	}
+	if s3Acc.Email != "bucket-test" {
+		t.Errorf("expected email/principal 'bucket-test', got '%s'", s3Acc.Email)
+	}
+
+	// 2. Mega with username/email without custom name
+	megaPayload := map[string]any{
+		"provider": "mega",
+		"username": "user@mega.nz",
+		"password": "password123",
+	}
+	megaBytes, _ := json.Marshal(megaPayload)
+	resp, err = http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(megaBytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create mega account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var megaAcc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&megaAcc)
+	resp.Body.Close()
+
+	if megaAcc.Name != "MEGA (user@mega.nz)" {
+		t.Errorf("expected name 'MEGA (user@mega.nz)', got '%s'", megaAcc.Name)
+	}
+	if megaAcc.Email != "user@mega.nz" {
+		t.Errorf("expected email 'user@mega.nz', got '%s'", megaAcc.Email)
+	}
+
+	// 3. WebDAV with explicit custom name
+	webdavPayload := map[string]any{
+		"provider": "webdav",
+		"name":     "My Private Cloud",
+		"url":      "https://nextcloud.example.com/remote.php/dav",
+		"username": "admin",
+		"password": "secretpassword",
+	}
+	webdavBytes, _ := json.Marshal(webdavPayload)
+	resp, err = http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(webdavBytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create webdav account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var webdavAcc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&webdavAcc)
+	resp.Body.Close()
+
+	if webdavAcc.Name != "My Private Cloud" {
+		t.Errorf("expected custom name 'My Private Cloud', got '%s'", webdavAcc.Name)
+	}
+	if webdavAcc.Email != "admin@nextcloud.example.com" {
+		t.Errorf("expected email 'admin@nextcloud.example.com', got '%s'", webdavAcc.Email)
+	}
+
+	// 4. Test auto-reconcile upgrading generic fallback names on sync
+	// Seed an account with generic name and empty email
+	genericAcc := db.RemoteAccount{
+		ID:         "acc_generic_gdrive",
+		Provider:   "gdrive",
+		Name:       "GOOGLE Account",
+		RootFolder: "/",
+		Status:     "connected",
+		QuotaTotal: 1000,
+		QuotaUsed:  100,
+	}
+	_ = database.SaveAccount(genericAcc)
+
+	// Create a driver that returns UserEmail
+	mockDriver := storage.NewRcloneAdapter("gdrive", "acc_generic_gdrive", "", "", "", "", "testuser@gmail.com", "Test User")
+	srv.RegisterDriver(mockDriver)
+
+	syncResp, err := http.Post(ts.URL+"/api/storage/sync", "application/json", nil)
+	if err != nil || syncResp.StatusCode != http.StatusOK {
+		t.Fatalf("sync failed: %v, status: %d", err, syncResp.StatusCode)
+	}
+	syncResp.Body.Close()
+
+	reconciled, err := database.GetAccount("acc_generic_gdrive")
+	if err != nil {
+		t.Fatalf("failed to get reconciled account: %v", err)
+	}
+	if reconciled.Email != "testuser@gmail.com" {
+		t.Errorf("expected reconciled email 'testuser@gmail.com', got '%s'", reconciled.Email)
+	}
+	if reconciled.Name != "Google Drive (testuser@gmail.com)" {
+		t.Errorf("expected reconciled name 'Google Drive (testuser@gmail.com)', got '%s'", reconciled.Name)
+	}
+}
+
+
 

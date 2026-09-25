@@ -293,6 +293,33 @@ func (s *Server) handleGetAccounts(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, accounts)
 }
 
+func providerDisplayName(provider string) string {
+	switch strings.ToLower(provider) {
+	case "gdrive", "google":
+		return "Google Drive"
+	case "onedrive":
+		return "OneDrive"
+	case "dropbox":
+		return "Dropbox"
+	case "box":
+		return "Box"
+	case "pcloud":
+		return "pCloud"
+	case "yandex":
+		return "Yandex Disk"
+	case "koofr":
+		return "Koofr"
+	case "s3":
+		return "Amazon S3"
+	case "webdav":
+		return "WebDAV"
+	case "mega":
+		return "MEGA"
+	default:
+		return strings.ToUpper(provider)
+	}
+}
+
 func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 	var raw map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
@@ -335,9 +362,6 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "provider required")
 		return
 	}
-	if name == "" {
-		name = strings.ToUpper(provider) + " Account"
-	}
 	// Collect provider-specific extra fields into credentials
 	extra := make(map[string]string)
 	for k, v := range raw {
@@ -352,6 +376,49 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	principal := ""
+	switch provider {
+	case "s3":
+		if extra["bucket"] != "" {
+			if extra["endpoint"] != "" {
+				principal = fmt.Sprintf("%s (%s)", extra["bucket"], extra["endpoint"])
+			} else {
+				principal = extra["bucket"]
+			}
+		}
+	case "webdav", "koofr":
+		if extra["username"] != "" && extra["url"] != "" {
+			u, err := url.Parse(extra["url"])
+			if err == nil && u.Host != "" {
+				principal = fmt.Sprintf("%s@%s", extra["username"], u.Host)
+			} else {
+				principal = extra["username"]
+			}
+		} else if extra["username"] != "" {
+			principal = extra["username"]
+		}
+	case "mega":
+		if extra["email"] != "" {
+			principal = extra["email"]
+		} else {
+			principal = extra["username"]
+		}
+	}
+	email := principal
+	if userEmail := getStr("email"); userEmail != "" {
+		email = userEmail
+	}
+
+	if name == "" {
+		disp := providerDisplayName(provider)
+		if principal != "" {
+			name = fmt.Sprintf("%s (%s)", disp, principal)
+		} else {
+			name = fmt.Sprintf("%s Account", disp)
+		}
+	}
+
 	credsJSON := ""
 	if len(extra) > 0 {
 		b, _ := json.Marshal(extra)
@@ -388,6 +455,7 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 		QuotaTotal:  quotaTotal,
 		QuotaUsed:   0,
 		Credentials: credsJSON,
+		Email:       email,
 		UpdatedAt:   time.Now().UTC(),
 	}
 	if err := s.database.SaveAccount(acc); err != nil {
@@ -654,16 +722,32 @@ func (s *Server) handleSyncStorage(w http.ResponseWriter, r *http.Request) {
 	updatedCount := 0
 	for id, drv := range drivers {
 		quota, err := drv.About(r.Context())
+		acc, accErr := s.database.GetAccount(id)
+		if accErr != nil || acc == nil {
+			continue
+		}
 		if err == nil {
-			if acc, err := s.database.GetAccount(id); err == nil && acc != nil {
-				acc.QuotaTotal = quota.Total
-				acc.QuotaUsed = quota.Used
-				acc.LastSyncAt = &now
-				_ = s.database.SaveAccount(*acc)
-				_ = s.database.UpdateAccountLastSync(id, now)
-				updatedCount++
+			acc.QuotaTotal = quota.Total
+			acc.QuotaUsed = quota.Used
+		}
+		acc.LastSyncAt = &now
+
+		// Auto-reconcile AccountPrincipal if empty
+		if acc.Email == "" {
+			if ue, ok := drv.(interface{ UserEmail() string }); ok {
+				if email := ue.UserEmail(); email != "" {
+					acc.Email = email
+				}
 			}
 		}
+		// Upgrade generic fallback names
+		if acc.Email != "" && (strings.HasSuffix(acc.Name, "Account") || strings.EqualFold(acc.Name, acc.Provider) || strings.EqualFold(acc.Name, providerDisplayName(acc.Provider))) {
+			acc.Name = fmt.Sprintf("%s (%s)", providerDisplayName(acc.Provider), acc.Email)
+		}
+
+		_ = s.database.SaveAccount(*acc)
+		_ = s.database.UpdateAccountLastSync(id, now)
+		updatedCount++
 	}
 
 	_ = s.database.RecordAudit("sync", "StorageHub", "system", fmt.Sprintf("Reconciled %d accounts", updatedCount), "success", 0)
@@ -719,6 +803,7 @@ func (s *Server) handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 		"client_secret": customClientSecret,
 		"redirect_uri":  redirectURI,
 		"provider":      provider,
+		"name":          r.URL.Query().Get("name"),
 	})
 	stateStr := base64.RawURLEncoding.EncodeToString(statePayload)
 
@@ -773,6 +858,7 @@ func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		ClientSecret string `json:"client_secret"`
 		RedirectURI  string `json:"redirect_uri"`
 		Provider     string `json:"provider"`
+		Name         string `json:"name"`
 	}
 	if stateParam := r.URL.Query().Get("state"); stateParam != "" {
 		if raw, err := base64.RawURLEncoding.DecodeString(stateParam); err == nil {
@@ -794,7 +880,10 @@ func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	accID := fmt.Sprintf("%s_%d", provider, time.Now().Unix())
-	accName := fmt.Sprintf("%s Account", strings.ToUpper(provider))
+	accName := stateData.Name
+	if accName == "" {
+		accName = fmt.Sprintf("%s Account", providerDisplayName(provider))
+	}
 	quotaTotal := int64(15 * 1024 * 1024 * 1024)
 	quotaUsed := int64(0)
 
@@ -853,26 +942,52 @@ button:hover { background: #475569; }
 	var liveDriver storage.Driver
 	switch provider {
 	case "google", "gdrive":
-		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+		// Query Google Drive v3 About endpoint to retrieve user email under existing Drive authorization (Least Privilege)
+		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://www.googleapis.com/drive/v3/about?fields=user", nil)
 		if err == nil {
 			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
 			userResp, err := http.DefaultClient.Do(userReq)
 			if err == nil {
 				defer userResp.Body.Close()
-				var userInfo struct {
-					Email string `json:"email"`
-					Name  string `json:"name"`
+				var aboutResp struct {
+					User struct {
+						DisplayName  string `json:"displayName"`
+						EmailAddress string `json:"emailAddress"`
+					} `json:"user"`
 				}
-				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
-					userEmail = userInfo.Email
-					userName = userInfo.Name
-					if userInfo.Name != "" && userInfo.Email != "" {
-						accName = fmt.Sprintf("%s (%s)", userInfo.Name, userInfo.Email)
-					} else if userInfo.Email != "" {
-						accName = userInfo.Email
+				if err := json.NewDecoder(userResp.Body).Decode(&aboutResp); err == nil {
+					userEmail = aboutResp.User.EmailAddress
+					userName = aboutResp.User.DisplayName
+				}
+			}
+		}
+		// Fallback to oauth2 userinfo endpoint if About didn't return email
+		if userEmail == "" {
+			userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+			if err == nil {
+				userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
+				userResp, err := http.DefaultClient.Do(userReq)
+				if err == nil {
+					defer userResp.Body.Close()
+					var userInfo struct {
+						Email string `json:"email"`
+						Name  string `json:"name"`
+					}
+					if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
+						if userEmail == "" {
+							userEmail = userInfo.Email
+						}
+						if userName == "" {
+							userName = userInfo.Name
+						}
 					}
 				}
 			}
+		}
+		if stateData.Name != "" {
+			accName = stateData.Name
+		} else if userEmail != "" {
+			accName = fmt.Sprintf("Google Drive (%s)", userEmail)
 		}
 		gdriver := storage.NewGDriveDriver(accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
 		liveDriver = gdriver
@@ -1017,6 +1132,10 @@ button:hover { background: #475569; }
 		liveDriver = adapter
 	}
 
+	if stateData.Name != "" {
+		accName = stateData.Name
+	}
+
 	quota, qErr := liveDriver.About(r.Context())
 	if qErr == nil {
 		quotaTotal = quota.Total
@@ -1065,6 +1184,7 @@ button:hover { background: #475569; }
 		QuotaTotal:  quotaTotal,
 		QuotaUsed:   quotaUsed,
 		Credentials: string(credsBytes),
+		Email:       userEmail,
 		UpdatedAt:   time.Now().UTC(),
 	}
 

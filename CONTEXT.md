@@ -7,8 +7,12 @@ A lightweight unified cloud storage gateway and multi-account aggregator compile
 ## Language
 
 **RemoteAccount**:
-A configured and authenticated connection to a specific cloud storage provider with unique user credentials and capacity tracking.
+A configured and authenticated connection to a specific cloud storage provider with unique user credentials, an AccountPrincipal, an optional user-defined display alias, and capacity tracking.
 _Avoid_: Drive connection, cloud user, session
+
+**AccountPrincipal**:
+The canonical external user or resource identity associated with a RemoteAccount (e.g., an authenticated email address for OAuth/Mega services, `username@host` for WebDAV, or `bucket_name` for S3).
+_Avoid_: User ID, internal provider key, account number
 
 **Provider**:
 A supported third-party cloud storage service (e.g., Google Drive, OneDrive, Dropbox, S3, Mega).
