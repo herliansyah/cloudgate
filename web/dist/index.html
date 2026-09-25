@@ -3270,7 +3270,7 @@
           if (remMsg) {
             let guideText = '<strong>Langkah Perbaikan:</strong><br>';
             if (provider === 'mega') {
-              guideText += '1. Cek kembali ejaan email dan kata sandi Mega Anda.<br>2. Pastikan akun Mega Anda aktif dan tidak sedang terkunci.<br>3. Jika password mengandung karakter khusus, pastikan tidak ada spasi yang tidak sengaja tersalin.';
+              guideText += '1. Cek kembali ejaan email dan kata sandi Mega Anda (Akun Mega Free 100% didukung).<br>2. Error 402/Hashcash kini diselesaikan secara otomatis. Jika tetap tertahan, buka browser dan login 1x di <a href="https://mega.nz" target="_blank">mega.nz</a> untuk validasi IP Anda.<br>3. Pastikan akun Mega aktif dan tidak sedang terkunci.';
             } else if (provider === 'webdav' || provider === 'koofr') {
               guideText += '1. Periksa URL WebDAV, pastikan diawali <code>https://</code> dan diakhiri slash <code>/</code>.<br>2. Jika Nextcloud Anda mengaktifkan 2FA, Anda WAJIB membuat <em>App Password</em> di menu Security Nextcloud (bukan password login biasa).';
             } else if (provider === 's3') {
@@ -4946,15 +4946,16 @@
             <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
               <span>📘</span> Panduan Penghubungan Akun Mega (Native Engine):
             </div>
-            1. Masukkan <strong>Email</strong> dan <strong>Password</strong> akun Mega Anda di bawah.<br>
-            2. Cloudgate menggunakan library enkripsi client-side end-to-end Mega untuk melakukan verifikasi langsung ke server Mega.<br>
-            3. Saat tombol <em>Test & Hubungkan Akun</em> ditekan, Cloudgate akan menguji autentikasi dan membaca kuota asli akun Mega Anda.<br>
+            1. Masukkan <strong>Email</strong> dan <strong>Password</strong> akun Mega Anda di bawah (Akun <strong>Free / Gratis</strong> didukung penuh 100%).<br>
+            2. Cloudgate menggunakan engine enkripsi client-side end-to-end Mega untuk melakukan verifikasi langsung ke server Mega.<br>
+            3. Saat tombol <em>Verifikasi & Hubungkan</em> ditekan, Cloudgate menguji autentikasi (termasuk penyelesaian otomatis security challenge Hashcash PoW) dan membaca kuota asli akun Mega Anda.<br>
             <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
               <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
               <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+                <div>• <strong>Akun Free vs Berbayar</strong>: Akun Mega gratis <strong>tidak perlu bayar</strong>. Status <em>402 Payment Required</em> adalah kode internal Mega untuk security challenge (Proof-of-Work) yang kini diselesaikan otomatis oleh Cloudgate.</div>
                 <div>• <strong>Error "autentikasi Mega gagal"</strong>: Email atau kata sandi salah. Periksa kembali spasi atau karakter huruf besar/kecil.</div>
                 <div>• <strong>Akun dengan 2FA</strong>: Pastikan Anda menggunakan Master Password akun Mega Anda.</div>
-                <div>• <strong>Akun Terblokir Sementara</strong>: Jika terlalu sering salah memasukkan sandi, tunggu beberapa menit sebelum mencoba kembali.</div>
+                <div>• <strong>IP Rate-Limited / Challenge Berulang</strong>: Jika Mega memblokir IP baru, buka browser dan login 1x di <a href="https://mega.nz" target="_blank" style="color:var(--md-sys-color-primary);">mega.nz</a> dari jaringan yang sama untuk melegitimasi IP address Anda.</div>
               </div>
             </details>
           </div>
