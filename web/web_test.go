@@ -335,4 +335,43 @@ func TestCapacityCardBilingualPersistence(t *testing.T) {
 	}
 }
 
+func TestFilenUIComponentsAndGuide(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	requiredMarkers := []string{
+		`id: 'filen'`,
+		`filen: '#2764eb'`,
+		`<option value="filen">`,
+		`id="filenExtraFields"`,
+		`id="filenUser"`,
+		`id="filenPass"`,
+		`id="filenApiKey"`,
+		`export-api-key.sh`,
+		`4. Filen (Zero-Knowledge End-to-End Encrypted Cloud)`,
+		`id="filen-logo"`,
+	}
+
+	for _, marker := range requiredMarkers {
+		if !strings.Contains(content, marker) {
+			t.Errorf("expected embedded index.html to contain Filen marker %q, but was not found", marker)
+		}
+	}
+}
+
+
 
