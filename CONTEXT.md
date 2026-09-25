@@ -64,6 +64,10 @@ _Avoid_: Update bundle, binary patch
 The protocol handshake granting Cloudgate access tokens and refresh tokens from third-party identity providers without storing plaintext passwords.
 _Avoid_: Login session, API handshake
 
+**DirectCredentialAuth**:
+A high-friction authentication flow where Cloudgate manages raw user credentials (such as username/email and master password) to negotiate sessions directly with providers lacking standard delegated OAuth (notably MEGA), carrying inherent operational risks of third-party fraud lockout, IP flagging, and security challenges.
+_Avoid_: Password login, basic auth, direct connection
+
 **VendorDriver**:
 A thin adapter over an embedded `rclone/fs.Fs` that implements the uniform Driver interface (`About`, `List`, `Get`, `Put`, `Delete`, `Move`, `Mkdir`) by delegating chunked uploads, retry, rate-limiting and provider quirks to rclone while preserving single-binary deployment without an external executable.
 _Avoid_: Raw REST client, client wrapper, connector plugin

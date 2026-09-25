@@ -1928,7 +1928,7 @@ func (r *RcloneAdapter) getMegaClient() (*mega.Mega, error) {
 		m.SetClient(r.client)
 	}
 	if err := m.Login(user, pass); err != nil {
-		return nil, fmt.Errorf("autentikasi Mega gagal: %w", err)
+		return nil, fmt.Errorf("autentikasi Mega gagal: %w (periksa kembali email & kata sandi; jika benar, akun kemungkinan dikunci sementara oleh proteksi fraud MEGA atau diblokir dari IP/VPS)", err)
 	}
 	r.megaClient = m
 	return m, nil
