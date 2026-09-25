@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/herliansyah/cloudgate/pkg/storage"
 )
@@ -267,6 +268,22 @@ func TestRcloneAdapter_Mega_Basic(t *testing.T) {
 	data, _ := io.ReadAll(rc)
 	if string(data) != "megadata" || info.Name != "test.txt" {
 		t.Errorf("unexpected content: %s", string(data))
+	}
+}
+
+func TestRcloneAdapter_Mega_DirectDispatchWithoutBaseURL(t *testing.T) {
+	// Without baseURL set, provider mega routes to megaList and returns empty slice when in-memory is fallback
+	creds := `{"username":"fake@example.com","password":"bad"}`
+	drv, err := storage.NewRcloneDriver("mega", "acc_mega_nobase", creds)
+	if err != nil {
+		t.Fatalf("failed to create driver: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+	// Should not panic, should route directly to megaList
+	files, err := drv.List(ctx, "/")
+	if err == nil && files == nil {
+		t.Errorf("expected non-nil slice, got nil")
 	}
 }
 

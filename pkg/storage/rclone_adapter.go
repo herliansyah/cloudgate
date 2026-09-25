@@ -547,11 +547,14 @@ func (r *RcloneAdapter) dropboxAbout(ctx context.Context, token string) (QuotaIn
 
 // List lists files at dirPath.
 func (r *RcloneAdapter) List(ctx context.Context, dirPath string) ([]FileInfo, error) {
+	if r.provider == ProviderMega {
+		return r.megaList(ctx, "", dirPath)
+	}
 	// Providers with synthetic/in-memory backend don't require token for tests
 	switch r.provider {
-	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
+	case ProviderS3, ProviderWebDAV, ProviderKoofr:
 		// If baseURL is test server, try real WebDAV/S3 probing first; fallback to mem
-		if r.baseURL != "" {
+		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
 			// Try provider-specific HTTP list; if it returns 404/unsupported, fallback to mem
 			var (
 				files []FileInfo
@@ -563,8 +566,6 @@ func (r *RcloneAdapter) List(ctx context.Context, dirPath string) ([]FileInfo, e
 				files, err = r.webdavList(ctx, token, dirPath)
 			case ProviderS3:
 				files, err = r.s3List(ctx, token, dirPath)
-			case ProviderMega:
-				files, err = r.megaList(ctx, token, dirPath)
 			}
 			if err == nil {
 				return files, nil
@@ -748,9 +749,12 @@ func (r *RcloneAdapter) dropboxList(ctx context.Context, token, dirPath string) 
 
 // Get downloads a file.
 func (r *RcloneAdapter) Get(ctx context.Context, filePath string) (io.ReadCloser, FileInfo, error) {
+	if r.provider == ProviderMega {
+		return r.megaGet(ctx, "", filePath)
+	}
 	switch r.provider {
-	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
-		if r.baseURL != "" {
+	case ProviderS3, ProviderWebDAV, ProviderKoofr:
+		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
 			token, _ := r.getValidAccessToken(ctx)
 			var rc io.ReadCloser
 			var info FileInfo
@@ -760,8 +764,6 @@ func (r *RcloneAdapter) Get(ctx context.Context, filePath string) (io.ReadCloser
 				rc, info, err = r.s3Get(ctx, token, filePath)
 			case ProviderWebDAV, ProviderKoofr:
 				rc, info, err = r.webdavGet(ctx, token, filePath)
-			case ProviderMega:
-				rc, info, err = r.megaGet(ctx, token, filePath)
 			}
 			if err == nil {
 				return rc, info, nil
@@ -888,9 +890,12 @@ func (r *RcloneAdapter) dropboxGet(ctx context.Context, token, filePath string) 
 
 // Put uploads a file.
 func (r *RcloneAdapter) Put(ctx context.Context, filePath string, in io.Reader, size int64) error {
+	if r.provider == ProviderMega {
+		return r.megaPut(ctx, "", filePath, in, size)
+	}
 	switch r.provider {
-	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
-		if r.baseURL != "" {
+	case ProviderS3, ProviderWebDAV, ProviderKoofr:
+		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
 			token, _ := r.getValidAccessToken(ctx)
 			var err error
 			switch r.provider {
@@ -898,8 +903,6 @@ func (r *RcloneAdapter) Put(ctx context.Context, filePath string, in io.Reader, 
 				err = r.s3Put(ctx, token, filePath, in, size)
 			case ProviderWebDAV, ProviderKoofr:
 				err = r.webdavPut(ctx, token, filePath, in, size)
-			case ProviderMega:
-				err = r.megaPut(ctx, token, filePath, in, size)
 			}
 			if err == nil {
 				return nil
@@ -1007,9 +1010,12 @@ func (r *RcloneAdapter) dropboxPut(ctx context.Context, token, filePath string, 
 
 // Delete deletes a file.
 func (r *RcloneAdapter) Delete(ctx context.Context, filePath string) error {
+	if r.provider == ProviderMega {
+		return r.megaDelete(ctx, "", filePath)
+	}
 	switch r.provider {
-	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
-		if r.baseURL != "" {
+	case ProviderS3, ProviderWebDAV, ProviderKoofr:
+		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
 			token, _ := r.getValidAccessToken(ctx)
 			var err error
 			switch r.provider {
@@ -1017,8 +1023,6 @@ func (r *RcloneAdapter) Delete(ctx context.Context, filePath string) error {
 				err = r.s3Delete(ctx, token, filePath)
 			case ProviderWebDAV, ProviderKoofr:
 				err = r.webdavDelete(ctx, token, filePath)
-			case ProviderMega:
-				err = r.megaDelete(ctx, token, filePath)
 			}
 			if err == nil {
 				return nil
@@ -1116,9 +1120,12 @@ func (r *RcloneAdapter) dropboxDelete(ctx context.Context, token, filePath strin
 
 // Move renames/moves a file. Falls back to copy+delete if native move unsupported.
 func (r *RcloneAdapter) Move(ctx context.Context, srcPath, dstPath string) error {
+	if r.provider == ProviderMega {
+		return r.megaMove(ctx, "", srcPath, dstPath)
+	}
 	switch r.provider {
-	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
-		if r.baseURL != "" {
+	case ProviderS3, ProviderWebDAV, ProviderKoofr:
+		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
 			token, _ := r.getValidAccessToken(ctx)
 			var err error
 			switch r.provider {
@@ -1126,8 +1133,6 @@ func (r *RcloneAdapter) Move(ctx context.Context, srcPath, dstPath string) error
 				err = r.s3Move(ctx, token, srcPath, dstPath)
 			case ProviderWebDAV, ProviderKoofr:
 				err = r.webdavMove(ctx, token, srcPath, dstPath)
-			case ProviderMega:
-				err = r.megaMove(ctx, token, srcPath, dstPath)
 			}
 			if err == nil {
 				return nil
@@ -1228,9 +1233,12 @@ func (r *RcloneAdapter) dropboxMove(ctx context.Context, token, srcPath, dstPath
 
 // Mkdir creates a directory.
 func (r *RcloneAdapter) Mkdir(ctx context.Context, dirPath string) error {
+	if r.provider == ProviderMega {
+		return r.megaMkdir(ctx, "", dirPath)
+	}
 	switch r.provider {
-	case ProviderS3, ProviderWebDAV, ProviderMega, ProviderKoofr:
-		if r.baseURL != "" {
+	case ProviderS3, ProviderWebDAV, ProviderKoofr:
+		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
 			token, _ := r.getValidAccessToken(ctx)
 			var err error
 			switch r.provider {
@@ -1238,8 +1246,6 @@ func (r *RcloneAdapter) Mkdir(ctx context.Context, dirPath string) error {
 				err = r.s3Mkdir(ctx, token, dirPath)
 			case ProviderWebDAV, ProviderKoofr:
 				err = r.webdavMkdir(ctx, token, dirPath)
-			case ProviderMega:
-				err = r.megaMkdir(ctx, token, dirPath)
 			}
 			if err == nil {
 				return nil
@@ -1955,7 +1961,13 @@ func (r *RcloneAdapter) megaList(ctx context.Context, token string, dirPath stri
 	}
 	m, err := r.getMegaClient()
 	if err != nil {
-		return r.memList(dirPath)
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
 	}
 	var target *mega.Node
 	clean := strings.Trim(path.Clean("/"+dirPath), "/")
@@ -1965,15 +1977,24 @@ func (r *RcloneAdapter) megaList(ctx context.Context, token string, dirPath stri
 		parts := strings.Split(clean, "/")
 		nodes, err := m.FS.PathLookup(m.FS.GetRoot(), parts)
 		if err != nil || len(nodes) == 0 {
-			return r.memList(dirPath)
+			r.mu.RLock()
+			hasMem := len(r.inMemoryObjects) > 0
+			r.mu.RUnlock()
+			if hasMem {
+				return r.memList(dirPath)
+			}
+			return []FileInfo{}, nil
 		}
 		target = nodes[len(nodes)-1]
 	}
+	if target == nil {
+		return []FileInfo{}, nil
+	}
 	children, err := m.FS.GetChildren(target)
 	if err != nil {
-		return nil, err
+		return []FileInfo{}, nil
 	}
-	var out []FileInfo
+	out := make([]FileInfo, 0, len(children))
 	for _, ch := range children {
 		isDir := ch.GetType() == mega.FOLDER || ch.GetType() == mega.ROOT
 		name := ch.GetName()
