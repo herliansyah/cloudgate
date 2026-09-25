@@ -142,6 +142,18 @@ func (d *DB) migrate() error {
 		is_dir INTEGER NOT NULL DEFAULT 0,
 		created_at DATETIME NOT NULL
 	);
+
+	CREATE TABLE IF NOT EXISTS gateway_auth (
+		id INTEGER PRIMARY KEY CHECK (id = 1),
+		password_hash TEXT NOT NULL,
+		updated_at DATETIME NOT NULL
+	);
+
+	CREATE TABLE IF NOT EXISTS gateway_sessions (
+		token TEXT PRIMARY KEY,
+		created_at DATETIME NOT NULL,
+		expires_at DATETIME NOT NULL
+	);
 	`
 	if _, err := d.conn.Exec(schema); err != nil {
 		return err
@@ -385,3 +397,93 @@ func (d *DB) DeleteTrashRecord(id string) error {
 	_, err := d.conn.Exec(`DELETE FROM trash_records WHERE id = ?`, id)
 	return err
 }
+
+// SetMasterPassword sets or updates the master password hash.
+func (d *DB) SetMasterPassword(hash string) error {
+	_, err := d.conn.Exec(`
+		INSERT INTO gateway_auth (id, password_hash, updated_at)
+		VALUES (1, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = excluded.updated_at
+	`, hash, time.Now().UTC())
+	return err
+}
+
+// GetMasterPasswordHash returns the stored master password hash, or empty string if not configured.
+func (d *DB) GetMasterPasswordHash() (string, error) {
+	var hash string
+	err := d.conn.QueryRow(`SELECT password_hash FROM gateway_auth WHERE id = 1`).Scan(&hash)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	return hash, err
+}
+
+// ClearMasterPassword deletes the master password and wipes all active sessions.
+func (d *DB) ClearMasterPassword() error {
+	tx, err := d.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`DELETE FROM gateway_auth WHERE id = 1`); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`DELETE FROM gateway_sessions`); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// HasMasterPassword returns true if a master password has been configured.
+func (d *DB) HasMasterPassword() (bool, error) {
+	hash, err := d.GetMasterPasswordHash()
+	if err != nil {
+		return false, err
+	}
+	return hash != "", nil
+}
+
+// CreateGatewaySession records an active session token with an expiration time.
+func (d *DB) CreateGatewaySession(token string, expiresAt time.Time) error {
+	_, err := d.conn.Exec(`
+		INSERT INTO gateway_sessions (token, created_at, expires_at)
+		VALUES (?, ?, ?)
+	`, token, time.Now().UTC(), expiresAt.UTC())
+	return err
+}
+
+// ValidateGatewaySession checks if a session token is valid and not expired.
+func (d *DB) ValidateGatewaySession(token string) (bool, error) {
+	if token == "" {
+		return false, nil
+	}
+	var expiresAt time.Time
+	err := d.conn.QueryRow(`
+		SELECT expires_at FROM gateway_sessions WHERE token = ?
+	`, token).Scan(&expiresAt)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if time.Now().UTC().After(expiresAt) {
+		_, _ = d.conn.Exec(`DELETE FROM gateway_sessions WHERE token = ?`, token)
+		return false, nil
+	}
+	return true, nil
+}
+
+// DeleteGatewaySession removes an active session token.
+func (d *DB) DeleteGatewaySession(token string) error {
+	_, err := d.conn.Exec(`DELETE FROM gateway_sessions WHERE token = ?`, token)
+	return err
+}
+
+// PurgeExpiredGatewaySessions deletes all expired sessions.
+func (d *DB) PurgeExpiredGatewaySessions() error {
+	_, err := d.conn.Exec(`DELETE FROM gateway_sessions WHERE expires_at < ?`, time.Now().UTC())
+	return err
+}
+

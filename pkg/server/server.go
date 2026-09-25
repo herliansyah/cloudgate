@@ -78,6 +78,14 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/accounts/{id}", s.handleDeleteAccount)
 	mux.HandleFunc("POST /api/storage/sync", s.handleSyncStorage)
 
+	// GatewayAuth Routes
+	mux.HandleFunc("GET /api/auth/gateway/status", s.handleGatewayStatus)
+	mux.HandleFunc("POST /api/auth/gateway/setup", s.handleGatewaySetup)
+	mux.HandleFunc("POST /api/auth/gateway/unlock", s.handleGatewayUnlock)
+	mux.HandleFunc("POST /api/auth/gateway/lock", s.handleGatewayLock)
+	mux.HandleFunc("POST /api/auth/gateway/change-password", s.handleGatewayChangePassword)
+	mux.HandleFunc("POST /api/auth/gateway/disable", s.handleGatewayDisable)
+
 	// OAuth Routes
 	mux.HandleFunc("GET /api/auth/{provider}/login", s.handleOAuthLogin)
 	mux.HandleFunc("GET /api/auth/{provider}/callback", s.handleOAuthCallback)
@@ -131,7 +139,7 @@ func (s *Server) Handler() http.Handler {
 		})
 	}
 
-	return s.corsMiddleware(mux)
+	return s.corsMiddleware(s.authMiddleware(mux))
 }
 
 func (s *Server) corsMiddleware(next http.Handler) http.Handler {
@@ -145,6 +153,45 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hasPassword, err := s.database.HasMasterPassword()
+		if err != nil || !hasPassword {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		path := r.URL.Path
+		// Whitelisted paths
+		if !strings.HasPrefix(path, "/api/") ||
+			path == "/api/auth/gateway/status" ||
+			path == "/api/auth/gateway/unlock" ||
+			path == "/api/auth/gateway/setup" ||
+			(strings.HasPrefix(path, "/api/auth/") && strings.HasSuffix(path, "/callback")) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Check session cookie or Authorization Bearer header
+		token := ""
+		if cookie, err := r.Cookie("cg_session"); err == nil && cookie.Value != "" {
+			token = cookie.Value
+		} else if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+			token = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+
+		if token != "" {
+			valid, err := s.database.ValidateGatewaySession(token)
+			if err == nil && valid {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
+		writeError(w, http.StatusUnauthorized, "GatewayAuth terkunci. Silakan masukkan MasterPassword.")
 	})
 }
 
@@ -1692,3 +1739,242 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})
 }
+
+func (s *Server) handleGatewayStatus(w http.ResponseWriter, r *http.Request) {
+	hasPassword, err := s.database.HasMasterPassword()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	authenticated := false
+	if !hasPassword {
+		authenticated = true
+	} else {
+		token := ""
+		if cookie, err := r.Cookie("cg_session"); err == nil && cookie.Value != "" {
+			token = cookie.Value
+		} else if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+			token = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+		if token != "" {
+			valid, err := s.database.ValidateGatewaySession(token)
+			if err == nil && valid {
+				authenticated = true
+			}
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"enabled":       hasPassword,
+		"authenticated": authenticated,
+	})
+}
+
+func (s *Server) handleGatewaySetup(w http.ResponseWriter, r *http.Request) {
+	hasPassword, err := s.database.HasMasterPassword()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if hasPassword {
+		writeError(w, http.StatusBadRequest, "MasterPassword sudah disetel. Gunakan menu ganti kata sandi.")
+		return
+	}
+
+	var req struct {
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if len(req.Password) < 4 {
+		writeError(w, http.StatusBadRequest, "Kata sandi minimal 4 karakter")
+		return
+	}
+
+	hash, err := auth.HashMasterPassword(req.Password)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := s.database.SetMasterPassword(hash); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	token, err := auth.GenerateSessionToken()
+	if err == nil {
+		_ = s.database.CreateGatewaySession(token, time.Now().Add(7*24*time.Hour))
+		http.SetCookie(w, &http.Cookie{
+			Name:     "cg_session",
+			Value:    token,
+			Path:     "/",
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+			MaxAge:   7 * 24 * 3600,
+		})
+	}
+
+	_ = s.database.RecordAudit("auth", "gateway", "system", "MasterPassword diaktifkan", "success", 0)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"token":   token,
+		"message": "MasterPassword berhasil diaktifkan",
+	})
+}
+
+func (s *Server) handleGatewayUnlock(w http.ResponseWriter, r *http.Request) {
+	hash, err := s.database.GetMasterPasswordHash()
+	if err != nil || hash == "" {
+		writeError(w, http.StatusBadRequest, "GatewayAuth belum diaktifkan")
+		return
+	}
+
+	var req struct {
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if !auth.VerifyMasterPassword(hash, req.Password) {
+		_ = s.database.RecordAudit("auth", "gateway", "system", "Percobaan unlock gateway gagal: kata sandi salah", "failed", 0)
+		writeError(w, http.StatusUnauthorized, "Kata sandi salah")
+		return
+	}
+
+	token, err := auth.GenerateSessionToken()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal membuat token sesi")
+		return
+	}
+
+	if err := s.database.CreateGatewaySession(token, time.Now().Add(7*24*time.Hour)); err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal menyimpan sesi")
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "cg_session",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   7 * 24 * 3600,
+	})
+
+	_ = s.database.RecordAudit("auth", "gateway", "system", "GatewayAuth berhasil dibuka", "success", 0)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"token":   token,
+		"message": "Gateway berhasil dibuka",
+	})
+}
+
+func (s *Server) handleGatewayLock(w http.ResponseWriter, r *http.Request) {
+	if cookie, err := r.Cookie("cg_session"); err == nil && cookie.Value != "" {
+		_ = s.database.DeleteGatewaySession(cookie.Value)
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "cg_session",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+	})
+	_ = s.database.RecordAudit("auth", "gateway", "system", "GatewayAuth dikunci", "success", 0)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "Gateway berhasil dikunci",
+	})
+}
+
+func (s *Server) handleGatewayChangePassword(w http.ResponseWriter, r *http.Request) {
+	hash, err := s.database.GetMasterPasswordHash()
+	if err != nil || hash == "" {
+		writeError(w, http.StatusBadRequest, "GatewayAuth belum diaktifkan")
+		return
+	}
+
+	var req struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if !auth.VerifyMasterPassword(hash, req.CurrentPassword) {
+		writeError(w, http.StatusUnauthorized, "Kata sandi saat ini salah")
+		return
+	}
+
+	if len(req.NewPassword) < 4 {
+		writeError(w, http.StatusBadRequest, "Kata sandi baru minimal 4 karakter")
+		return
+	}
+
+	newHash, err := auth.HashMasterPassword(req.NewPassword)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := s.database.SetMasterPassword(newHash); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	_ = s.database.RecordAudit("auth", "gateway", "system", "MasterPassword berhasil diperbarui", "success", 0)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "Kata sandi berhasil diperbarui",
+	})
+}
+
+func (s *Server) handleGatewayDisable(w http.ResponseWriter, r *http.Request) {
+	hash, err := s.database.GetMasterPasswordHash()
+	if err != nil || hash == "" {
+		writeError(w, http.StatusBadRequest, "GatewayAuth belum diaktifkan")
+		return
+	}
+
+	var req struct {
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if !auth.VerifyMasterPassword(hash, req.Password) {
+		writeError(w, http.StatusUnauthorized, "Kata sandi salah")
+		return
+	}
+
+	if err := s.database.ClearMasterPassword(); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "cg_session",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+	})
+
+	_ = s.database.RecordAudit("auth", "gateway", "system", "GatewayAuth dinonaktifkan", "success", 0)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "GatewayAuth berhasil dinonaktifkan",
+	})
+}
+

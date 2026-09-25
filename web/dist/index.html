@@ -1848,6 +1848,9 @@
 
     <!-- Actions -->
     <div class="nav-actions">
+      <button class="btn-icon" id="btnGatewayLock" title="Kunci Gateway (GatewayAuth)" onclick="lockGateway()" style="display:none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      </button>
       <button class="btn-icon" id="btnTheme" title="Ganti Tema Gelap/Terang" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span>
       </button>
@@ -2452,6 +2455,119 @@
     </div>
   </div>
 
+  <!-- GatewayAuth Lock Screen Overlay -->
+  <div id="gatewayLockOverlay" style="display:none; position:fixed; inset:0; z-index:999999; background:var(--md-sys-color-surface); flex-direction:column; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--md-sys-color-surface-container-high); border:1px solid var(--md-sys-color-outline-variant); border-radius:var(--md-sys-shape-corner-xl); padding:36px; max-width:420px; width:100%; box-shadow:0 12px 40px rgba(0,0,0,0.3); text-align:center;">
+      <div style="width:64px; height:64px; border-radius:50%; background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      </div>
+      <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:8px; color:var(--md-sys-color-on-surface);">Cloudgate Terkunci</h2>
+      <p style="font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); margin-bottom:24px; line-height:1.4;">Masukkan MasterPassword untuk mengakses gateway penyimpanan cloud Anda.</p>
+      
+      <form onsubmit="submitGatewayUnlock(event)">
+        <div style="margin-bottom:16px; text-align:left;">
+          <input type="password" id="gatewayUnlockPassword" placeholder="MasterPassword" style="width:100%; padding:14px 16px; border-radius:var(--md-sys-shape-corner-md); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font-size:1rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--md-sys-color-primary)'" onblur="this.style.borderColor='var(--md-sys-color-outline)'">
+        </div>
+        <div id="gatewayUnlockError" style="display:none; color:var(--md-sys-color-error); font-size:0.82rem; margin-bottom:16px; text-align:left;"></div>
+        <button type="submit" id="btnGatewayUnlock" class="btn btn-primary" style="width:100%; padding:12px; font-size:1rem; justify-content:center;">
+          Buka Kunci
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Setup MasterPassword -->
+  <div class="modal-backdrop" id="setupMasterPasswordModal" onclick="if(event.target===this)closeModal('setupMasterPasswordModal')">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </div>
+          <span>Aktifkan MasterPassword</span>
+        </div>
+        <button class="btn-icon" onclick="closeModal('setupMasterPasswordModal')">✕</button>
+      </div>
+      <div style="margin:12px 0; font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); line-height:1.5;">
+        <p style="margin-bottom:14px;">MasterPassword akan melindungi dashboard dan REST API Cloudgate dari akses tidak sah di jaringan lokal (LAN).</p>
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Kata Sandi Baru (Min. 4 karakter)</label>
+          <input type="password" id="setupMasterPwdInput" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Konfirmasi Kata Sandi</label>
+          <input type="password" id="setupMasterPwdConfirm" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
+        </div>
+        <div id="setupMasterPwdError" style="display:none; color:var(--md-sys-color-error); font-size:0.8rem; margin-top:8px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-text" onclick="closeModal('setupMasterPasswordModal')">Batal</button>
+        <button class="btn btn-primary" onclick="submitSetupMasterPassword()">Aktifkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Change MasterPassword -->
+  <div class="modal-backdrop" id="changeMasterPasswordModal" onclick="if(event.target===this)closeModal('changeMasterPasswordModal')">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>
+          </div>
+          <span>Ganti Kata Sandi Master</span>
+        </div>
+        <button class="btn-icon" onclick="closeModal('changeMasterPasswordModal')">✕</button>
+      </div>
+      <div style="margin:12px 0; font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); line-height:1.5;">
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Kata Sandi Saat Ini</label>
+          <input type="password" id="changeMasterPwdCurrent" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Kata Sandi Baru</label>
+          <input type="password" id="changeMasterPwdNew" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Konfirmasi Kata Sandi Baru</label>
+          <input type="password" id="changeMasterPwdConfirm" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
+        </div>
+        <div id="changeMasterPwdError" style="display:none; color:var(--md-sys-color-error); font-size:0.8rem; margin-top:8px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-text" onclick="closeModal('changeMasterPasswordModal')">Batal</button>
+        <button class="btn btn-primary" onclick="submitChangeMasterPassword()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Disable GatewayAuth -->
+  <div class="modal-backdrop" id="disableGatewayModal" onclick="if(event.target===this)closeModal('disableGatewayModal')">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);background-color:var(--md-sys-color-error-container);color:var(--md-sys-color-error);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          </div>
+          <span>Nonaktifkan GatewayAuth?</span>
+        </div>
+        <button class="btn-icon" onclick="closeModal('disableGatewayModal')">✕</button>
+      </div>
+      <div style="margin:12px 0; font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); line-height:1.5;">
+        <p style="margin-bottom:12px;">Menonaktifkan proteksi ini akan membuat dashboard dan API Cloudgate dapat diakses secara bebas tanpa kata sandi oleh siapapun di jaringan.</p>
+        <div>
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Masukkan MasterPassword untuk Konfirmasi</label>
+          <input type="password" id="disableGatewayPwdInput" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
+        </div>
+        <div id="disableGatewayPwdError" style="display:none; color:var(--md-sys-color-error); font-size:0.8rem; margin-top:8px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-text" onclick="closeModal('disableGatewayModal')">Batal</button>
+        <button class="btn btn-primary" style="background-color:var(--md-sys-color-error);color:#fff;" onclick="submitDisableGateway()">Nonaktifkan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- M3 Context Menu -->
   <div class="context-menu" id="contextMenu"></div>
 
@@ -2732,7 +2848,240 @@
       yandex: '#fc3f1d'
     };
 
+    // GatewayAuth State & Methods
+    let gatewayAuthEnabled = false;
+    let gatewayAuthenticated = true;
+
+    async function checkGatewayAuthStatus() {
+      try {
+        const res = await fetch('/api/auth/gateway/status');
+        if (res.ok) {
+          const data = await res.json();
+          gatewayAuthEnabled = !!data.enabled;
+          gatewayAuthenticated = !!data.authenticated;
+          const btnLock = document.getElementById('btnGatewayLock');
+          if (btnLock) {
+            btnLock.style.display = gatewayAuthEnabled ? 'inline-flex' : 'none';
+          }
+          return data;
+        }
+      } catch (e) {
+        console.error('Failed to check gateway auth status:', e);
+      }
+      return { enabled: false, authenticated: true };
+    }
+
+    function showLockScreen() {
+      const overlay = document.getElementById('gatewayLockOverlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        const inp = document.getElementById('gatewayUnlockPassword');
+        if (inp) {
+          inp.value = '';
+          setTimeout(() => inp.focus(), 100);
+        }
+        const errDiv = document.getElementById('gatewayUnlockError');
+        if (errDiv) errDiv.style.display = 'none';
+      }
+    }
+
+    function hideLockScreen() {
+      const overlay = document.getElementById('gatewayLockOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+    }
+
+    async function submitGatewayUnlock(e) {
+      if (e) e.preventDefault();
+      const pwd = document.getElementById('gatewayUnlockPassword').value;
+      const errDiv = document.getElementById('gatewayUnlockError');
+      const btn = document.getElementById('btnGatewayUnlock');
+
+      if (!pwd) {
+        errDiv.textContent = 'Masukkan kata sandi master';
+        errDiv.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Memverifikasi...';
+      errDiv.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/gateway/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          gatewayAuthenticated = true;
+          hideLockScreen();
+          showToast('Gateway berhasil dibuka');
+          await loadAccounts();
+          await loadStats();
+          if (currentMode === 'storage') {
+            renderStorageHub();
+          } else {
+            selectDashboard();
+          }
+          await updateProviderAuthUI();
+        } else {
+          errDiv.textContent = data.error || 'Kata sandi salah. Silakan coba lagi.';
+          errDiv.style.display = 'block';
+          const inp = document.getElementById('gatewayUnlockPassword');
+          if (inp) inp.select();
+        }
+      } catch (err) {
+        errDiv.textContent = 'Gagal menghubungi server: ' + err.message;
+        errDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Buka Kunci';
+      }
+    }
+
+    async function lockGateway() {
+      try {
+        await fetch('/api/auth/gateway/lock', { method: 'POST' });
+        gatewayAuthenticated = false;
+        showLockScreen();
+        showToast('Gateway telah dikunci');
+      } catch (e) {
+        console.error('Failed to lock gateway:', e);
+      }
+    }
+
+    async function submitSetupMasterPassword() {
+      const p1 = document.getElementById('setupMasterPwdInput').value;
+      const p2 = document.getElementById('setupMasterPwdConfirm').value;
+      const errDiv = document.getElementById('setupMasterPwdError');
+
+      if (!p1 || p1.length < 4) {
+        errDiv.textContent = 'Kata sandi minimal 4 karakter';
+        errDiv.style.display = 'block';
+        return;
+      }
+      if (p1 !== p2) {
+        errDiv.textContent = 'Konfirmasi kata sandi tidak cocok';
+        errDiv.style.display = 'block';
+        return;
+      }
+
+      errDiv.style.display = 'none';
+      try {
+        const res = await fetch('/api/auth/gateway/setup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: p1 })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeModal('setupMasterPasswordModal');
+          gatewayAuthEnabled = true;
+          gatewayAuthenticated = true;
+          const btnLock = document.getElementById('btnGatewayLock');
+          if (btnLock) btnLock.style.display = 'inline-flex';
+          showToast('MasterPassword berhasil diaktifkan! Gateway kini terlindungi.');
+          if (currentMode === 'storage') renderStorageHub();
+        } else {
+          errDiv.textContent = data.error || 'Gagal mengaktifkan MasterPassword';
+          errDiv.style.display = 'block';
+        }
+      } catch (err) {
+        errDiv.textContent = 'Error: ' + err.message;
+        errDiv.style.display = 'block';
+      }
+    }
+
+    async function submitChangeMasterPassword() {
+      const curr = document.getElementById('changeMasterPwdCurrent').value;
+      const p1 = document.getElementById('changeMasterPwdNew').value;
+      const p2 = document.getElementById('changeMasterPwdConfirm').value;
+      const errDiv = document.getElementById('changeMasterPwdError');
+
+      if (!curr) {
+        errDiv.textContent = 'Masukkan kata sandi saat ini';
+        errDiv.style.display = 'block';
+        return;
+      }
+      if (!p1 || p1.length < 4) {
+        errDiv.textContent = 'Kata sandi baru minimal 4 karakter';
+        errDiv.style.display = 'block';
+        return;
+      }
+      if (p1 !== p2) {
+        errDiv.textContent = 'Konfirmasi kata sandi baru tidak cocok';
+        errDiv.style.display = 'block';
+        return;
+      }
+
+      errDiv.style.display = 'none';
+      try {
+        const res = await fetch('/api/auth/gateway/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current_password: curr, new_password: p1 })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeModal('changeMasterPasswordModal');
+          showToast('Kata sandi berhasil diperbarui!');
+          if (currentMode === 'storage') renderStorageHub();
+        } else {
+          errDiv.textContent = data.error || 'Gagal mengubah kata sandi';
+          errDiv.style.display = 'block';
+        }
+      } catch (err) {
+        errDiv.textContent = 'Error: ' + err.message;
+        errDiv.style.display = 'block';
+      }
+    }
+
+    async function submitDisableGateway() {
+      const pwd = document.getElementById('disableGatewayPwdInput').value;
+      const errDiv = document.getElementById('disableGatewayPwdError');
+
+      if (!pwd) {
+        errDiv.textContent = 'Masukkan kata sandi untuk konfirmasi';
+        errDiv.style.display = 'block';
+        return;
+      }
+
+      errDiv.style.display = 'none';
+      try {
+        const res = await fetch('/api/auth/gateway/disable', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeModal('disableGatewayModal');
+          gatewayAuthEnabled = false;
+          gatewayAuthenticated = true;
+          const btnLock = document.getElementById('btnGatewayLock');
+          if (btnLock) btnLock.style.display = 'none';
+          showToast('GatewayAuth telah dinonaktifkan. Akses kembali terbuka.');
+          if (currentMode === 'storage') renderStorageHub();
+        } else {
+          errDiv.textContent = data.error || 'Kata sandi salah';
+          errDiv.style.display = 'block';
+        }
+      } catch (err) {
+        errDiv.textContent = 'Error: ' + err.message;
+        errDiv.style.display = 'block';
+      }
+    }
+
     async function initApp() {
+      const authStatus = await checkGatewayAuthStatus();
+      if (authStatus && authStatus.enabled && !authStatus.authenticated) {
+        showLockScreen();
+        return;
+      }
+      hideLockScreen();
       await loadAccounts();
       await loadStats();
       selectDashboard();
@@ -3261,6 +3610,40 @@
               </div>
               <div style="font-weight:700;font-size:0.95rem;">Hubungkan Akun Penyimpanan Baru</div>
               <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, dll.</div>
+            </div>
+
+            <!-- Gateway Security Card -->
+            <div class="storage-breakdown-card" style="margin-top: 10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <div style="width:40px;height:40px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-surface-container);display:flex;align-items:center;justify-content:center;color:var(--md-sys-color-primary);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                  </div>
+                  <div>
+                    <div style="font-weight:700;font-size:1rem;display:flex;align-items:center;gap:8px;">
+                      Keamanan Gateway (GatewayAuth)
+                      ${gatewayAuthEnabled ? '<span class="status-indicator-dot active" title="Aktif"></span><span style="font-size:0.75rem;font-weight:700;color:var(--status-success);">AKTIF</span>' : '<span class="status-indicator-dot inactive" title="Nonaktif"></span><span style="font-size:0.75rem;font-weight:700;color:var(--md-sys-color-on-surface-variant);">NONAKTIF</span>'}
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;">
+                      ${gatewayAuthEnabled ? 'Dashboard dan API lokal dilindungi dengan MasterPassword.' : 'Akses terbuka tanpa kata sandi (cocok untuk pemakaian desktop lokal pribadi).'}
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  ${gatewayAuthEnabled ? `
+                    <button class="btn btn-secondary btn-sm" onclick="openModal('changeMasterPasswordModal')">
+                      Ganti Kata Sandi
+                    </button>
+                    <button class="btn btn-text btn-sm" style="color:var(--md-sys-color-error);" onclick="openModal('disableGatewayModal')">
+                      Nonaktifkan Proteksi
+                    </button>
+                  ` : `
+                    <button class="btn btn-primary btn-sm" onclick="openModal('setupMasterPasswordModal')">
+                      Aktifkan MasterPassword
+                    </button>
+                  `}
+                </div>
+              </div>
             </div>
           </div>
         </div>
