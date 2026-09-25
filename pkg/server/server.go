@@ -84,7 +84,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/auth/gateway/unlock", s.handleGatewayUnlock)
 	mux.HandleFunc("POST /api/auth/gateway/lock", s.handleGatewayLock)
 	mux.HandleFunc("POST /api/auth/gateway/change-password", s.handleGatewayChangePassword)
-	mux.HandleFunc("POST /api/auth/gateway/disable", s.handleGatewayDisable)
 
 	// OAuth Routes
 	mux.HandleFunc("GET /api/auth/{provider}/login", s.handleOAuthLogin)
@@ -156,20 +155,64 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func isLoopbackRequest(r *http.Request) bool {
+	if r.RemoteAddr == "" {
+		return true
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hasPassword, err := s.database.HasMasterPassword()
-		if err != nil || !hasPassword {
-			next.ServeHTTP(w, r)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		path := r.URL.Path
-		// Whitelisted paths
-		if !strings.HasPrefix(path, "/api/") ||
-			path == "/api/auth/gateway/status" ||
+
+		// Non-API paths (static assets, HTML, CSS, JS) are served freely so UI can render lock/setup screen
+		if !strings.HasPrefix(path, "/api/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// When MasterPassword is not yet configured (Mandatory First-Run Setup state):
+		if !hasPassword {
+			if path == "/api/auth/gateway/status" || path == "/api/info" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			if strings.HasPrefix(path, "/api/auth/") && strings.HasSuffix(path, "/callback") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			if path == "/api/auth/gateway/setup" {
+				if isLoopbackRequest(r) {
+					next.ServeHTTP(w, r)
+					return
+				}
+				writeError(w, http.StatusForbidden, "Inisialisasi MasterPassword hanya diizinkan dari localhost.")
+				return
+			}
+			writeError(w, http.StatusUnauthorized, "Cloudgate belum diinisialisasi. Silakan buat MasterPassword terlebih dahulu dari localhost atau CLI.")
+			return
+		}
+
+		// Whitelisted paths when MasterPassword is configured:
+		if path == "/api/auth/gateway/status" ||
 			path == "/api/auth/gateway/unlock" ||
 			path == "/api/auth/gateway/setup" ||
+			path == "/api/info" ||
 			(strings.HasPrefix(path, "/api/auth/") && strings.HasSuffix(path, "/callback")) {
 			next.ServeHTTP(w, r)
 			return
@@ -1867,10 +1910,9 @@ func (s *Server) handleGatewayStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	loopback := isLoopbackRequest(r)
 	authenticated := false
-	if !hasPassword {
-		authenticated = true
-	} else {
+	if hasPassword {
 		token := ""
 		if cookie, err := r.Cookie("cg_session"); err == nil && cookie.Value != "" {
 			token = cookie.Value
@@ -1886,12 +1928,19 @@ func (s *Server) handleGatewayStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"enabled":       hasPassword,
-		"authenticated": authenticated,
+		"enabled":        hasPassword,
+		"setup_required": !hasPassword,
+		"can_setup":      !hasPassword && loopback,
+		"authenticated":  authenticated,
 	})
 }
 
 func (s *Server) handleGatewaySetup(w http.ResponseWriter, r *http.Request) {
+	if !isLoopbackRequest(r) {
+		writeError(w, http.StatusForbidden, "Inisialisasi MasterPassword hanya diizinkan dari localhost.")
+		return
+	}
+
 	hasPassword, err := s.database.HasMasterPassword()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -2055,46 +2104,6 @@ func (s *Server) handleGatewayChangePassword(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"message": "Kata sandi berhasil diperbarui",
-	})
-}
-
-func (s *Server) handleGatewayDisable(w http.ResponseWriter, r *http.Request) {
-	hash, err := s.database.GetMasterPasswordHash()
-	if err != nil || hash == "" {
-		writeError(w, http.StatusBadRequest, "GatewayAuth belum diaktifkan")
-		return
-	}
-
-	var req struct {
-		Password string `json:"password"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	if !auth.VerifyMasterPassword(hash, req.Password) {
-		writeError(w, http.StatusUnauthorized, "Kata sandi salah")
-		return
-	}
-
-	if err := s.database.ClearMasterPassword(); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "cg_session",
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		MaxAge:   -1,
-	})
-
-	_ = s.database.RecordAudit("auth", "gateway", "system", "GatewayAuth dinonaktifkan", "success", 0)
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"message": "GatewayAuth berhasil dinonaktifkan",
 	})
 }
 

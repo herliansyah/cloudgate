@@ -119,7 +119,7 @@ URL akses langsung atau sementara yang dibuat untuk VirtualFile, memanfaatkan ka
 _Hindari_: Public URL, download link
 
 **GatewayAuth**:
-Sistem kontrol akses lokal yang membatasi akses ke antarmuka web Cloudgate dan endpoint REST API hingga sesi yang valid terbentuk.
+Sistem kontrol akses lokal wajib yang membatasi akses ke antarmuka web Cloudgate dan endpoint REST API hingga sesi yang valid terbentuk menggunakan MasterPassword. Inisialisasi awal wajib dilakukan saat pertama kali dipasang dan hanya diizinkan melalui koneksi loopback (localhost) atau CLI.
 _Hindari_: Login page, user account system, web guard
 
 **MasterPassword**:

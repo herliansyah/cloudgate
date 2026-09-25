@@ -94,6 +94,9 @@ cloudgate serve            Jalankan server di terminal saat ini
   --port int               Port awal (default 5210, mencari otomatis jika terpakai)
 cloudgate accounts         Daftar akun penyimpanan cloud yang terhubung
 cloudgate audit            Lihat 100 aktivitas log audit terbaru
+cloudgate auth status     Periksa status proteksi GatewayAuth
+cloudgate auth setup <pw>  Setel MasterPassword awal melalui terminal
+cloudgate auth reset       Reset MasterPassword dan kunci ulang ke status setup awal
 cloudgate version          Tampilkan informasi versi dan pembuat
 cloudgate help             Tampilkan bantuan perintah CLI
 ```
@@ -106,7 +109,7 @@ cloudgate help             Tampilkan bantuan perintah CLI
 .
 ├── cmd/cloudgate/         # Titik masuk utama binary dan perintah CLI
 ├── pkg/
-│   ├── auth/              # Pembuatan URL persetujuan OAuth2 & pertukaran token
+│   ├── auth/              # Pembuatan URL persetujuan OAuth2, pertukaran token, & MasterPassword bcrypt
 │   ├── config/            # Resolver path konfigurasi & lockfile single-instance
 │   ├── db/                # Skema SQLite pure-Go, migrasi, & pencarian FTS5
 │   ├── server/            # REST API, server aset statis, & manajemen port
@@ -116,7 +119,7 @@ cloudgate help             Tampilkan bantuan perintah CLI
 │   └── vault/             # Enkripsi vault PBKDF2 + AES-256-GCM
 ├── web/                   # Frontend SPA tersemat (Material Design 3 mode gelap)
 ├── docs/
-│   ├── adr/               # Catatan Keputusan Arsitektur (ADR 0001 - 0019)
+│   ├── adr/               # Catatan Keputusan Arsitektur (ADR 0001 - 0021)
 │   └── agents/            # Konvensi domain dan spesifikasi triage agent
 ├── CONTEXT.md             # Kosakata kanonikal dan glosarium domain (English)
 ├── CONTEXT.id.md          # Kosakata kanonikal dan glosarium domain (Bahasa Indonesia)

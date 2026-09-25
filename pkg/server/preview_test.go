@@ -34,6 +34,7 @@ func TestFilePreviewAndFolderNavigation(t *testing.T) {
 
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
 
 	// Upload a PDF file
 	uploadFile(t, ts.URL, "test_drive", "/documents", "sample.pdf", "%PDF-1.4 sample content")

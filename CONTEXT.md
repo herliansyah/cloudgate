@@ -119,7 +119,7 @@ A temporary or direct access URL generated for a VirtualFile, utilizing native p
 _Avoid_: Public URL, download link
 
 **GatewayAuth**:
-The local access control system that restricts access to Cloudgate's web interface and REST API endpoints until a valid session is established.
+The mandatory local access control system that restricts access to Cloudgate's web interface and REST API endpoints until a valid session is established using MasterPassword. Initial configuration is strictly required upon first run and restricted to loopback connections or the CLI.
 _Avoid_: Login page, user account system, web guard
 
 **MasterPassword**:

@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/herliansyah/cloudgate/pkg/auth"
 	"github.com/herliansyah/cloudgate/pkg/config"
 	"github.com/herliansyah/cloudgate/pkg/db"
 	"github.com/herliansyah/cloudgate/pkg/server"
@@ -69,7 +70,8 @@ func printHelp() {
 	fmt.Println("  cloudgate accounts         List connected cloud storage accounts")
 	fmt.Println("  cloudgate audit            View recent 100 audit events")
 	fmt.Println("  cloudgate auth status      Check GatewayAuth protection status")
-	fmt.Println("  cloudgate auth reset       Reset MasterPassword and disable GatewayAuth")
+	fmt.Println("  cloudgate auth setup <pw>  Set initial MasterPassword from terminal")
+	fmt.Println("  cloudgate auth reset       Reset MasterPassword and return to setup state")
 	fmt.Println("  cloudgate version          Show version and author information")
 	fmt.Println("  cloudgate help             Show this help screen")
 }
@@ -330,8 +332,9 @@ func handleAuthCLI(subArgs []string) {
 	if len(subArgs) == 0 {
 		fmt.Println("Usage: cloudgate auth <command>")
 		fmt.Println("Commands:")
-		fmt.Println("  status     Check if GatewayAuth is enabled")
-		fmt.Println("  reset      Clear MasterPassword and disable GatewayAuth")
+		fmt.Println("  status             Check if GatewayAuth is enabled")
+		fmt.Println("  setup <password>   Set initial MasterPassword from terminal")
+		fmt.Println("  reset              Clear MasterPassword and return to setup state")
 		return
 	}
 
@@ -358,17 +361,55 @@ func handleAuthCLI(subArgs []string) {
 		if enabled {
 			fmt.Println("GatewayAuth: AKTIF (Protected with MasterPassword)")
 		} else {
-			fmt.Println("GatewayAuth: NONAKTIF (Open access)")
+			fmt.Println("GatewayAuth: SETUP DIPERLUKAN (Jalankan 'cloudgate auth setup <password>' untuk inisialisasi)")
 		}
+	case "setup":
+		hasPassword, err := database.HasMasterPassword()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error checking database: %v\n", err)
+			os.Exit(1)
+		}
+		if hasPassword {
+			fmt.Fprintf(os.Stderr, "Error: MasterPassword sudah disetel. Gunakan menu ganti kata sandi di web atau jalankan 'cloudgate auth reset' terlebih dahulu.\n")
+			os.Exit(1)
+		}
+
+		password := ""
+		if len(subArgs) > 1 {
+			password = subArgs[1]
+		} else {
+			fmt.Print("Masukkan MasterPassword baru (minimal 4 karakter): ")
+			fmt.Scanln(&password)
+		}
+
+		if len(password) < 4 {
+			fmt.Fprintf(os.Stderr, "Error: Kata sandi minimal 4 karakter.\n")
+			os.Exit(1)
+		}
+
+		hash, err := auth.HashMasterPassword(password)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error hashing password: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := database.SetMasterPassword(hash); err != nil {
+			fmt.Fprintf(os.Stderr, "Error saving password: %v\n", err)
+			os.Exit(1)
+		}
+
+		_ = database.RecordAudit("auth", "gateway", "cli", "MasterPassword diinisialisasi via CLI", "success", 0)
+		fmt.Println("Berhasil: MasterPassword telah disetel. GatewayAuth aktif.")
+
 	case "reset":
 		if err := database.ClearMasterPassword(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error resetting MasterPassword: %v\n", err)
 			os.Exit(1)
 		}
 		_ = database.RecordAudit("auth", "gateway", "cli", "MasterPassword di-reset via CLI", "success", 0)
-		fmt.Println("Berhasil: MasterPassword telah dihapus dan GatewayAuth dinonaktifkan.")
+		fmt.Println("Berhasil: MasterPassword telah dihapus. Cloudgate kembali ke status inisialisasi awal (SETUP_REQUIRED).")
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown auth command: %s. Use 'status' or 'reset'.\n", subArgs[0])
+		fmt.Fprintf(os.Stderr, "Unknown auth command: %s. Use 'status', 'setup <password>', or 'reset'.\n", subArgs[0])
 		os.Exit(1)
 	}
 }

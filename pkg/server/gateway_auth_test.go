@@ -30,26 +30,53 @@ func TestGatewayAuthFlow(t *testing.T) {
 
 	client := ts.Client()
 
-	// 1. Initial status: disabled
+	// 1. Initial status: setup required, unauthenticated even initially
 	resp, err := client.Get(ts.URL + "/api/auth/gateway/status")
 	if err != nil {
 		t.Fatalf("failed to get gateway status: %v", err)
 	}
 	var status struct {
 		Enabled       bool `json:"enabled"`
+		SetupRequired bool `json:"setup_required"`
+		CanSetup      bool `json:"can_setup"`
 		Authenticated bool `json:"authenticated"`
 	}
 	_ = json.NewDecoder(resp.Body).Decode(&status)
 	resp.Body.Close()
 
 	if status.Enabled {
-		t.Errorf("expected GatewayAuth to be disabled initially")
+		t.Errorf("expected GatewayAuth to be not enabled initially")
 	}
-	if !status.Authenticated {
-		t.Errorf("expected authenticated to be true when disabled")
+	if !status.SetupRequired {
+		t.Errorf("expected SetupRequired to be true initially")
+	}
+	if !status.CanSetup {
+		t.Errorf("expected CanSetup to be true from loopback client")
+	}
+	if status.Authenticated {
+		t.Errorf("expected authenticated to be false when uninitialized")
 	}
 
-	// 2. Setup MasterPassword
+	// 1b. Verify protected endpoints (/api/stats) are blocked before setup is performed
+	preSetupResp, err := client.Get(ts.URL + "/api/stats")
+	if err != nil {
+		t.Fatalf("failed to call stats before setup: %v", err)
+	}
+	preSetupResp.Body.Close()
+	if preSetupResp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("expected 401 Unauthorized before setup, got %d", preSetupResp.StatusCode)
+	}
+
+	// 1c. Verify non-loopback setup request is rejected with 403 Forbidden
+	rec := httptest.NewRecorder()
+	remoteReq := httptest.NewRequest("POST", "/api/auth/gateway/setup", bytes.NewBufferString(`{"password":"testpassword123"}`))
+	remoteReq.RemoteAddr = "192.168.1.100:45678"
+	srv.Handler().ServeHTTP(rec, remoteReq)
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("expected 403 Forbidden for remote setup attempt, got %d", rec.Code)
+	}
+
+	// 2. Setup MasterPassword from loopback
 	setupBody := bytes.NewBufferString(`{"password":"testpassword123"}`)
 	resp, err = client.Post(ts.URL+"/api/auth/gateway/setup", "application/json", setupBody)
 	if err != nil {

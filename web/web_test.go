@@ -177,14 +177,15 @@ func TestGatewayAuthUIComponents(t *testing.T) {
 		"gatewayLockOverlay",
 		"setupMasterPasswordModal",
 		"changeMasterPasswordModal",
-		"disableGatewayModal",
 		"function checkGatewayAuthStatus",
 		"function showLockScreen",
+		"function showSetupScreen",
+		"function showRemoteLockedScreen",
 		"function submitGatewayUnlock",
 		"function lockGateway",
 		"function submitSetupMasterPassword",
 		"function submitChangeMasterPassword",
-		"function submitDisableGateway",
+		"function submitFirstRunSetup",
 	}
 
 	for _, marker := range requiredAuthMarkers {
@@ -257,7 +258,8 @@ func TestGatewayAuthBilingualSupport(t *testing.T) {
 		"gateway.descInactive",
 		"gateway.setupMasterPassword",
 		"gateway.changePassword",
-		"gateway.disableProtection",
+		"gateway.firstRunTitle",
+		"gateway.remoteLockedTitle",
 	}
 
 	for _, key := range requiredGatewayKeys {
