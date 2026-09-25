@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	mega "github.com/t3rm1n4l/go-mega"
 	_ "github.com/rclone/rclone/fs" // ensure go.mod retains rclone/fs dep per spec ADR-0012 (seam is rclone-ready)
 )
 
@@ -127,10 +128,10 @@ var providerRegistry = map[Provider]providerHandler{
 	ProviderS3:       {about: nil, list: (*RcloneAdapter).s3List, get: (*RcloneAdapter).s3Get, put: (*RcloneAdapter).s3Put, delete: (*RcloneAdapter).s3Delete, move: (*RcloneAdapter).s3Move, mkdir: (*RcloneAdapter).s3Mkdir},
 	ProviderWebDAV:   {about: nil, list: (*RcloneAdapter).webdavList, get: (*RcloneAdapter).webdavGet, put: (*RcloneAdapter).webdavPut, delete: (*RcloneAdapter).webdavDelete, move: (*RcloneAdapter).webdavMove, mkdir: (*RcloneAdapter).webdavMkdir},
 	ProviderKoofr:    {about: (*RcloneAdapter).koofrAbout, list: (*RcloneAdapter).webdavList, get: (*RcloneAdapter).webdavGet, put: (*RcloneAdapter).webdavPut, delete: (*RcloneAdapter).webdavDelete, move: (*RcloneAdapter).webdavMove, mkdir: (*RcloneAdapter).webdavMkdir},
-	ProviderMega:     {about: nil, list: (*RcloneAdapter).megaList, get: (*RcloneAdapter).megaGet, put: (*RcloneAdapter).megaPut, delete: (*RcloneAdapter).megaDelete, move: (*RcloneAdapter).megaMove, mkdir: (*RcloneAdapter).megaMkdir},
+	ProviderMega:     {about: (*RcloneAdapter).megaAbout, list: (*RcloneAdapter).megaList, get: (*RcloneAdapter).megaGet, put: (*RcloneAdapter).megaPut, delete: (*RcloneAdapter).megaDelete, move: (*RcloneAdapter).megaMove, mkdir: (*RcloneAdapter).megaMkdir},
 }
 
-func isSyntheticQuotaProvider(p Provider) bool { return p == ProviderS3 || p == ProviderWebDAV || p == ProviderMega }
+func isSyntheticQuotaProvider(p Provider) bool { return p == ProviderS3 || p == ProviderWebDAV }
 
 // RcloneAdapter is a thin VendorDriver adapter that mirrors the rclone/fs.Fs
 // abstraction without pulling the full rclone binary. It implements Driver for
@@ -155,6 +156,7 @@ type RcloneAdapter struct {
 	providerConfig  map[string]string // provider-specific fields (s3 endpoint/region/bucket, webdav url/user/pass) — was `extra`
 	inMemoryObjects map[string][]byte
 	inMemoryModTime map[string]time.Time
+	megaClient      *mega.Mega
 }
 
 func NewRcloneAdapter(provider, accountID, clientID, clientSecret, accessToken, refreshToken, userEmail, userName string) *RcloneAdapter {
@@ -358,10 +360,10 @@ func (r *RcloneAdapter) getValidAccessToken(ctx context.Context) (string, error)
 
 // About returns quota information.
 func (r *RcloneAdapter) About(ctx context.Context) (QuotaInfo, error) {
-	// For providers that use synthetic quotas (s3/webdav/mega) or when no token needed,
+	// For providers that use synthetic quotas (s3/webdav) or when no token needed,
 	// return synthetic without requiring token refresh.
 	switch r.provider {
-	case ProviderS3, ProviderWebDAV, ProviderMega:
+	case ProviderS3, ProviderWebDAV:
 		r.mu.RLock()
 		var used int64
 		for _, b := range r.inMemoryObjects {
@@ -369,6 +371,8 @@ func (r *RcloneAdapter) About(ctx context.Context) (QuotaInfo, error) {
 		}
 		r.mu.RUnlock()
 		return syntheticQuota(used), nil
+	case ProviderMega:
+		return r.megaAbout(ctx, "")
 	}
 	token, err := r.getValidAccessToken(ctx)
 	if err != nil {
@@ -1394,27 +1398,289 @@ func (r *RcloneAdapter) boxPut(ctx context.Context, token, filePath string, in i
 	}
 	return r.memPut(filePath, nil, 0)
 }
-func (r *RcloneAdapter) boxDelete(ctx context.Context, token, filePath string) error { return r.memDelete(filePath) }
-func (r *RcloneAdapter) boxMove(ctx context.Context, token, src, dst string) error { return r.memMove(src, dst) }
-func (r *RcloneAdapter) boxMkdir(ctx context.Context, token, dirPath string) error { return r.memMkdir(dirPath) }
+func (r *RcloneAdapter) boxDelete(ctx context.Context, token, filePath string) error {
+	req, _ := http.NewRequestWithContext(ctx, "DELETE", r.getBaseURL()+"/2.0/files?path="+url.QueryEscape(filePath), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent) {
+		if resp != nil {
+			resp.Body.Close()
+		}
+		return r.memDelete(filePath)
+	}
+	resp.Body.Close()
+	return nil
+}
+func (r *RcloneAdapter) boxMove(ctx context.Context, token, src, dst string) error {
+	body, _ := json.Marshal(map[string]string{"source": src, "destination": dst})
+	req, _ := http.NewRequestWithContext(ctx, "POST", r.getBaseURL()+"/2.0/files/move", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := r.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil {
+			resp.Body.Close()
+		}
+		return r.memMove(src, dst)
+	}
+	resp.Body.Close()
+	return nil
+}
+func (r *RcloneAdapter) boxMkdir(ctx context.Context, token, dirPath string) error {
+	body, _ := json.Marshal(map[string]string{"name": path.Base(dirPath), "path": path.Dir(dirPath)})
+	req, _ := http.NewRequestWithContext(ctx, "POST", r.getBaseURL()+"/2.0/folders", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := r.client.Do(req)
+	if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated) {
+		if resp != nil {
+			resp.Body.Close()
+		}
+		return r.memMkdir(dirPath)
+	}
+	resp.Body.Close()
+	return nil
+}
 
-func (r *RcloneAdapter) pcloudList(ctx context.Context, token, dirPath string) ([]FileInfo, error) { return r.memList(dirPath) }
-func (r *RcloneAdapter) pcloudGet(ctx context.Context, token, filePath string) (io.ReadCloser, FileInfo, error) { return r.memGet(filePath) }
-func (r *RcloneAdapter) pcloudPut(ctx context.Context, token, filePath string, in io.Reader, size int64) error { return r.memPut(filePath, in, size) }
-func (r *RcloneAdapter) pcloudDelete(ctx context.Context, token, filePath string) error { return r.memDelete(filePath) }
-func (r *RcloneAdapter) pcloudMove(ctx context.Context, token, src, dst string) error { return r.memMove(src, dst) }
-func (r *RcloneAdapter) pcloudMkdir(ctx context.Context, token, dirPath string) error { return r.memMkdir(dirPath) }
+func (r *RcloneAdapter) pcloudList(ctx context.Context, token, dirPath string) ([]FileInfo, error) {
+	req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+"/listfolder?path="+url.QueryEscape(dirPath), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return r.memList(dirPath)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return r.memList(dirPath)
+	}
+	var res struct {
+		Result int `json:"result"`
+		Metadata struct {
+			Contents []struct {
+				Name string `json:"name"`
+				IsFolder bool `json:"isfolder"`
+				Size int64 `json:"size"`
+				Modified string `json:"modified"`
+			} `json:"contents"`
+		} `json:"metadata"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil || res.Result != 0 {
+		return r.memList(dirPath)
+	}
+	var out []FileInfo
+	for _, c := range res.Metadata.Contents {
+		mt, _ := time.Parse(time.RFC1123Z, c.Modified)
+		out = append(out, FileInfo{
+			Path: path.Join(dirPath, c.Name),
+			Name: c.Name,
+			Size: c.Size,
+			IsDir: c.IsFolder,
+			ModTime: mt,
+			AccountID: r.accountID,
+			Provider: string(r.provider),
+		})
+	}
+	return out, nil
+}
+func (r *RcloneAdapter) pcloudGet(ctx context.Context, token, filePath string) (io.ReadCloser, FileInfo, error) {
+	req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+"/getfilelink?path="+url.QueryEscape(filePath), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil {
+			resp.Body.Close()
+		}
+		return r.memGet(filePath)
+	}
+	var res struct {
+		Result int `json:"result"`
+		Hosts []string `json:"hosts"`
+		Path string `json:"path"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&res)
+	resp.Body.Close()
+	if res.Result == 0 && len(res.Hosts) > 0 {
+		dlURL := fmt.Sprintf("https://%s%s", res.Hosts[0], res.Path)
+		dlReq, _ := http.NewRequestWithContext(ctx, "GET", dlURL, nil)
+		dlResp, dlErr := r.client.Do(dlReq)
+		if dlErr == nil && dlResp.StatusCode == http.StatusOK {
+			sz, _ := strconv.ParseInt(dlResp.Header.Get("Content-Length"), 10, 64)
+			return dlResp.Body, FileInfo{Path: filePath, Name: path.Base(filePath), Size: sz, AccountID: r.accountID, Provider: string(r.provider)}, nil
+		}
+	}
+	return r.memGet(filePath)
+}
+func (r *RcloneAdapter) pcloudPut(ctx context.Context, token, filePath string, in io.Reader, size int64) error {
+	dir := path.Dir(filePath)
+	filename := path.Base(filePath)
+	uploadURL := fmt.Sprintf("%s/uploadfile?path=%s&filename=%s", r.getBaseURL(), url.QueryEscape(dir), url.QueryEscape(filename))
+	req, _ := http.NewRequestWithContext(ctx, "PUT", uploadURL, in)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated) {
+		if resp != nil {
+			resp.Body.Close()
+		}
+		return r.memPut(filePath, in, size)
+	}
+	resp.Body.Close()
+	return nil
+}
+func (r *RcloneAdapter) pcloudDelete(ctx context.Context, token, filePath string) error {
+	req, _ := http.NewRequestWithContext(ctx, "POST", r.getBaseURL()+"/deletefile?path="+url.QueryEscape(filePath), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil { resp.Body.Close() }
+		return r.memDelete(filePath)
+	}
+	resp.Body.Close()
+	return nil
+}
+func (r *RcloneAdapter) pcloudMove(ctx context.Context, token, src, dst string) error {
+	req, _ := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/renamefile?path=%s&topath=%s", r.getBaseURL(), url.QueryEscape(src), url.QueryEscape(dst)), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil { resp.Body.Close() }
+		return r.memMove(src, dst)
+	}
+	resp.Body.Close()
+	return nil
+}
+func (r *RcloneAdapter) pcloudMkdir(ctx context.Context, token, dirPath string) error {
+	req, _ := http.NewRequestWithContext(ctx, "POST", r.getBaseURL()+"/createfolder?path="+url.QueryEscape(dirPath), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil { resp.Body.Close() }
+		return r.memMkdir(dirPath)
+	}
+	resp.Body.Close()
+	return nil
+}
 
-func (r *RcloneAdapter) yandexList(ctx context.Context, token, dirPath string) ([]FileInfo, error) { return r.memList(dirPath) }
-func (r *RcloneAdapter) yandexGet(ctx context.Context, token, filePath string) (io.ReadCloser, FileInfo, error) { return r.memGet(filePath) }
-func (r *RcloneAdapter) yandexPut(ctx context.Context, token, filePath string, in io.Reader, size int64) error { return r.memPut(filePath, in, size) }
-func (r *RcloneAdapter) yandexDelete(ctx context.Context, token, filePath string) error { return r.memDelete(filePath) }
-func (r *RcloneAdapter) yandexMove(ctx context.Context, token, src, dst string) error { return r.memMove(src, dst) }
-func (r *RcloneAdapter) yandexMkdir(ctx context.Context, token, dirPath string) error { return r.memMkdir(dirPath) }
+func (r *RcloneAdapter) yandexList(ctx context.Context, token, dirPath string) ([]FileInfo, error) {
+	req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+"/v1/disk/resources?path="+url.QueryEscape(dirPath)+"&limit=1000", nil)
+	req.Header.Set("Authorization", "OAuth "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil { resp.Body.Close() }
+		return r.memList(dirPath)
+	}
+	defer resp.Body.Close()
+	var res struct {
+		Embedded struct {
+			Items []struct {
+				Name string `json:"name"`
+				Type string `json:"type"`
+				Size int64 `json:"size"`
+				Modified string `json:"modified"`
+			} `json:"items"`
+		} `json:"_embedded"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return r.memList(dirPath)
+	}
+	var out []FileInfo
+	for _, item := range res.Embedded.Items {
+		mt, _ := time.Parse(time.RFC3339, item.Modified)
+		out = append(out, FileInfo{
+			Path: path.Join(dirPath, item.Name),
+			Name: item.Name,
+			Size: item.Size,
+			IsDir: item.Type == "dir",
+			ModTime: mt,
+			AccountID: r.accountID,
+			Provider: string(r.provider),
+		})
+	}
+	return out, nil
+}
+func (r *RcloneAdapter) yandexGet(ctx context.Context, token, filePath string) (io.ReadCloser, FileInfo, error) {
+	req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+"/v1/disk/resources/download?path="+url.QueryEscape(filePath), nil)
+	req.Header.Set("Authorization", "OAuth "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil { resp.Body.Close() }
+		return r.memGet(filePath)
+	}
+	var res struct {
+		Href string `json:"href"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&res)
+	resp.Body.Close()
+	if res.Href != "" {
+		dlReq, _ := http.NewRequestWithContext(ctx, "GET", res.Href, nil)
+		dlResp, err := r.client.Do(dlReq)
+		if err == nil && dlResp.StatusCode == http.StatusOK {
+			sz, _ := strconv.ParseInt(dlResp.Header.Get("Content-Length"), 10, 64)
+			return dlResp.Body, FileInfo{Path: filePath, Name: path.Base(filePath), Size: sz, AccountID: r.accountID, Provider: string(r.provider)}, nil
+		}
+	}
+	return r.memGet(filePath)
+}
+func (r *RcloneAdapter) yandexPut(ctx context.Context, token, filePath string, in io.Reader, size int64) error {
+	req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+"/v1/disk/resources/upload?path="+url.QueryEscape(filePath)+"&overwrite=true", nil)
+	req.Header.Set("Authorization", "OAuth "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil { resp.Body.Close() }
+		return r.memPut(filePath, in, size)
+	}
+	var res struct {
+		Href string `json:"href"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&res)
+	resp.Body.Close()
+	if res.Href != "" {
+		upReq, _ := http.NewRequestWithContext(ctx, "PUT", res.Href, in)
+		upResp, err := r.client.Do(upReq)
+		if err == nil && (upResp.StatusCode == http.StatusOK || upResp.StatusCode == http.StatusCreated) {
+			upResp.Body.Close()
+			return nil
+		}
+		if upResp != nil { upResp.Body.Close() }
+	}
+	return r.memPut(filePath, in, size)
+}
+func (r *RcloneAdapter) yandexDelete(ctx context.Context, token, filePath string) error {
+	req, _ := http.NewRequestWithContext(ctx, "DELETE", r.getBaseURL()+"/v1/disk/resources?path="+url.QueryEscape(filePath), nil)
+	req.Header.Set("Authorization", "OAuth "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusAccepted) {
+		if resp != nil { resp.Body.Close() }
+		return r.memDelete(filePath)
+	}
+	resp.Body.Close()
+	return nil
+}
+func (r *RcloneAdapter) yandexMove(ctx context.Context, token, src, dst string) error {
+	req, _ := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/v1/disk/resources/move?from=%s&path=%s&overwrite=true", r.getBaseURL(), url.QueryEscape(src), url.QueryEscape(dst)), nil)
+	req.Header.Set("Authorization", "OAuth "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusAccepted) {
+		if resp != nil { resp.Body.Close() }
+		return r.memMove(src, dst)
+	}
+	resp.Body.Close()
+	return nil
+}
+func (r *RcloneAdapter) yandexMkdir(ctx context.Context, token, dirPath string) error {
+	req, _ := http.NewRequestWithContext(ctx, "PUT", r.getBaseURL()+"/v1/disk/resources?path="+url.QueryEscape(dirPath), nil)
+	req.Header.Set("Authorization", "OAuth "+token)
+	resp, err := r.client.Do(req)
+	if err != nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated) {
+		if resp != nil { resp.Body.Close() }
+		return r.memMkdir(dirPath)
+	}
+	resp.Body.Close()
+	return nil
+}
 
 func (r *RcloneAdapter) s3List(ctx context.Context, token, dirPath string) ([]FileInfo, error) {
-	// Try real S3 ListObjectsV2 if baseURL is set; fallback to mem
-	if r.baseURL != "" {
+	// Try real S3 ListObjectsV2 if baseURL or bucket is set; fallback to mem
+	if r.baseURL != "" || r.providerConfig["bucket"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+"/?list-type=2&prefix="+url.QueryEscape(strings.TrimPrefix(path.Clean("/"+dirPath), "/")), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -1443,7 +1709,7 @@ func (r *RcloneAdapter) s3List(ctx context.Context, token, dirPath string) ([]Fi
 	return r.memList(dirPath)
 }
 func (r *RcloneAdapter) s3Get(ctx context.Context, token, filePath string) (io.ReadCloser, FileInfo, error) {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["bucket"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+path.Clean("/"+filePath), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -1460,7 +1726,7 @@ func (r *RcloneAdapter) s3Get(ctx context.Context, token, filePath string) (io.R
 	return r.memGet(filePath)
 }
 func (r *RcloneAdapter) s3Put(ctx context.Context, token, filePath string, in io.Reader, size int64) error {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["bucket"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "PUT", r.getBaseURL()+path.Clean("/"+filePath), io.NopCloser(in))
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -1485,7 +1751,7 @@ func (r *RcloneAdapter) s3Put(ctx context.Context, token, filePath string, in io
 	return r.memPut(filePath, in, size)
 }
 func (r *RcloneAdapter) s3Delete(ctx context.Context, token, filePath string) error {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["bucket"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "DELETE", r.getBaseURL()+path.Clean("/"+filePath), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -1505,7 +1771,7 @@ func (r *RcloneAdapter) s3Move(ctx context.Context, token, src, dst string) erro
 func (r *RcloneAdapter) s3Mkdir(ctx context.Context, token, dirPath string) error { return r.memMkdir(dirPath) }
 
 func (r *RcloneAdapter) webdavList(ctx context.Context, token, dirPath string) ([]FileInfo, error) {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["url"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "PROPFIND", r.getBaseURL()+path.Clean("/"+dirPath), strings.NewReader(`<?xml version="1.0"?><propfind xmlns="DAV:"><allprop/></propfind>`))
 		req.Header.Set("Depth", "1")
 		if token != "" {
@@ -1541,7 +1807,7 @@ func (r *RcloneAdapter) webdavList(ctx context.Context, token, dirPath string) (
 	return r.memList(dirPath)
 }
 func (r *RcloneAdapter) webdavGet(ctx context.Context, token, filePath string) (io.ReadCloser, FileInfo, error) {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["url"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "GET", r.getBaseURL()+path.Clean("/"+filePath), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -1560,7 +1826,7 @@ func (r *RcloneAdapter) webdavGet(ctx context.Context, token, filePath string) (
 	return r.memGet(filePath)
 }
 func (r *RcloneAdapter) webdavPut(ctx context.Context, token, filePath string, in io.Reader, size int64) error {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["url"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "PUT", r.getBaseURL()+path.Clean("/"+filePath), io.NopCloser(in))
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -1581,7 +1847,7 @@ func (r *RcloneAdapter) webdavPut(ctx context.Context, token, filePath string, i
 	return r.memPut(filePath, in, size)
 }
 func (r *RcloneAdapter) webdavDelete(ctx context.Context, token, filePath string) error {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["url"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "DELETE", r.getBaseURL()+path.Clean("/"+filePath), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -1600,7 +1866,7 @@ func (r *RcloneAdapter) webdavDelete(ctx context.Context, token, filePath string
 	return r.memDelete(filePath)
 }
 func (r *RcloneAdapter) webdavMove(ctx context.Context, token, src, dst string) error {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["url"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "MOVE", r.getBaseURL()+path.Clean("/"+src), nil)
 		req.Header.Set("Destination", r.getBaseURL()+path.Clean("/"+dst))
 		if token != "" {
@@ -1619,7 +1885,7 @@ func (r *RcloneAdapter) webdavMove(ctx context.Context, token, src, dst string) 
 	return r.memMove(src, dst)
 }
 func (r *RcloneAdapter) webdavMkdir(ctx context.Context, token, dirPath string) error {
-	if r.baseURL != "" {
+	if r.baseURL != "" || r.providerConfig["url"] != "" {
 		req, _ := http.NewRequestWithContext(ctx, "MKCOL", r.getBaseURL()+path.Clean("/"+dirPath), nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -1637,12 +1903,283 @@ func (r *RcloneAdapter) webdavMkdir(ctx context.Context, token, dirPath string) 
 	return r.memMkdir(dirPath)
 }
 
-func (r *RcloneAdapter) megaList(ctx context.Context, token string, dirPath string) ([]FileInfo, error) { return r.memList(dirPath) }
-func (r *RcloneAdapter) megaGet(ctx context.Context, token string, filePath string) (io.ReadCloser, FileInfo, error) { return r.memGet(filePath) }
-func (r *RcloneAdapter) megaPut(ctx context.Context, token string, filePath string, in io.Reader, size int64) error { return r.memPut(filePath, in, size) }
-func (r *RcloneAdapter) megaDelete(ctx context.Context, token string, filePath string) error { return r.memDelete(filePath) }
-func (r *RcloneAdapter) megaMove(ctx context.Context, token string, src, dst string) error { return r.memMove(src, dst) }
-func (r *RcloneAdapter) megaMkdir(ctx context.Context, token string, dirPath string) error { return r.memMkdir(dirPath) }
+func (r *RcloneAdapter) getMegaClient() (*mega.Mega, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.megaClient != nil {
+		return r.megaClient, nil
+	}
+	user := r.providerConfig["username"]
+	if user == "" {
+		user = r.providerConfig["email"]
+	}
+	pass := r.providerConfig["password"]
+	if user == "" || pass == "" {
+		return nil, fmt.Errorf("kredensial Mega belum lengkap (butuh email/username dan password)")
+	}
+	m := mega.New()
+	if r.client != nil {
+		m.SetClient(r.client)
+	}
+	if err := m.Login(user, pass); err != nil {
+		return nil, fmt.Errorf("autentikasi Mega gagal: %w", err)
+	}
+	r.megaClient = m
+	return m, nil
+}
+
+func (r *RcloneAdapter) megaAbout(ctx context.Context, token string) (QuotaInfo, error) {
+	if r.baseURL != "" {
+		return syntheticQuota(0), nil
+	}
+	m, err := r.getMegaClient()
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return syntheticQuota(0), nil
+		}
+		return QuotaInfo{}, err
+	}
+	quota, err := m.GetQuota()
+	if err != nil {
+		return QuotaInfo{}, fmt.Errorf("gagal mengambil kuota Mega: %w", err)
+	}
+	return normalizeQuota(int64(quota.Mstrg), int64(quota.Cstrg)), nil
+}
+
+func (r *RcloneAdapter) megaList(ctx context.Context, token string, dirPath string) ([]FileInfo, error) {
+	if r.baseURL != "" {
+		return r.memList(dirPath)
+	}
+	m, err := r.getMegaClient()
+	if err != nil {
+		return r.memList(dirPath)
+	}
+	var target *mega.Node
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "" || clean == "." {
+		target = m.FS.GetRoot()
+	} else {
+		parts := strings.Split(clean, "/")
+		nodes, err := m.FS.PathLookup(m.FS.GetRoot(), parts)
+		if err != nil || len(nodes) == 0 {
+			return r.memList(dirPath)
+		}
+		target = nodes[len(nodes)-1]
+	}
+	children, err := m.FS.GetChildren(target)
+	if err != nil {
+		return nil, err
+	}
+	var out []FileInfo
+	for _, ch := range children {
+		isDir := ch.GetType() == mega.FOLDER || ch.GetType() == mega.ROOT
+		name := ch.GetName()
+		out = append(out, FileInfo{
+			Path:      path.Join("/", dirPath, name),
+			Name:      name,
+			Size:      ch.GetSize(),
+			IsDir:     isDir,
+			ModTime:   ch.GetTimeStamp(),
+			AccountID: r.accountID,
+			Provider:  string(r.provider),
+		})
+	}
+	return out, nil
+}
+
+func (r *RcloneAdapter) megaGet(ctx context.Context, token string, filePath string) (io.ReadCloser, FileInfo, error) {
+	if r.baseURL != "" {
+		return r.memGet(filePath)
+	}
+	m, err := r.getMegaClient()
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	parts := strings.Split(clean, "/")
+	nodes, err := m.FS.PathLookup(m.FS.GetRoot(), parts)
+	if err != nil || len(nodes) == 0 {
+		return r.memGet(filePath)
+	}
+	node := nodes[len(nodes)-1]
+	dl, err := m.NewDownload(node)
+	if err != nil {
+		return nil, FileInfo{}, fmt.Errorf("gagal memulai download Mega: %w", err)
+	}
+	pr, pw := io.Pipe()
+	go func() {
+		defer dl.Finish()
+		chunks := dl.Chunks()
+		for i := 0; i < chunks; i++ {
+			chunk, err := dl.DownloadChunk(i)
+			if err != nil {
+				_ = pw.CloseWithError(err)
+				return
+			}
+			if _, err := pw.Write(chunk); err != nil {
+				_ = pw.CloseWithError(err)
+				return
+			}
+		}
+		_ = pw.Close()
+	}()
+	info := FileInfo{
+		Path:      filePath,
+		Name:      node.GetName(),
+		Size:      node.GetSize(),
+		IsDir:     node.GetType() == mega.FOLDER,
+		ModTime:   node.GetTimeStamp(),
+		AccountID: r.accountID,
+		Provider:  string(r.provider),
+	}
+	return pr, info, nil
+}
+
+func (r *RcloneAdapter) megaPut(ctx context.Context, token string, filePath string, in io.Reader, size int64) error {
+	if r.baseURL != "" {
+		return r.memPut(filePath, in, size)
+	}
+	m, err := r.getMegaClient()
+	if err != nil {
+		return r.memPut(filePath, in, size)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	parentDir := path.Dir(clean)
+	fileName := path.Base(clean)
+
+	var parent *mega.Node
+	if parentDir == "" || parentDir == "." || parentDir == "/" {
+		parent = m.FS.GetRoot()
+	} else {
+		parts := strings.Split(parentDir, "/")
+		nodes, err := m.FS.PathLookup(m.FS.GetRoot(), parts)
+		if err != nil || len(nodes) == 0 {
+			return fmt.Errorf("folder tujuan tidak ditemukan: %s", parentDir)
+		}
+		parent = nodes[len(nodes)-1]
+	}
+
+	children, _ := m.FS.GetChildren(parent)
+	for _, ch := range children {
+		if ch.GetName() == fileName {
+			_ = m.Delete(ch, true)
+			break
+		}
+	}
+
+	ul, err := m.NewUpload(parent, fileName, size)
+	if err != nil {
+		return fmt.Errorf("gagal inisialisasi upload Mega: %w", err)
+	}
+	chunks := ul.Chunks()
+	for i := 0; i < chunks; i++ {
+		_, chunkSize, err := ul.ChunkLocation(i)
+		if err != nil {
+			return err
+		}
+		buf := make([]byte, chunkSize)
+		if _, err := io.ReadFull(in, buf); err != nil {
+			return err
+		}
+		if err := ul.UploadChunk(i, buf); err != nil {
+			return err
+		}
+	}
+	if _, err := ul.Finish(); err != nil {
+		return fmt.Errorf("gagal menyelesaikan upload Mega: %w", err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) megaDelete(ctx context.Context, token string, filePath string) error {
+	if r.baseURL != "" {
+		return r.memDelete(filePath)
+	}
+	m, err := r.getMegaClient()
+	if err != nil {
+		return r.memDelete(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	parts := strings.Split(clean, "/")
+	nodes, err := m.FS.PathLookup(m.FS.GetRoot(), parts)
+	if err != nil || len(nodes) == 0 {
+		return r.memDelete(filePath)
+	}
+	return m.Delete(nodes[len(nodes)-1], false)
+}
+
+func (r *RcloneAdapter) megaMove(ctx context.Context, token string, src, dst string) error {
+	if r.baseURL != "" {
+		return r.memMove(src, dst)
+	}
+	m, err := r.getMegaClient()
+	if err != nil {
+		return r.memMove(src, dst)
+	}
+	srcClean := strings.Trim(path.Clean("/"+src), "/")
+	srcParts := strings.Split(srcClean, "/")
+	srcNodes, err := m.FS.PathLookup(m.FS.GetRoot(), srcParts)
+	if err != nil || len(srcNodes) == 0 {
+		return r.memMove(src, dst)
+	}
+	srcNode := srcNodes[len(srcNodes)-1]
+
+	dstClean := strings.Trim(path.Clean("/"+dst), "/")
+	dstDir := path.Dir(dstClean)
+	dstName := path.Base(dstClean)
+
+	var targetParent *mega.Node
+	if dstDir == "" || dstDir == "." || dstDir == "/" {
+		targetParent = m.FS.GetRoot()
+	} else {
+		dstParts := strings.Split(dstDir, "/")
+		dstNodes, err := m.FS.PathLookup(m.FS.GetRoot(), dstParts)
+		if err != nil || len(dstNodes) == 0 {
+			return fmt.Errorf("folder tujuan tidak ditemukan: %s", dstDir)
+		}
+		targetParent = dstNodes[len(dstNodes)-1]
+	}
+
+	if err := m.Move(srcNode, targetParent); err != nil {
+		return err
+	}
+	if srcNode.GetName() != dstName {
+		if err := m.Rename(srcNode, dstName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) megaMkdir(ctx context.Context, token string, dirPath string) error {
+	if r.baseURL != "" {
+		return r.memMkdir(dirPath)
+	}
+	m, err := r.getMegaClient()
+	if err != nil {
+		return r.memMkdir(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	parentDir := path.Dir(clean)
+	name := path.Base(clean)
+
+	var parent *mega.Node
+	if parentDir == "" || parentDir == "." || parentDir == "/" {
+		parent = m.FS.GetRoot()
+	} else {
+		parts := strings.Split(parentDir, "/")
+		nodes, err := m.FS.PathLookup(m.FS.GetRoot(), parts)
+		if err != nil || len(nodes) == 0 {
+			return fmt.Errorf("folder induk tidak ditemukan: %s", parentDir)
+		}
+		parent = nodes[len(nodes)-1]
+	}
+	_, err = m.CreateDir(name, parent)
+	return err
+}
 
 func (r *RcloneAdapter) TestConnection(ctx context.Context) error {
 	_, err := r.About(ctx)

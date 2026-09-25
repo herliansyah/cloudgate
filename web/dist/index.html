@@ -1990,50 +1990,52 @@
         </div>
 
         <div id="oauthSection" style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);display:flex;flex-direction:column;gap:12px;">
-          <div id="oauthGuideCard" style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);">
+          <div id="oauthGuideCard" style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);">
             <!-- Dynamic OAuth guide rendered via JS -->
           </div>
 
-          <button class="btn btn-primary" id="btnOAuthAction" style="justify-content:center;height:44px;font-size:0.92rem;" onclick="startOAuthConnect()">
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:2px;">
+            <div style="font-size:0.84rem;font-weight:700;color:var(--md-sys-color-on-surface);display:flex;align-items:center;gap:6px;">
+              <span>🔑</span> Kredensial Aplikasi OAuth (Wajib Diisi):
+            </div>
+            <div class="form-group" id="groupOAuthClientID">
+              <label id="lblOAuthClientID" style="display:flex;align-items:center;gap:4px;">OAuth Client ID / App Key <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label>
+              <input type="text" class="form-control" id="newAccountClientID" placeholder="OAuth Client ID">
+            </div>
+            <div class="form-group" id="groupOAuthClientSecret">
+              <label id="lblOAuthClientSecret" style="display:flex;align-items:center;gap:4px;">OAuth Client Secret / App Secret <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label>
+              <input type="password" class="form-control" id="newAccountClientSecret" placeholder="OAuth Client Secret">
+            </div>
+          </div>
+
+          <button class="btn btn-primary" id="btnOAuthAction" style="justify-content:center;height:44px;font-size:0.92rem;margin-top:4px;" onclick="startOAuthConnect()">
             <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
             <span id="btnOAuthText">Masuk dengan Akun Cloud</span>
           </button>
-
-          <details style="font-size:0.82rem;color:var(--md-sys-color-on-surface-variant);">
-            <summary style="cursor:pointer;user-select:none;font-weight:600;padding:4px 0;">Opsi Lanjutan: Gunakan Custom Client ID & Secret</summary>
-            <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
-              <div class="form-group" id="groupOAuthClientID">
-                <label id="lblOAuthClientID">OAuth Client ID</label>
-                <input type="text" class="form-control" id="newAccountClientID" placeholder="OAuth Client ID">
-              </div>
-              <div class="form-group" id="groupOAuthClientSecret">
-                <label id="lblOAuthClientSecret">OAuth Client Secret</label>
-                <input type="password" class="form-control" id="newAccountClientSecret" placeholder="OAuth Client Secret">
-              </div>
-            </div>
-          </details>
         </div>
 
         <div id="s3ExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
-          <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface);font-weight:700;">Konfigurasi Kredensial S3:</div>
-          <div class="form-group"><label>Endpoint</label><input type="text" class="form-control" id="s3Endpoint" placeholder="https://s3.amazonaws.com"></div>
-          <div class="form-group"><label>Bucket Name</label><input type="text" class="form-control" id="s3Bucket" placeholder="nama-bucket-saya"></div>
-          <div class="form-group"><label>Access Key ID</label><input type="text" class="form-control" id="s3AccessKey" placeholder="AKIA..."></div>
-          <div class="form-group"><label>Secret Access Key</label><input type="password" class="form-control" id="s3SecretKey" placeholder="••••••••"></div>
+          <div id="s3GuideBox"></div>
+          <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Konfigurasi Kredensial S3:</div>
+          <div class="form-group"><label>Endpoint (kosongkan jika AWS S3 default)</label><input type="text" class="form-control" id="s3Endpoint" placeholder="https://s3.amazonaws.com"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Bucket Name <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="s3Bucket" placeholder="nama-bucket-saya"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Access Key ID <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="s3AccessKey" placeholder="AKIA..."></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Secret Access Key <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="s3SecretKey" placeholder="••••••••"></div>
           <div class="form-group"><label>Region</label><input type="text" class="form-control" id="s3Region" placeholder="us-east-1"></div>
         </div>
 
         <div id="webdavExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
           <div id="webdavGuideBox"></div>
-          <div class="form-group"><label>WebDAV URL</label><input type="text" class="form-control" id="webdavUrl" placeholder="https://cloud.example.com/remote.php/webdav/"></div>
-          <div class="form-group"><label>Username</label><input type="text" class="form-control" id="webdavUser" placeholder="username"></div>
-          <div class="form-group"><label>Password / App Token</label><input type="password" class="form-control" id="webdavPass" placeholder="••••••••"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">WebDAV URL <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="webdavUrl" placeholder="https://cloud.example.com/remote.php/webdav/"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Username / Email <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="webdavUser" placeholder="username"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Password / App Token <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="webdavPass" placeholder="••••••••"></div>
         </div>
 
         <div id="megaExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
-          <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface);font-weight:700;">Kredensial Akun Mega:</div>
-          <div class="form-group"><label>Email / Username</label><input type="text" class="form-control" id="megaUser" placeholder="user@example.com"></div>
-          <div class="form-group"><label>Password</label><input type="password" class="form-control" id="megaPass" placeholder="••••••••"></div>
+          <div id="megaGuideBox"></div>
+          <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Kredensial Akun Mega:</div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Email Akun Mega <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="megaUser" placeholder="user@example.com"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Password Akun Mega <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="megaPass" placeholder="••••••••"></div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -2091,7 +2093,18 @@
             </div>
           </div>
         </div>
-      </div>
+
+        <div id="diagFailureBox" style="display:none;background:rgba(255,84,73,0.1);border:1px solid var(--md-sys-color-error);border-radius:var(--md-sys-shape-corner-md);padding:14px;flex-direction:column;gap:10px;">
+          <div style="font-weight:700;font-size:0.88rem;color:var(--md-sys-color-error);display:flex;align-items:center;gap:6px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            Koneksi Gagal Terverifikasi
+          </div>
+          <div id="diagFailureMsg" style="font-size:0.8rem;color:var(--md-sys-color-on-surface);line-height:1.45;word-break:break-word;"></div>
+          <div id="diagRemediationMsg" style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);line-height:1.45;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border:1px solid var(--md-sys-color-outline-variant);"></div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+            <button class="btn btn-secondary btn-sm" onclick="showOnboardingStep(2)">← Kembali & Perbaiki Kredensial</button>
+          </div>
+        </div>
     </div>
   </div>
 
@@ -3117,6 +3130,46 @@
     }
 
     async function executeOnboardingSave() {
+      const provider = document.getElementById('newAccountProvider').value;
+      const testPayload = { provider };
+
+      // Validasi awal input sebelum pindah ke step diagnostics
+      if (provider === 's3') {
+        const bucket = (document.getElementById('s3Bucket').value || '').trim();
+        const accessKey = (document.getElementById('s3AccessKey').value || '').trim();
+        const secretKey = (document.getElementById('s3SecretKey').value || '').trim();
+        if (!bucket || !accessKey || !secretKey) {
+          showToast('Wajib mengisi Bucket Name, Access Key ID, dan Secret Access Key!', 'error');
+          return;
+        }
+        testPayload.endpoint = (document.getElementById('s3Endpoint').value || '').trim();
+        testPayload.bucket = bucket;
+        testPayload.access_key_id = accessKey;
+        testPayload.secret_access_key = secretKey;
+        testPayload.region = (document.getElementById('s3Region').value || '').trim();
+      } else if (provider === 'webdav' || provider === 'koofr') {
+        const urlVal = (document.getElementById('webdavUrl').value || '').trim();
+        const userVal = (document.getElementById('webdavUser').value || '').trim();
+        const passVal = (document.getElementById('webdavPass').value || '').trim();
+        if (!urlVal || !userVal || !passVal) {
+          showToast('Wajib mengisi WebDAV URL, Username, dan Password / Token!', 'error');
+          return;
+        }
+        testPayload.url = urlVal;
+        testPayload.username = userVal;
+        testPayload.password = passVal;
+      } else if (provider === 'mega') {
+        const userVal = (document.getElementById('megaUser').value || '').trim();
+        const passVal = (document.getElementById('megaPass').value || '').trim();
+        if (!userVal || !passVal) {
+          showToast('Wajib mengisi Email dan Password akun Mega!', 'error');
+          return;
+        }
+        testPayload.username = userVal;
+        testPayload.password = passVal;
+        testPayload.email = userVal;
+      }
+
       showOnboardingStep(3);
       const icon1 = document.getElementById('diagIcon1');
       const desc1 = document.getElementById('diagDesc1');
@@ -3124,28 +3177,76 @@
       const desc2 = document.getElementById('diagDesc2');
       const icon3 = document.getElementById('diagIcon3');
       const desc3 = document.getElementById('diagDesc3');
+      const failBox = document.getElementById('diagFailureBox');
+      const failMsg = document.getElementById('diagFailureMsg');
+      const remMsg = document.getElementById('diagRemediationMsg');
 
+      if (failBox) failBox.style.display = 'none';
       if (icon1) icon1.innerHTML = '<div class="status-pulse-dot" style="background-color:var(--md-sys-color-primary);"></div>';
-      if (desc1) desc1.textContent = 'Melakukan handshake autentikasi...';
+      if (desc1) desc1.textContent = 'Melakukan handshake autentikasi ke server remote...';
       if (icon2) icon2.innerHTML = '<span style="opacity:0.3;">⏳</span>';
       if (desc2) desc2.textContent = 'Menunggu uji koneksi...';
       if (icon3) icon3.innerHTML = '<span style="opacity:0.3;">⏳</span>';
       if (desc3) desc3.textContent = 'Menunggu registrasi driver...';
 
-      // Step 1: Handshake
-      await new Promise(r => setTimeout(r, 600));
+      // Step 1: Real Handshake Testing via backend /api/accounts/test
+      let testData = { success: true, duration_ms: 150 };
+      try {
+        const testRes = await fetch('/api/accounts/test', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(testPayload)
+        });
+        if (testRes.ok) {
+          testData = await testRes.json();
+        } else {
+          testData = { success: false, error: `HTTP ${testRes.status}: Gagal memproses uji koneksi` };
+        }
+      } catch (err) {
+        testData = { success: false, error: err.message || 'Koneksi jaringan terputus' };
+      }
+
+      if (!testData.success) {
+        if (icon1) icon1.innerHTML = '<span style="color:var(--md-sys-color-error);font-weight:700;">✗</span>';
+        if (desc1) desc1.textContent = 'Uji konektivitas dan autentikasi gagal.';
+        if (failBox) {
+          failBox.style.display = 'flex';
+          if (failMsg) failMsg.textContent = `Pesan Error: ${testData.error || 'Kredensial ditolak oleh server provider.'}`;
+          if (remMsg) {
+            let guideText = '<strong>Langkah Perbaikan:</strong><br>';
+            if (provider === 'mega') {
+              guideText += '1. Cek kembali ejaan email dan kata sandi Mega Anda.<br>2. Pastikan akun Mega Anda aktif dan tidak sedang terkunci.<br>3. Jika password mengandung karakter khusus, pastikan tidak ada spasi yang tidak sengaja tersalin.';
+            } else if (provider === 'webdav' || provider === 'koofr') {
+              guideText += '1. Periksa URL WebDAV, pastikan diawali <code>https://</code> dan diakhiri slash <code>/</code>.<br>2. Jika Nextcloud Anda mengaktifkan 2FA, Anda WAJIB membuat <em>App Password</em> di menu Security Nextcloud (bukan password login biasa).';
+            } else if (provider === 's3') {
+              guideText += '1. Periksa apakah nama Bucket sudah dibuat di dashboard S3.<br>2. Verifikasi Access Key ID dan Secret Access Key Anda.<br>3. Jika menggunakan custom endpoint (R2/Wasabi), pastikan format URL benar.';
+            } else {
+              guideText += 'Periksa kembali parameter konfigurasi yang Anda masukkan di halaman sebelumnya.';
+            }
+            remMsg.innerHTML = guideText;
+          }
+        }
+        return; // Hentikan onboarding, jangan simpan akun yang gagal!
+      }
+
       if (icon1) icon1.innerHTML = '<span style="color:var(--status-success);font-weight:700;">✓</span>';
-      if (desc1) desc1.textContent = 'Koneksi jaringan dan kredensial valid.';
+      if (desc1) desc1.textContent = `Koneksi dan kredensial valid (${testData.duration_ms || 120} ms).`;
 
-      // Step 2: Quota
+      // Step 2: Quota Retrieval
       if (icon2) icon2.innerHTML = '<div class="status-pulse-dot" style="background-color:var(--md-sys-color-primary);"></div>';
-      if (desc2) desc2.textContent = 'Mengambil alokasi kuota kapasitas...';
-      await new Promise(r => setTimeout(r, 600));
-      const quotaVal = document.getElementById('newAccountQuota').value || '15';
+      if (desc2) desc2.textContent = 'Mengambil alokasi kuota kapasitas akun...';
+      await new Promise(r => setTimeout(r, 400));
       if (icon2) icon2.innerHTML = '<span style="color:var(--status-success);font-weight:700;">✓</span>';
-      if (desc2) desc2.textContent = `Alokasi kuota ${quotaVal} GB berhasil diverifikasi.`;
+      if (testData.quota && testData.quota.total > 0) {
+        if (desc2) desc2.textContent = `Kapasitas real: ${formatBytes(testData.quota.total)} (Terpakai: ${formatBytes(testData.quota.used)}).`;
+        const qInput = document.getElementById('newAccountQuota');
+        if (qInput) qInput.value = Math.max(1, Math.round(testData.quota.total / (1024 * 1024 * 1024)));
+      } else {
+        const quotaVal = document.getElementById('newAccountQuota').value || '15';
+        if (desc2) desc2.textContent = `Alokasi kuota ${quotaVal} GB berhasil diverifikasi.`;
+      }
 
-      // Step 3: Register
+      // Step 3: Register to Pool
       if (icon3) icon3.innerHTML = '<div class="status-pulse-dot" style="background-color:var(--md-sys-color-primary);"></div>';
       if (desc3) desc3.textContent = 'Mendaftarkan ke StoragePool virtual...';
       await submitAddAccount();
@@ -3406,6 +3507,135 @@
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "http://localhost:8080/api/files/share?path=/dokumen.pdf"</pre>
               </div>
+            </div>
+          </div>
+
+          <!-- Comprehensive Provider Guides & Troubleshooting Handbook -->
+          <div class="storage-breakdown-card" style="gap:20px;margin-top:24px;">
+            <div style="border-bottom:1px solid var(--md-sys-color-outline-variant);padding-bottom:12px;">
+              <h3 style="font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:10px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                Panduan Resmi Pendaftaran Akun Cloud & Troubleshooting
+              </h3>
+              <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">
+                Petunjuk step-by-step terbaru sesuai ketentuan masing-masing provider dan penanganan jika terjadi kegagalan.
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:16px;">
+
+              <!-- Google Drive -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('gdrive', 26)}
+                  <div style="font-weight:700;font-size:1rem;">1. Google Drive (OAuth 2.0 Web Application)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Pendaftaran:</strong></div>
+                  <div>1. Buka <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Google Cloud Console → Google Drive API ↗</a> lalu klik tombol <strong>ENABLE (Aktifkan)</strong>.</div>
+                  <div>2. Masuk ke menu <strong>OAuth consent screen</strong>, pilih jenis <strong>External</strong>, isi nama aplikasi & email kontak.</div>
+                  <div>3. Masuk ke <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>OAuth client ID</strong>.</div>
+                  <div>4. Pilih jenis <strong>Web application</strong>. Pada kolom <em>Authorized redirect URIs</em>, masukkan callback Cloudgate: <code>http://localhost:8080/api/auth/google/callback</code> (atau port host aktif).</div>
+                  <div>5. Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke formulir Cloudgate.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Panduan Penanganan Kegagalan (Troubleshooting):</strong><br>
+                    • <em>Error 400 redirect_uri_mismatch</em>: Redirect URI di Google Cloud Console belum identik dengan alamat gateway lokal Anda.<br>
+                    • <em>Error 403 Google Drive API has not been used</em>: Klik ENABLE pada Google Drive API di Cloud Console project Anda.<br>
+                    • <em>Peringatan "Google hasn't verified this app"</em>: Klik <strong>Advanced</strong> → <strong>Go to Cloudgate (unsafe)</strong> untuk melanjutkan izin akses pribadi.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Microsoft OneDrive -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('onedrive', 26)}
+                  <div style="font-weight:700;font-size:1rem;">2. Microsoft OneDrive (Microsoft Entra ID / Azure Portal)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Pendaftaran Terbaru:</strong></div>
+                  <div>1. Buka <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Azure Portal → App registrations ↗</a> dan klik <strong>New registration</strong>.</div>
+                  <div>2. Masukkan nama aplikasi (misal: <code>Cloudgate Gateway</code>).</div>
+                  <div>3. <strong>Sangat Krusial:</strong> Pada <em>Supported account types</em>, pilih opsi ke-3:<br>
+                    <code>Accounts in any organizational directory and personal Microsoft accounts (e.g. Skype, Xbox)</code>.
+                  </div>
+                  <div>4. Pada bagian <em>Redirect URI</em>, pilih platform <strong>Web</strong> (jangan SPA), masukkan: <code>http://localhost:8080/api/auth/onedrive/callback</code>.</div>
+                  <div>5. Klik <strong>Register</strong>. Salin <strong>Application (client) ID</strong> dari halaman Overview.</div>
+                  <div>6. Masuk ke menu <strong>Certificates & secrets</strong> → klik <strong>New client secret</strong> → salin nilai <strong>Value</strong> (bukan Secret ID!).</div>
+                  <div>7. Masuk ke <strong>API permissions</strong> → pastikan terdapat izin Microsoft Graph: <code>Files.ReadWrite</code>, <code>offline_access</code>, dan <code>User.Read</code>.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Panduan Penanganan Kegagalan (Troubleshooting):</strong><br>
+                    • <em>Error AADSTS700016 (Application not found)</em>: Client ID salah atau belum tersimpan. Pastikan Anda menyalin Application (client) ID.<br>
+                    • <em>Error AADSTS50011 (The reply URL does not match)</em>: Periksa platform redirect URI di Azure. Pastikan terdaftar sebagai platform <strong>Web</strong> dan URL sama persis.<br>
+                    • <em>Error AADSTS7000215 (Invalid client secret)</em>: Anda menyalin <em>Secret ID</em> alih-alih <em>Secret Value</em>. Buka menu Certificates & secrets untuk menyalin Value.<br>
+                    • <em>Error AADSTS50194</em>: Anda salah memilih Supported Account Types (memilih Single Tenant). Buat registrasi baru dengan opsi Personal & Multi-tenant.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mega -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('mega', 26)}
+                  <div style="font-weight:700;font-size:1rem;">3. Mega (Native Client-Side Encrypted Engine)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Penghubungan:</strong></div>
+                  <div>1. Pilih Mega pada modal Add Storage. Masukkan Email dan Password akun Mega Anda.</div>
+                  <div>2. Cloudgate menggunakan modul native pure-Go MEGA API untuk mengautentikasi kunci enkripsi client-side secara real-time.</div>
+                  <div>3. Tekan tombol <strong>Test & Hubungkan Akun</strong>. Cloudgate akan melakukan live handshake dan menarik kuota real akun Anda.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Panduan Penanganan Kegagalan (Troubleshooting):</strong><br>
+                    • <em>Error "autentikasi Mega gagal: Bad credentials"</em>: Email atau kata sandi tidak cocok. Periksa kembali spasi atau ejaan password.<br>
+                    • <em>Akun dengan 2FA</em>: Pastikan Anda menggunakan Master Password akun Mega Anda.<br>
+                    • <em>Error "kredensial Mega belum lengkap"</em>: Kedua kolom email dan password wajib diisi sebelum verifikasi.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dropbox -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('dropbox', 26)}
+                  <div style="font-weight:700;font-size:1rem;">4. Dropbox (Scoped App Access)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Pendaftaran:</strong></div>
+                  <div>1. Buka <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Dropbox App Console ↗</a> → Create app.</div>
+                  <div>2. Pilih <strong>Scoped access</strong> dan <strong>Full Dropbox</strong>.</div>
+                  <div>3. Di tab <strong>Permissions</strong>, centang <code>files.content.read</code>, <code>files.content.write</code>, dan <code>account_info.read</code>.</div>
+                  <div>4. Di tab <strong>Settings</strong>, tambahkan OAuth 2 Redirect URI Cloudgate: <code>http://localhost:8080/api/auth/dropbox/callback</code>.</div>
+                  <div>5. Salin <strong>App key</strong> dan <strong>App secret</strong> ke formulir Cloudgate.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Troubleshooting:</strong> Error <em>invalid_client</em> berarti App Key/Secret salah. Error <em>redirect_uri_mismatch</em> berarti URL callback belum tersimpan di tab Settings Dropbox Console.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nextcloud / WebDAV & S3 -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                  <div style="font-weight:700;font-size:0.95rem;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+                    ${getProviderIconSvg('webdav', 22)} Nextcloud / WebDAV
+                  </div>
+                  <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);">
+                    • Format URL: <code>https://domain.com/remote.php/dav/files/user/</code> (wajib akhiri slash).<br>
+                    • Jika 2FA aktif, buat <strong>App Password</strong> di menu Settings → Security.<br>
+                    • <em>Troubleshooting</em>: Error 401 berarti password ditolak (gunakan App Password). Error 405 berarti URL WebDAV salah.
+                  </div>
+                </div>
+                <div style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                  <div style="font-weight:700;font-size:0.95rem;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+                    ${getProviderIconSvg('s3', 22)} S3 / R2 / Wasabi
+                  </div>
+                  <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);">
+                    • AWS S3: Kosongkan endpoint, isi Bucket, Access Key, Secret Key, dan Region.<br>
+                    • Cloudflare R2 / Wasabi: Isi custom Endpoint lengkap.<br>
+                    • <em>Troubleshooting</em>: Error <code>NoSuchBucket</code> menandakan bucket belum dibuat di dashboard penyedia storage.
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -4410,96 +4640,169 @@
         name: 'Google Drive',
         type: 'oauth',
         defaultQuota: 15,
-        namePlaceholder: 'e.g. Personal Google Drive',
-        clientIdPlaceholder: 'contoh: 123456789-xxx.apps.googleusercontent.com',
-        clientSecretPlaceholder: 'contoh: GOCSPX-xxxxxxxxxxxxxxxxx',
+        namePlaceholder: 'e.g. Akun Google Drive Utama',
+        clientIdPlaceholder: '123456789-xxx.apps.googleusercontent.com',
+        clientSecretPlaceholder: 'GOCSPX-xxxxxxxxxxxxxxxxx',
         requiresCredentials: true,
         guideHtml: (redirectUri) => `
-          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Google Drive:</strong><br>
-          1. <strong>Wajib:</strong> Pastikan <a href="https://console.developers.google.com/apis/api/drive.googleapis.com/overview" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Google Drive API di-ENABLE (Aktif) ↗</a>.<br>
-          2. Masuk ke <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Google Cloud Console Credentials ↗</a>.<br>
-          3. Buat <em>OAuth 2.0 Client ID</em> (Web Application).<br>
-          4. Atur <strong>Authorized redirect URI</strong> persis seperti di bawah:<br>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+          <div style="font-weight:700;font-size:0.86rem;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span>📘</span> Panduan Pendaftaran Google Drive API (Terbaru):
+          </div>
+          <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;line-height:1.45;">
+            <li>Buka <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Google Cloud Console → Google Drive API ↗</a> lalu klik <strong>ENABLE (Aktifkan)</strong>.</li>
+            <li>Buka menu <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">OAuth consent screen ↗</a>, pilih <strong>External</strong>, isi App name & email pengembang, lalu simpan.</li>
+            <li>Masuk ke <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Credentials ↗</a> → klik <strong>Create Credentials</strong> → pilih <strong>OAuth client ID</strong>.</li>
+            <li>Pilih Application type: <strong>Web application</strong>.</li>
+            <li>Pada bagian <strong>Authorized redirect URIs</strong>, tambahkan URL persis di bawah:</li>
+          </ol>
+          <div style="display:flex;gap:6px;margin:8px 0;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;font-family:monospace;">
             <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
           </div>
+          <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+            6. Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> yang diberikan Google ke kolom di bawah, lalu klik tombol masuk.
+          </div>
+          <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
+            <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
+            <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+              <div>• <strong>Error 400 redirect_uri_mismatch</strong>: URL redirect di Google Cloud Console belum sama persis dengan yang disalin di atas (perhatikan http vs https dan port).</div>
+              <div>• <strong>Error 403 Google Drive API has not been used</strong>: Anda belum menekan tombol ENABLE pada Google Drive API di Google Cloud Console.</div>
+              <div>• <strong>Peringatan "Google hasn't verified this app"</strong>: Hal ini wajar untuk app pribadi lokal. Klik <em>Advanced</em> → lalu klik <em>Go to Cloudgate (unsafe)</em> untuk melanjutkan login.</div>
+            </div>
+          </details>
         `
       },
       onedrive: {
         name: 'Microsoft OneDrive',
         type: 'oauth',
         defaultQuota: 5,
-        namePlaceholder: 'e.g. Personal / Work OneDrive',
-        clientIdPlaceholder: 'Application (client) ID / kosongkan jika default',
-        clientSecretPlaceholder: 'Client secret value / kosongkan jika default',
-        requiresCredentials: false,
+        namePlaceholder: 'e.g. Akun Microsoft OneDrive',
+        clientIdPlaceholder: 'Application (client) ID dari Azure Portal',
+        clientSecretPlaceholder: 'Client Secret Value dari Azure Portal',
+        requiresCredentials: true,
         guideHtml: (redirectUri) => `
-          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Microsoft OneDrive:</strong><br>
-          1. Buka <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Azure Portal / App Registrations ↗</a>.<br>
-          2. Daftarkan aplikasi baru (pilih <em>Personal Microsoft accounts</em> atau multi-tenant).<br>
-          3. Tambahkan <strong>Redirect URI (Web)</strong> persis seperti di bawah:<br>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+          <div style="font-weight:700;font-size:0.86rem;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span>📘</span> Panduan Pendaftaran Microsoft Azure / Entra ID (Ketentuan Terbaru):
+          </div>
+          <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;line-height:1.45;">
+            <li>Buka <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Azure Portal → App registrations ↗</a> lalu klik <strong>New registration</strong>.</li>
+            <li>Beri nama aplikasi: <code>Cloudgate Gateway</code>.</li>
+            <li><strong>Sangat Penting:</strong> Pada opsi <em>Supported account types</em>, WAJIB pilih:<br>
+              <span style="display:inline-block;background:var(--md-sys-color-surface-container);padding:3px 6px;border-radius:4px;font-weight:600;font-size:0.75rem;margin-top:2px;">Accounts in any organizational directory and personal Microsoft accounts (e.g. Skype, Xbox)</span>
+            </li>
+            <li>Pada <em>Redirect URI</em>, pilih platform <strong>Web</strong> (jangan SPA), dan masukkan URL persis di bawah:</li>
+          </ol>
+          <div style="display:flex;gap:6px;margin:8px 0;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;font-family:monospace;">
             <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
           </div>
-          <div style="font-size:0.75rem;margin-top:6px;color:var(--md-sys-color-on-surface-variant);">* Jika menggunakan default Cloudgate, kolom Client ID & Secret di bawah dapat dikosongkan.</div>
+          <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+            5. Klik <strong>Register</strong>. Salin <strong>Application (client) ID</strong> ke kolom Client ID di bawah.<br>
+            6. Buka menu <strong>Certificates & secrets</strong> → klik <strong>New client secret</strong> → klik Add → salin nilai <strong>Value</strong> (bukan Secret ID!) ke kolom Client Secret di bawah.<br>
+            7. Buka menu <strong>API permissions</strong> → Add permission → Microsoft Graph → Delegated: pastikan terdapat izin <code>Files.ReadWrite</code>, <code>offline_access</code>, dan <code>User.Read</code>.
+          </div>
+          <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
+            <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
+            <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+              <div>• <strong>Error AADSTS700016 (Application not found)</strong>: Nilai Client ID salah atau belum tersimpan. Salin ulang <em>Application (client) ID</em> dari halaman Overview Azure.</div>
+              <div>• <strong>Error AADSTS50011 (Redirect URI mismatch)</strong>: URL redirect di Azure tidak persis sama dengan yang disalin di atas. Pastikan memilih platform <em>Web</em> di menu Authentication Azure.</div>
+              <div>• <strong>Error AADSTS7000215 / invalid_client</strong>: Anda menyalin <em>Secret ID</em> bukan <em>Secret Value</em>. Buka menu Certificates & secrets dan salin kolom Value.</div>
+              <div>• <strong>Error AADSTS50194 / Account type mismatch</strong>: Anda memilih "Single tenant" saat pendaftaran. Buat registrasi baru dengan opsi "Personal & multitenant accounts".</div>
+            </div>
+          </details>
         `
       },
       dropbox: {
         name: 'Dropbox',
         type: 'oauth',
         defaultQuota: 2,
-        namePlaceholder: 'e.g. My Dropbox Account',
-        clientIdPlaceholder: 'App key / kosongkan jika default',
-        clientSecretPlaceholder: 'App secret / kosongkan jika default',
-        requiresCredentials: false,
+        namePlaceholder: 'e.g. Akun Dropbox Saya',
+        clientIdPlaceholder: 'App key dari Dropbox App Console',
+        clientSecretPlaceholder: 'App secret dari Dropbox App Console',
+        requiresCredentials: true,
         guideHtml: (redirectUri) => `
-          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Dropbox:</strong><br>
-          1. Buka <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Dropbox App Console ↗</a> lalu buat App baru (Scoped access).<br>
-          2. Pada tab <em>Permissions</em>, aktifkan <code>files.content.read</code> dan <code>files.content.write</code>.<br>
-          3. Tambahkan <strong>Redirect URI</strong> persis seperti di bawah:<br>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+          <div style="font-weight:700;font-size:0.86rem;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span>📘</span> Panduan Pendaftaran Dropbox Developer Console:
+          </div>
+          <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;line-height:1.45;">
+            <li>Buka <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Dropbox App Console ↗</a> lalu klik <strong>Create app</strong>.</li>
+            <li>Pilih <strong>Scoped access</strong> dan <strong>Full Dropbox</strong>.</li>
+            <li>Buka tab <strong>Permissions</strong>, centang <code>files.content.read</code>, <code>files.content.write</code>, dan <code>account_info.read</code>, lalu klik Submit.</li>
+            <li>Buka tab <strong>Settings</strong>, cari bagian <em>OAuth 2 Redirect URIs</em>, masukkan URL di bawah:</li>
+          </ol>
+          <div style="display:flex;gap:6px;margin:8px 0;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;font-family:monospace;">
             <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
           </div>
-          <div style="font-size:0.75rem;margin-top:6px;color:var(--md-sys-color-on-surface-variant);">* Jika menggunakan default Cloudgate, kolom App Key & Secret di bawah dapat dikosongkan.</div>
+          <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+            5. Salin <strong>App key</strong> (Client ID) dan <strong>App secret</strong> (Client Secret) ke kolom di bawah.
+          </div>
+          <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
+            <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
+            <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+              <div>• <strong>Error invalid_client</strong>: App key atau App secret tidak valid. Cek kembali di tab Settings Dropbox Console.</div>
+              <div>• <strong>Error redirect_uri_mismatch</strong>: URL redirect belum ditambahkan ke daftar Redirect URIs pada tab Settings Dropbox.</div>
+              <div>• <strong>Error missing_scope</strong>: Izin <code>files.content.read</code> / <code>write</code> belum dicentang di tab Permissions.</div>
+            </div>
+          </details>
         `
       },
       box: {
         name: 'Box',
         type: 'oauth',
         defaultQuota: 10,
-        namePlaceholder: 'e.g. Box Cloud Drive',
-        clientIdPlaceholder: 'OAuth 2.0 Client ID',
-        clientSecretPlaceholder: 'OAuth 2.0 Client Secret',
-        requiresCredentials: false,
+        namePlaceholder: 'e.g. Box Cloud Storage',
+        clientIdPlaceholder: 'OAuth 2.0 Client ID dari Box Console',
+        clientSecretPlaceholder: 'OAuth 2.0 Client Secret dari Box Console',
+        requiresCredentials: true,
         guideHtml: (redirectUri) => `
-          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Box:</strong><br>
-          1. Masuk ke <a href="https://app.box.com/developers/console" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Box Developer Console ↗</a> & buat Custom App.<br>
-          2. Pilih metode <em>User Authentication (OAuth 2.0)</em>.<br>
-          3. Tambahkan <strong>OAuth 2.0 Redirect URI</strong> di bawah dan simpan:<br>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+          <div style="font-weight:700;font-size:0.86rem;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span>📘</span> Panduan Pendaftaran Box Developer Console:
+          </div>
+          <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;line-height:1.45;">
+            <li>Buka <a href="https://app.box.com/developers/console" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Box Developer Console ↗</a> lalu klik <strong>Create New App</strong> → <strong>Custom App</strong>.</li>
+            <li>Pilih metode autentikasi: <strong>User Authentication (OAuth 2.0)</strong>.</li>
+            <li>Pada tab <strong>Configuration</strong>, tambahkan Redirect URI di bawah:</li>
+          </ol>
+          <div style="display:flex;gap:6px;margin:8px 0;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;font-family:monospace;">
             <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
           </div>
+          <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+            4. Di bagian <em>Application Scopes</em>, centang <strong>Read and write all files and folders stored in Box</strong>.<br>
+            5. Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke kolom di bawah.
+          </div>
+          <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
+            <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
+            <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+              <div>• <strong>Error redirect_uri_mismatch</strong>: Pastikan Redirect URI di Box Configuration sama persis dengan yang disalin di atas.</div>
+              <div>• <strong>Error unauthorized_client</strong>: Pastikan opsi User Authentication (OAuth 2.0) dipilih, bukan Server Authentication (JWT).</div>
+            </div>
+          </details>
         `
       },
       pcloud: {
         name: 'pCloud',
         type: 'oauth',
         defaultQuota: 10,
-        namePlaceholder: 'e.g. pCloud Drive',
+        namePlaceholder: 'e.g. Akun pCloud Drive',
         clientIdPlaceholder: 'pCloud App Key / Client ID',
         clientSecretPlaceholder: 'pCloud App Secret',
-        requiresCredentials: false,
+        requiresCredentials: true,
         guideHtml: (redirectUri) => `
-          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi pCloud:</strong><br>
-          1. Masuk ke <a href="https://docs.pcloud.com/my_apps/" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">pCloud Developer Apps ↗</a> & daftarkan aplikasi.<br>
-          2. Masukkan <strong>Redirect URI</strong> persis seperti di bawah:<br>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+          <div style="font-weight:700;font-size:0.86rem;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span>📘</span> Panduan Pendaftaran pCloud Developer Console:
+          </div>
+          <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;line-height:1.45;">
+            <li>Buka <a href="https://docs.pcloud.com/my_apps/" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">pCloud Developer Apps ↗</a> lalu daftarkan aplikasi baru.</li>
+            <li>Masukkan <strong>Redirect URI</strong> persis seperti di bawah:</li>
+          </ol>
+          <div style="display:flex;gap:6px;margin:8px 0;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;font-family:monospace;">
             <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
+          </div>
+          <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+            3. Salin <strong>App Key</strong> dan <strong>App Secret</strong> ke kolom di bawah.
           </div>
         `
       },
@@ -4510,44 +4813,46 @@
         namePlaceholder: 'e.g. Yandex Disk',
         clientIdPlaceholder: 'Yandex ClientID',
         clientSecretPlaceholder: 'Yandex ClientSecret',
-        requiresCredentials: false,
+        requiresCredentials: true,
         guideHtml: (redirectUri) => `
-          <strong style="color:var(--md-sys-color-on-surface);">Panduan Autentikasi Yandex Disk:</strong><br>
-          1. Buka <a href="https://oauth.yandex.com/client/new" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Yandex OAuth App Registration ↗</a>.<br>
-          2. Beri izin pada API <em>Yandex Disk REST API</em> (read & write).<br>
-          3. Masukkan <strong>Callback URL</strong> persis seperti di bawah:<br>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;">
+          <div style="font-weight:700;font-size:0.86rem;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span>📘</span> Panduan Pendaftaran Yandex OAuth:
+          </div>
+          <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;line-height:1.45;">
+            <li>Buka <a href="https://oauth.yandex.com/client/new" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Yandex OAuth App Registration ↗</a>.</li>
+            <li>Beri izin pada API <em>Yandex Disk REST API</em> (read & write).</li>
+            <li>Masukkan <strong>Callback URL</strong> di bawah:</li>
+          </ol>
+          <div style="display:flex;gap:6px;margin:8px 0;">
+            <input type="text" id="oauthRedirectUriDisplay" readonly value="${redirectUri}" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;font-family:monospace;">
             <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('oauthRedirectUriDisplay').value); showToast('Redirect URI disalin!');">Salin</button>
           </div>
-        `
-      },
-      koofr: {
-        name: 'Koofr',
-        type: 'webdav',
-        defaultQuota: 10,
-        namePlaceholder: 'e.g. Koofr Cloud',
-        webdavDefaultUrl: 'https://app.koofr.net/dav/Koofr',
-        webdavGuideHtml: `
-          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
-            <strong style="color:var(--md-sys-color-on-surface);">Panduan Koneksi Koofr (WebDAV):</strong><br>
-            1. Buka <a href="https://app.koofr.net/app/admin/preferences/password" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Koofr Preferences &rarr; Password ↗</a>.<br>
-            2. Generate <strong>App Password</strong> baru untuk Cloudgate.<br>
-            3. Masukkan email Koofr dan App Password di bawah.
+          <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+            4. Salin <strong>ClientID</strong> dan <strong>ClientSecret</strong> ke kolom di bawah.
           </div>
         `
       },
-      webdav: {
-        name: 'Nextcloud / WebDAV',
-        type: 'webdav',
-        defaultQuota: 50,
-        namePlaceholder: 'e.g. Personal Nextcloud',
-        webdavDefaultUrl: '',
-        webdavGuideHtml: `
-          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
-            <strong style="color:var(--md-sys-color-on-surface);">Panduan Koneksi Nextcloud / WebDAV:</strong><br>
-            1. Untuk Nextcloud, format URL WebDAV: <code>https://domain-anda.com/remote.php/dav/files/username/</code><br>
-            2. Buat <em>App Password / Device Token</em> di menu Settings &rarr; Security pada Nextcloud Anda.
+      mega: {
+        name: 'Mega',
+        type: 'mega',
+        defaultQuota: 20,
+        namePlaceholder: 'e.g. Akun Mega Personal',
+        megaGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Penghubungan Akun Mega (Native Engine):
+            </div>
+            1. Masukkan <strong>Email</strong> dan <strong>Password</strong> akun Mega Anda di bawah.<br>
+            2. Cloudgate menggunakan library enkripsi client-side end-to-end Mega untuk melakukan verifikasi langsung ke server Mega.<br>
+            3. Saat tombol <em>Test & Hubungkan Akun</em> ditekan, Cloudgate akan menguji autentikasi dan membaca kuota asli akun Mega Anda.<br>
+            <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
+              <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
+              <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+                <div>• <strong>Error "autentikasi Mega gagal"</strong>: Email atau kata sandi salah. Periksa kembali spasi atau karakter huruf besar/kecil.</div>
+                <div>• <strong>Akun dengan 2FA</strong>: Pastikan Anda menggunakan Master Password akun Mega Anda.</div>
+                <div>• <strong>Akun Terblokir Sementara</strong>: Jika terlalu sering salah memasukkan sandi, tunggu beberapa menit sebelum mencoba kembali.</div>
+              </div>
+            </details>
           </div>
         `
       },
@@ -4555,13 +4860,63 @@
         name: 'S3 / S3-Compatible',
         type: 's3',
         defaultQuota: 50,
-        namePlaceholder: 'e.g. AWS S3 / Cloudflare R2 / Wasabi'
+        namePlaceholder: 'e.g. AWS S3 / Cloudflare R2 / Wasabi',
+        s3GuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Koneksi S3 & S3-Compatible Object Storage:
+            </div>
+            1. <strong>AWS S3</strong>: Kolom Endpoint dapat dikosongkan (default: https://s3.amazonaws.com). Masukkan Bucket, Access Key, Secret Key, dan Region (contoh: <code>us-east-1</code>).<br>
+            2. <strong>Cloudflare R2 / Wasabi / MinIO</strong>: Masukkan Endpoint lengkap (contoh R2: <code>https://&lt;id-akun&gt;.r2.cloudflarestorage.com</code>).<br>
+            <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
+              <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
+              <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+                <div>• <strong>Error NoSuchBucket</strong>: Nama bucket belum dibuat di dashboard penyedia storage. Buat bucket terlebih dahulu.</div>
+                <div>• <strong>Error InvalidAccessKeyId / SignatureDoesNotMatch</strong>: Kredensial Access Key ID atau Secret Access Key salah.</div>
+              </div>
+            </details>
+          </div>
+        `
       },
-      mega: {
-        name: 'Mega',
-        type: 'mega',
-        defaultQuota: 20,
-        namePlaceholder: 'e.g. Mega Cloud Storage'
+      webdav: {
+        name: 'Nextcloud / WebDAV',
+        type: 'webdav',
+        defaultQuota: 50,
+        namePlaceholder: 'e.g. Akun Nextcloud Pribadi',
+        webdavDefaultUrl: '',
+        webdavGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Koneksi Nextcloud / WebDAV:
+            </div>
+            1. Format URL WebDAV Nextcloud: <code>https://domain-anda.com/remote.php/dav/files/username/</code> (WAJIB diakhiri slash <code>/</code>).<br>
+            2. <strong>Sangat Penting (2FA Nextcloud)</strong>: Buka menu Nextcloud → <em>Settings → Security → Devices & client credentials</em>, lalu buat <strong>App Password</strong> khusus Cloudgate.<br>
+            <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
+              <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
+              <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+                <div>• <strong>Error 401 Unauthorized</strong>: Jangan gunakan password login web biasa jika mengaktifkan 2FA. Gunakan <em>App Password</em> dari menu Security Nextcloud.</div>
+                <div>• <strong>Error 404 / 405 Method Not Allowed</strong>: Path URL WebDAV salah. Pastikan alamat URL WebDAV lengkap sesuai yang tertera di menu Files → File settings pada Nextcloud Anda.</div>
+              </div>
+            </details>
+          </div>
+        `
+      },
+      koofr: {
+        name: 'Koofr',
+        type: 'webdav',
+        defaultQuota: 10,
+        namePlaceholder: 'e.g. Akun Koofr Cloud',
+        webdavDefaultUrl: 'https://app.koofr.net/dav/Koofr',
+        webdavGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Koneksi Koofr (WebDAV):
+            </div>
+            1. Buka <a href="https://app.koofr.net/app/admin/preferences/password" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;text-decoration:none;">Koofr Preferences → Password ↗</a>.<br>
+            2. Di bagian <em>Generate new password</em>, buat <strong>App Password</strong> baru untuk Cloudgate.<br>
+            3. Masukkan email Koofr dan App Password di bawah (URL default: <code>https://app.koofr.net/dav/Koofr</code>).
+          </div>
+        `
       }
     };
 
@@ -4581,9 +4936,11 @@
       const oauthGuideCard = document.getElementById('oauthGuideCard');
       const btnOAuthText = document.getElementById('btnOAuthText');
       const s3Extra = document.getElementById('s3ExtraFields');
+      const s3GuideBox = document.getElementById('s3GuideBox');
       const webdavExtra = document.getElementById('webdavExtraFields');
       const webdavGuideBox = document.getElementById('webdavGuideBox');
       const megaExtra = document.getElementById('megaExtraFields');
+      const megaGuideBox = document.getElementById('megaGuideBox');
       const nameInput = document.getElementById('newAccountName');
       const quotaInput = document.getElementById('newAccountQuota');
       const clientIdInput = document.getElementById('newAccountClientID');
@@ -4640,11 +4997,17 @@
         s3Extra.style.display = 'flex';
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'none';
+        if (s3GuideBox) {
+          s3GuideBox.innerHTML = meta.s3GuideHtml || '';
+        }
       } else if (meta.type === 'mega') {
         oauthSection.style.display = 'none';
         s3Extra.style.display = 'none';
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'flex';
+        if (megaGuideBox) {
+          megaGuideBox.innerHTML = meta.megaGuideHtml || '';
+        }
       }
     }
 
