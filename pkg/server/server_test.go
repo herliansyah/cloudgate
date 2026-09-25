@@ -480,6 +480,29 @@ func TestAccountPrincipalAndDefaultNaming(t *testing.T) {
 		t.Errorf("expected email 'admin@nextcloud.example.com', got '%s'", webdavAcc.Email)
 	}
 
+	// 4. Filen with email & api_key without custom name
+	filenPayload := map[string]any{
+		"provider": "filen",
+		"email":    "user@filen.io",
+		"password": "filenpassword",
+		"api_key":  "mock_filen_key",
+	}
+	filenBytes, _ := json.Marshal(filenPayload)
+	resp, err = http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(filenBytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create filen account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var filenAcc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&filenAcc)
+	resp.Body.Close()
+
+	if filenAcc.Name != "Filen (user@filen.io)" {
+		t.Errorf("expected name 'Filen (user@filen.io)', got '%s'", filenAcc.Name)
+	}
+	if filenAcc.Email != "user@filen.io" {
+		t.Errorf("expected email 'user@filen.io', got '%s'", filenAcc.Email)
+	}
+
 	// 4. Test auto-reconcile upgrading generic fallback names on sync
 	// Seed an account with generic name and empty email
 	genericAcc := db.RemoteAccount{

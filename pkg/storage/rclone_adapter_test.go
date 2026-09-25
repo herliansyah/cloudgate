@@ -287,3 +287,59 @@ func TestRcloneAdapter_Mega_DirectDispatchWithoutBaseURL(t *testing.T) {
 	}
 }
 
+func TestRcloneAdapter_Filen_Basic(t *testing.T) {
+	creds := `{"email":"user@filen.io","password":"secretpassword","api_key":"mock_api_key"}`
+	drv, err := storage.NewRcloneDriver("filen", "acc_filen_test", creds)
+	if err != nil {
+		t.Fatalf("failed to create filen driver: %v", err)
+	}
+	if drv.Provider() != "filen" {
+		t.Errorf("expected filen, got %s", drv.Provider())
+	}
+	ctx := context.Background()
+	// Set mock mode for offline test
+	drv.SetBaseURL("http://127.0.0.1:9999")
+
+	quota, err := drv.About(ctx)
+	if err != nil {
+		t.Fatalf("about failed: %v", err)
+	}
+	if quota.Total <= 0 {
+		t.Errorf("expected positive total quota, got %d", quota.Total)
+	}
+
+	if err := drv.Put(ctx, "/filen_doc.txt", bytes.NewReader([]byte("filendata")), 9); err != nil {
+		t.Fatalf("put failed: %v", err)
+	}
+	files, err := drv.List(ctx, "/")
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatalf("expected at least 1 file, got 0")
+	}
+	rc, info, err := drv.Get(ctx, "/filen_doc.txt")
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	defer rc.Close()
+	data, _ := io.ReadAll(rc)
+	if string(data) != "filendata" || info.Name != "filen_doc.txt" {
+		t.Errorf("unexpected content: %s", string(data))
+	}
+
+	if err := drv.Move(ctx, "/filen_doc.txt", "/filen_moved.txt"); err != nil {
+		t.Fatalf("move failed: %v", err)
+	}
+	if err := drv.Mkdir(ctx, "/filen_folder"); err != nil {
+		t.Fatalf("mkdir failed: %v", err)
+	}
+	if err := drv.Delete(ctx, "/filen_moved.txt"); err != nil {
+		t.Fatalf("delete failed: %v", err)
+	}
+	if err := drv.TestConnection(ctx); err != nil {
+		t.Fatalf("test connection failed: %v", err)
+	}
+}
+
+

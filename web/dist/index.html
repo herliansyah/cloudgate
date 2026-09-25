@@ -2108,6 +2108,7 @@
         <option value="webdav">Nextcloud / WebDAV</option>
         <option value="s3">S3 / S3-Compatible (MinIO, R2, Wasabi)</option>
         <option value="koofr">Koofr (WebDAV / App Password)</option>
+        <option value="filen">Filen (Zero-Knowledge E2EE)</option>
         <option value="yandex">Yandex Disk (OAuth2)</option>
       </select>
 
@@ -2199,6 +2200,14 @@
           <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Kredensial Akun Mega:</div>
           <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Email Akun Mega <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="megaUser" placeholder="user@example.com"></div>
           <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Password Akun Mega <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="megaPass" placeholder="••••••••"></div>
+        </div>
+
+        <div id="filenExtraFields" style="display:none;flex-direction:column;gap:12px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div id="filenGuideBox"></div>
+          <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Kredensial Akun Filen (Zero-Knowledge):</div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Email Akun Filen <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="filenUser" placeholder="user@example.com"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Master Password Filen <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="filenPass" placeholder="••••••••"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Master API Key Filen <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><textarea class="form-control" id="filenApiKey" rows="3" placeholder="Tempel API key hasil ekspor di sini..." style="font-family:monospace;font-size:0.75rem;resize:vertical;"></textarea></div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -2788,7 +2797,7 @@
         'hub.enable': 'Enable',
         'hub.disable': 'Disable',
         'hub.connectNew': 'Connect New Cloud Account',
-        'hub.connectNewDesc': 'Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, etc.',
+        'hub.connectNewDesc': 'Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, Filen, etc.',
         'gateway.cardTitle': 'Gateway Security (GatewayAuth)',
         'gateway.active': 'ACTIVE',
         'gateway.inactive': 'INACTIVE',
@@ -2917,7 +2926,7 @@
         'hub.enable': 'Aktifkan',
         'hub.disable': 'Nonaktifkan',
         'hub.connectNew': 'Hubungkan Akun Penyimpanan Baru',
-        'hub.connectNewDesc': 'Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, dll.',
+        'hub.connectNewDesc': 'Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, Filen, dll.',
         'gateway.cardTitle': 'Keamanan Gateway (GatewayAuth)',
         'gateway.active': 'AKTIF',
         'gateway.inactive': 'NONAKTIF',
@@ -3206,6 +3215,9 @@
       if (p === 'mega') {
         return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><circle cx="12" cy="12" r="11" fill="#d9272e"/><path d="M6.5 16V8h2.3l3.2 3.8L15.2 8h2.3v8h-2.1v-4.8l-2.6 3.1h-1.6l-2.6-3.1V16z" fill="#ffffff"/></svg>`;
       }
+      if (p === 'filen') {
+        return `<svg id="filen-logo" viewBox="0 0 2133.89 2133.89" width="${size}" height="${size}"><path fill="#2764eb" fill-rule="evenodd" d="M1066.95,0C477.73,0,0,477.73,0,1066.95s477.73,1066.95,1066.95,1066.95,1066.95-477.73,1066.95-1066.95S1656.21,0,1066.95,0ZM498.58,329.87h665.24c22.95-36.62,63.76-60.98,110.34-60.98,71.84,0,130.25,58.16,130.25,130.25s-58.42,130.04-130.25,130.04c-47.31,0-88.76-25.26-111.49-63.03H426.74v1272.58c0,1.41,0,2.31-.21,3.72,65.6,62.14,140,114.74,221.15,155.77v-553.07c0-1.15.21-2.09.21-3.25s.21-2.09.47-3.25.47-2.09.68-3.25c.21-1.15.47-2.09.68-3.25.21-1.15.68-2.09.94-3.25s.68-2.09,1.15-3.25.94-2.09,1.15-3.03c.47-1.15.94-2.09,1.41-3.03s1.15-1.84,1.41-3.03c.47-1.15,1.15-1.84,1.62-2.78.68-.94,1.15-1.84,1.62-2.78.68-.94,1.41-1.62,1.84-2.78.68-.94,1.41-1.62,1.84-2.56.68-.94,1.41-1.62,2.09-2.56s1.41-1.62,2.09-2.31,1.41-1.41,2.31-2.31c.94-.68,1.62-1.41,2.56-2.09s1.62-1.41,2.56-2.09,1.62-1.41,2.56-1.84c.94-.68,1.84-1.41,2.78-1.62.94-.68,1.84-1.15,2.78-1.62,1.15-.47,1.84-1.15,3.03-1.41s1.84-.94,3.03-1.41c1.15-.47,2.09-.94,3.03-1.41,1.15-.47,2.09-.68,3.25-1.15s2.09-.68,3.25-.94,2.09-.68,3.25-.94c1.15-.21,2.09-.47,3.25-.68s2.09-.47,3.25-.47,2.09-.21,3.25-.47c1.15,0,2.09-.21,3.25-.21h229.95c22.95-36.62,63.76-60.98,110.34-60.98,71.84,0,130.25,58.16,130.25,130.25s-58.16,130.25-130.25,130.25c-47.31,0-88.76-25.26-111.49-63.03h-159.23v528.02c0,3.03-.21,6.03-.68,9.06,89.96,28.29,185.42,43.8,284.18,43.8,88.55,0,174.31-12.26,255.42-35.47v-705.12c-36.41-22.95-60.51-63.5-60.51-109.87,0-71.84,58.16-130.25,130.25-130.25s130.25,58.16,130.25,130.25c0,47.52-25.51,89.23-63.76,111.96v652.3c62.61-28.97,121.45-64.91,175.72-106.62v-659.95c0-1.15.21-2.09.21-3.25s.21-2.09.47-3.25c.21-1.15.47-2.09.68-3.25s.47-2.09.68-3.25.68-2.09.94-3.25c.47-1.15.68-2.09,1.15-3.25s.68-2.09,1.15-3.25.94-2.09,1.41-3.03,1.15-1.84,1.41-3.03c.47-1.15,1.15-1.84,1.62-2.78s1.15-1.84,1.62-2.78c.68-.94,1.41-1.84,1.84-2.78s1.41-1.62,1.84-2.56c.68-.94,1.41-1.62,2.09-2.56s1.41-1.62,2.31-2.31,1.41-1.41,2.31-2.31c.94-.68,1.62-1.41,2.56-2.09s1.62-1.41,2.56-2.09c.94-.68,1.62-1.41,2.78-1.84.94-.68,1.84-1.41,2.78-1.62.94-.47,1.84-1.15,2.78-1.62.94-.68,1.84-1.15,3.03-1.41,1.15-.47,1.84-.94,3.03-1.41s2.09-.94,3.03-1.41c1.15-.47,2.09-.94,3.25-1.15,1.15-.47,2.09-.68,3.25-.94s2.09-.47,3.25-.94c1.15-.21,2.09-.47,3.25-.68,1.15-.21,2.09-.21,3.25-.47s2.09-.21,3.25-.21,2.09-.21,3.25-.21h296.7v-12.99c0-232.94-85.55-445.97-227.18-609.18v292.99c0,1.15-.21,2.09-.21,3.46s-.21,2.09-.47,3.25c-.21,1.15-.47,2.09-.68,3.25s-.47,2.09-.68,3.25-.68,2.09-.94,3.25c-.47,1.15-.68,2.09-1.15,3.25s-.94,2.09-1.41,3.25c-.47,1.15-.94,2.09-1.41,3.03-.47,1.15-1.15,1.84-1.41,3.03s-1.15,1.84-1.62,3.03c-.68,1.15-1.15,1.84-1.62,2.78-.68.94-1.41,1.84-1.84,2.78-.68.94-1.41,1.62-2.09,2.56s-1.41,1.62-2.09,2.56-1.41,1.62-2.31,2.31-1.62,1.41-2.31,2.31c-.94.94-1.62,1.41-2.56,2.09s-1.62,1.41-2.56,2.09-1.62,1.41-2.78,1.84c-.94.68-1.84,1.41-2.78,1.62-1.15.68-1.84,1.15-3.03,1.62s-1.84,1.15-3.03,1.41c-1.15.47-2.09.94-3.03,1.41-1.15.47-2.09.94-3.25,1.41s-2.09.68-3.25,1.15-2.09.68-3.25.94-2.09.47-3.25.68c-1.15.21-2.09.47-3.25.68-1.15.21-2.09.21-3.46.47s-2.09.21-3.46.21h-922.21v138.37c38.03,22.73,63.29,64.19,63.29,111.71,0,71.84-58.16,130.25-130.25,130.25s-129.83-58.42-129.83-130.51c0-46.37,24.1-87.14,60.51-110.08v-211.41c0-1.15.21-2.09.21-3.25s.21-2.09.47-3.25.47-2.09.68-3.25.47-2.09.68-3.25.68-2.09.94-3.25.68-2.09,1.15-3.25.94-2.09,1.15-3.03c.47-1.15.94-2.09,1.41-3.03s1.15-1.84,1.41-3.03c.47-1.15,1.15-1.84,1.62-3.03.68-1.15,1.15-1.84,1.62-2.78.68-.94,1.41-1.84,1.84-2.78.68-.94,1.41-1.62,1.84-2.56.68-.94,1.41-1.62,2.09-2.56s1.41-1.62,2.09-2.31l2.31-2.31c.94-.94,1.62-1.41,2.56-2.09s1.62-1.41,2.56-2.09,1.62-1.41,2.56-1.84c.94-.68,1.84-1.41,2.78-1.62.94-.68,1.84-1.15,2.78-1.62,1.15-.47,1.84-1.15,3.03-1.41s1.84-.94,3.03-1.41,2.09-.94,3.03-1.41c1.15-.47,2.09-.94,3.25-1.15s2.09-.68,3.25-.94,2.09-.68,3.25-.94,2.09-.47,3.25-.68c1.15-.21,2.09-.47,3.25-.47s2.09-.21,3.25-.21,2.09-.21,3.25-.21h920.71v-342.52c0-2.09,0-4.19.21-6.24-157.18-121.92-353.97-194.01-567.9-194.01s-411.45,72.31-568.58,193.8h-.13ZM136.07,1066.95c0-189.83,56.79-366.49,154.36-513.45v1027.08c-97.61-147.18-154.36-323.84-154.36-513.67h0v.04ZM1985.82,1216h-215.55v460.33c111.02-127.48,187.52-285.59,215.55-460.33Z"/></svg>`;
+      }
       if (p === 'pcloud') {
         return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#1ab7ea"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>`;
       }
@@ -3248,6 +3260,7 @@
       { id: 's3', name: 'S3 Storage', badge: 'Object Storage' },
       { id: 'webdav', name: 'WebDAV / Nextcloud', badge: 'WebDAV Protocol' },
       { id: 'mega', name: 'Mega', badge: 'Direct Auth' },
+      { id: 'filen', name: 'Filen', badge: 'Zero-Knowledge' },
       { id: 'pcloud', name: 'pCloud', badge: 'OAuth 2.0 Direct' },
       { id: 'koofr', name: 'Koofr', badge: 'App Password' },
       { id: 'yandex', name: 'Yandex Disk', badge: 'OAuth 2.0 Direct' }
@@ -3260,6 +3273,7 @@
       box: '#0061d5',
       s3: '#e05243',
       mega: '#d9272e',
+      filen: '#2764eb',
       webdav: '#0082c9',
       pcloud: '#1ab7ea',
       koofr: '#00b4d8',
@@ -4218,6 +4232,17 @@
         testPayload.username = userVal;
         testPayload.password = passVal;
         testPayload.email = userVal;
+      } else if (provider === 'filen') {
+        const userVal = (document.getElementById('filenUser').value || '').trim();
+        const passVal = (document.getElementById('filenPass').value || '').trim();
+        const apiKeyVal = (document.getElementById('filenApiKey').value || '').trim();
+        if (!userVal || !passVal || !apiKeyVal) {
+          showToast('Wajib mengisi Email, Master Password, dan Master API Key akun Filen!', 'error');
+          return;
+        }
+        testPayload.email = userVal;
+        testPayload.password = passVal;
+        testPayload.api_key = apiKeyVal;
       }
 
       showOnboardingStep(3);
@@ -4266,6 +4291,8 @@
             let guideText = '<strong>Langkah Perbaikan:</strong><br>';
             if (provider === 'mega') {
               guideText += '1. <strong>Cek Kredensial & Status Kunci:</strong> Jika email & sandi sudah benar, akun Anda kemungkinan telah <em>dikunci sementara</em> oleh sistem keamanan MEGA karena terdeteksi login pihak ketiga.<br>2. <strong>Buka Kunci Akun:</strong> Buka <a href="https://mega.nz" target="_blank" style="color:var(--md-sys-color-primary);font-weight:700;text-decoration:underline;">mega.nz</a> di browser Anda, login secara manual, dan ganti kata sandi untuk memulihkan akun.<br>3. <strong>Periksa Jaringan / IP:</strong> Pastikan Anda TIDAK menjalankan Cloudgate di server VPS / Cloud Datacenter.<br>4. <strong>Legitimasi IP:</strong> Pastikan Anda telah login 1x di browser pada koneksi Wi-Fi/jaringan yang sama.';
+            } else if (provider === 'filen') {
+              guideText += '1. <strong>Cek Master API Key:</strong> Pastikan seluruh karakter API key disalin utuh tanpa spasi di awal/akhir.<br>2. <strong>Password Diubah?</strong> Jika Anda baru saja mengganti kata sandi akun Filen di browser, API key lama otomatis kedaluwarsa. Jalankan ulang script ekspor API key di terminal komputer Anda.<br>3. <strong>2FA:</strong> Pastikan Anda telah memasukkan kode 2FA saat mengekspor API key di terminal.';
             } else if (provider === 'webdav' || provider === 'koofr') {
               guideText += '1. Periksa URL WebDAV, pastikan diawali <code>https://</code> dan diakhiri slash <code>/</code>.<br>2. Jika Nextcloud Anda mengaktifkan 2FA, Anda WAJIB membuat <em>App Password</em> di menu Security Nextcloud (bukan password login biasa).';
             } else if (provider === 's3') {
@@ -4644,11 +4671,32 @@
                 </div>
               </div>
 
+              <!-- Filen -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('filen', 26)}
+                  <div style="font-weight:700;font-size:1rem;">4. Filen (Zero-Knowledge End-to-End Encrypted Cloud)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Penghubungan:</strong></div>
+                  <div>1. Pilih Filen pada modal Tambah Penyimpanan. Masukkan Email dan Master Password akun Filen Anda.</div>
+                  <div>2. Ekspor <strong>Master API Key</strong> dengan menjalankan script resmi Filen pada terminal komputer Anda:</div>
+                  <pre style="background:var(--md-sys-color-surface-container-high);padding:8px 12px;border-radius:6px;font-family:monospace;font-size:0.75rem;overflow-x:auto;">curl -sL https://raw.githubusercontent.com/FilenCloudDienste/filen-rs/refs/heads/main/filen-cli/export-api-key.sh | bash</pre>
+                  <div>3. Salin seluruh string API key ke formulir Cloudgate dan tekan <strong>Test & Hubungkan Akun</strong>.</div>
+                  <div>4. Cloudgate menggunakan embedded native Rclone v1.73 Filen engine untuk mendekripsi dan menyinkronkan file secara real-time.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-primary);">
+                    <strong>💡 Tips & Troubleshooting Filen:</strong><br>
+                    • <strong>Password Berubah:</strong> Mengubah kata sandi akun Filen di browser otomatis membatalkan API key lama. Pastikan untuk mengekspor ulang API key jika kata sandi diubah.<br>
+                    • <strong>Zero-Knowledge Isolation:</strong> Seluruh file yang diunggah ke Filen melalui Cloudgate tetap terenkripsi client-side sebelum dikirimkan ke server remote Filen.
+                  </div>
+                </div>
+              </div>
+
               <!-- Dropbox -->
               <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
                   ${getProviderIconSvg('dropbox', 26)}
-                  <div style="font-weight:700;font-size:1rem;">4. Dropbox (Scoped App Access)</div>
+                  <div style="font-weight:700;font-size:1rem;">5. Dropbox (Scoped App Access)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
                   <div><strong>Langkah Pendaftaran:</strong></div>
@@ -5963,6 +6011,37 @@
           </div>
         `
       },
+      filen: {
+        name: 'Filen',
+        type: 'filen',
+        defaultQuota: 10,
+        namePlaceholder: 'e.g. Akun Filen Personal',
+        filenGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Penghubungan Akun Filen (Zero-Knowledge E2EE):
+            </div>
+            1. Masukkan <strong>Email</strong> dan <strong>Master Password</strong> akun Filen Anda.<br>
+            2. <strong>Ekspor Master API Key:</strong> Filen menggunakan enkripsi client-side end-to-end. Ekspor API Key akun Anda dengan menjalankan script resmi berikut di terminal komputer Anda:
+            <div style="display:flex;gap:6px;margin:8px 0;">
+              <input type="text" id="filenExportCmdDisplay" readonly value="curl -sL https://raw.githubusercontent.com/FilenCloudDienste/filen-rs/refs/heads/main/filen-cli/export-api-key.sh | bash" class="form-control" style="font-size:0.75rem;padding:6px 10px;flex:1;font-family:monospace;">
+              <button class="btn btn-secondary" style="font-size:0.75rem;height:36px;padding:0 12px;" type="button" onclick="navigator.clipboard.writeText(document.getElementById('filenExportCmdDisplay').value); showToast('Perintah salin berhasil!');">Salin Perintah</button>
+            </div>
+            3. Salin teks API key yang dihasilkan terminal ke kolom <strong>Master API Key</strong> di bawah.<br>
+            <div style="margin-top:6px;color:var(--md-sys-color-error);font-size:0.75rem;font-weight:600;">
+              ⚠️ Penting: Jika Anda mengubah kata sandi akun Filen di kemudian hari, Anda wajib mengekspor ulang API key baru.
+            </div>
+            <details style="margin-top:10px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);border-radius:6px;padding:8px 10px;">
+              <summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>
+              <div style="font-size:0.75rem;margin-top:6px;display:flex;flex-direction:column;gap:5px;color:var(--md-sys-color-on-surface-variant);line-height:1.4;">
+                <div>• <strong>Error Invalid API key</strong>: Pastikan seluruh karakter API key disalin utuh tanpa spasi di awal/akhir.</div>
+                <div>• <strong>Error Master Password Mismatch</strong>: Kata sandi yang dimasukkan tidak cocok dengan akun Filen atau API key yang diekspor.</div>
+                <div>• <strong>Autentikasi 2FA</strong>: Pastikan Anda memasukkan kode 2FA saat mengekspor API key di terminal.</div>
+              </div>
+            </details>
+          </div>
+        `
+      },
       s3: {
         name: 'S3 / S3-Compatible',
         type: 's3',
@@ -6048,6 +6127,8 @@
       const webdavGuideBox = document.getElementById('webdavGuideBox');
       const megaExtra = document.getElementById('megaExtraFields');
       const megaGuideBox = document.getElementById('megaGuideBox');
+      const filenExtra = document.getElementById('filenExtraFields');
+      const filenGuideBox = document.getElementById('filenGuideBox');
       const nameInput = document.getElementById('newAccountName');
       const quotaInput = document.getElementById('newAccountQuota');
       const clientIdInput = document.getElementById('newAccountClientID');
@@ -6065,6 +6146,7 @@
         s3Extra.style.display = 'none';
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'none';
 
         btnOAuthText.innerText = `Masuk dengan Akun ${meta.name}`;
         if (clientIdInput) clientIdInput.placeholder = meta.clientIdPlaceholder || 'OAuth Client ID';
@@ -6087,6 +6169,7 @@
         s3Extra.style.display = 'none';
         webdavExtra.style.display = 'flex';
         megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'none';
 
         if (webdavGuideBox) {
           webdavGuideBox.innerHTML = meta.webdavGuideHtml || '';
@@ -6104,6 +6187,7 @@
         s3Extra.style.display = 'flex';
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'none';
         if (s3GuideBox) {
           s3GuideBox.innerHTML = meta.s3GuideHtml || '';
         }
@@ -6112,8 +6196,18 @@
         s3Extra.style.display = 'none';
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'flex';
+        if (filenExtra) filenExtra.style.display = 'none';
         if (megaGuideBox) {
           megaGuideBox.innerHTML = meta.megaGuideHtml || '';
+        }
+      } else if (meta.type === 'filen') {
+        oauthSection.style.display = 'none';
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'flex';
+        if (filenGuideBox) {
+          filenGuideBox.innerHTML = meta.filenGuideHtml || '';
         }
       }
     }
@@ -6188,6 +6282,10 @@
         payload.username = document.getElementById('megaUser').value.trim();
         payload.password = document.getElementById('megaPass').value.trim();
         payload.email = payload.username;
+      } else if (provider === 'filen') {
+        payload.email = document.getElementById('filenUser').value.trim();
+        payload.password = document.getElementById('filenPass').value.trim();
+        payload.api_key = document.getElementById('filenApiKey').value.trim();
       }
       payload.name = rawName || (payload.email ? `${meta.name} (${payload.email})` : `${meta.name} Account`);
       const name = payload.name;

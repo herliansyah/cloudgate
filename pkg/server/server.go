@@ -358,6 +358,8 @@ func providerDisplayName(provider string) string {
 		return "WebDAV"
 	case "mega":
 		return "MEGA"
+	case "filen":
+		return "Filen"
 	default:
 		return strings.ToUpper(provider)
 	}
@@ -441,7 +443,7 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 		} else if extra["username"] != "" {
 			principal = extra["username"]
 		}
-	case "mega":
+	case "mega", "filen":
 		if extra["email"] != "" {
 			principal = extra["email"]
 		} else {
@@ -484,10 +486,15 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "mega requires username/email and password")
 			return
 		}
+	case "filen":
+		if len(extra) > 0 && ((extra["username"] == "" && extra["email"] == "") || extra["api_key"] == "") {
+			writeError(w, http.StatusBadRequest, "filen requires email, password, and api_key")
+			return
+		}
 	}
 	// For S3/WebDAV/Mega synthetic quota
-	if (provider == "s3" || provider == "webdav" || provider == "mega" || provider == "koofr") && quotaTotal == 0 {
-		quotaTotal = 1 << 40 // 1TB synthetic
+	if (provider == "s3" || provider == "webdav" || provider == "mega" || provider == "koofr" || provider == "filen") && quotaTotal == 0 {
+		quotaTotal = 1 << 40 // 1TB synthetic default before About()
 	}
 	acc := db.RemoteAccount{
 		ID:          id,
@@ -513,7 +520,7 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 		}
 		var drv storage.Driver
 		switch provider {
-		case "s3", "webdav", "mega", "koofr", "box", "pcloud", "yandex", "onedrive", "dropbox":
+		case "s3", "webdav", "mega", "koofr", "box", "pcloud", "yandex", "onedrive", "dropbox", "filen":
 			// Use RcloneAdapter for all non-gdrive providers (covers manual s3/webdav/mega and any future)
 			drv = storage.NewRcloneAdapterWithExtra(provider, acc.ID, extra["client_id"], extra["client_secret"], extra["access_token"], extra["refresh_token"], "", name, extra)
 		default:

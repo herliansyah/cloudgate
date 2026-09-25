@@ -11,11 +11,11 @@ Koneksi terkonfigurasi dan terautentikasi ke penyedia penyimpanan cloud tertentu
 _Hindari_: Drive connection, cloud user, session
 
 **AccountPrincipal**:
-Identitas eksternal kanonikal pengguna atau sumber daya target yang terkait dengan RemoteAccount (misalnya alamat email terotentikasi untuk layanan OAuth/Mega, `username@host` untuk WebDAV, atau `bucket_name` untuk S3).
+Identitas eksternal kanonikal pengguna atau sumber daya target yang terkait dengan RemoteAccount (misalnya alamat email terotentikasi untuk layanan OAuth/Mega/Filen, `username@host` untuk WebDAV, atau `bucket_name` untuk S3).
 _Hindari_: ID pengguna, kunci internal penyedia, nomor akun
 
 **Provider**:
-Layanan penyimpanan cloud pihak ketiga yang didukung (misalnya: Google Drive, OneDrive, Dropbox, S3, Mega).
+Layanan penyimpanan cloud pihak ketiga yang didukung (misalnya: Google Drive, OneDrive, Dropbox, S3, Mega, Filen).
 _Hindari_: Vendor, cloud host
 
 **StoragePool**:
@@ -71,7 +71,7 @@ Jabat tangan protokol yang memberikan Cloudgate access token dan refresh token d
 _Hindari_: Login session, API handshake
 
 **DirectCredentialAuth**:
-Alur autentikasi berfriksi tinggi di mana Cloudgate mengelola kredensial mentah pengguna (seperti username/email dan kata sandi utama) untuk menegosiasikan sesi langsung dengan penyedia yang tidak memiliki delegasi OAuth standar (khususnya MEGA), dengan risiko operasional pemblokiran fraud pihak ketiga, penandaan IP, dan tantangan keamanan.
+Alur autentikasi berfriksi tinggi di mana Cloudgate mengelola kredensial mentah pengguna (seperti username/email, kata sandi utama, dan/atau API key enkripsi client-side zero-knowledge) untuk menegosiasikan sesi langsung dengan penyedia yang tidak memiliki delegasi OAuth standar (khususnya MEGA dan Filen), dengan risiko operasional pemblokiran fraud pihak ketiga, penandaan IP, atau manajemen kunci enkripsi client.
 _Hindari_: Password login, basic auth, direct connection
 
 **VendorDriver**:
