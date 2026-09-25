@@ -588,3 +588,13 @@ func (g *GDriveDriver) Mkdir(ctx context.Context, dirPath string) error {
 
 	return nil
 }
+
+func (g *GDriveDriver) TestConnection(ctx context.Context) error {
+	_, err := g.About(ctx)
+	return err
+}
+
+func (g *GDriveDriver) GetShareLink(ctx context.Context, filePath string) (string, error) {
+	return fmt.Sprintf("/api/files/download?path=%s&account_id=%s", url.QueryEscape(filePath), url.QueryEscape(g.accountID)), nil
+}
+

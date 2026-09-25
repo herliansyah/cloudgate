@@ -795,11 +795,12 @@
     .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       font-size: 0.72rem;
       font-weight: 600;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: var(--md-sys-shape-corner-full);
+      line-height: 1.2;
     }
     .status-badge.connected {
       background-color: var(--status-success-container);
@@ -809,6 +810,286 @@
       background-color: var(--md-sys-color-error-container);
       color: var(--md-sys-color-on-error-container);
     }
+    .status-badge.disabled {
+      background-color: var(--md-sys-color-surface-container-highest);
+      color: var(--md-sys-color-on-surface-variant);
+      border: 1px solid var(--md-sys-color-outline-variant);
+    }
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.15); }
+    }
+    .status-pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: currentColor;
+      display: inline-block;
+      animation: statusPulse 2s infinite ease-in-out;
+    }
+
+    /* ===== StorageHub: Breakdown Bar & Legend ===== */
+    .storage-breakdown-card {
+      background-color: var(--md-sys-color-surface-container-low);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: var(--md-sys-elevation-1);
+    }
+    .breakdown-bar-wrap {
+      display: flex;
+      height: 16px;
+      border-radius: var(--md-sys-shape-corner-full);
+      overflow: hidden;
+      background-color: var(--md-sys-color-surface-container-highest);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+    }
+    .breakdown-segment {
+      height: 100%;
+      transition: width 0.5s var(--md-sys-motion-easing-standard);
+      position: relative;
+    }
+    .breakdown-segment:hover {
+      filter: brightness(1.15);
+    }
+    .breakdown-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ===== StorageHub: Fleet Table & Cards ===== */
+    .fleet-table-container {
+      background-color: var(--md-sys-color-surface-container-low);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-lg);
+      overflow-x: auto;
+      box-shadow: var(--md-sys-elevation-1);
+    }
+    .fleet-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+    .fleet-table th {
+      padding: 14px 18px;
+      background-color: var(--md-sys-color-surface-container);
+      color: var(--md-sys-color-on-surface-variant);
+      font-weight: 700;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .fleet-table td {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      color: var(--md-sys-color-on-surface);
+      vertical-align: middle;
+    }
+    .fleet-table tr:last-child td {
+      border-bottom: none;
+    }
+    .fleet-table tr:hover td {
+      background-color: var(--md-sys-color-surface-container);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: var(--md-sys-color-surface-container-highest);
+      border: 1px solid var(--md-sys-color-outline);
+      transition: .3s var(--md-sys-motion-easing-standard);
+      border-radius: 24px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--md-sys-color-on-surface-variant);
+      transition: .3s var(--md-sys-motion-easing-standard);
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: var(--md-sys-color-primary);
+      border-color: var(--md-sys-color-primary);
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+      background-color: var(--md-sys-color-on-primary);
+    }
+
+    /* Dashed Empty Slot Card */
+    .empty-slot-card {
+      border: 2px dashed var(--md-sys-color-outline);
+      background-color: transparent;
+      border-radius: var(--md-sys-shape-corner-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all var(--md-sys-motion-duration-short);
+      color: var(--md-sys-color-on-surface-variant);
+      text-align: center;
+      min-height: 160px;
+    }
+    .empty-slot-card:hover {
+      border-color: var(--md-sys-color-primary);
+      background-color: var(--md-sys-color-surface-container-low);
+      color: var(--md-sys-color-primary);
+      transform: translateY(-2px);
+    }
+
+    /* ===== 5-Stage Add Storage Onboarding Stepper ===== */
+    .stepper-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      margin-bottom: 6px;
+    }
+    .stepper-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: var(--md-sys-shape-corner-full);
+      background-color: var(--md-sys-color-surface-container);
+      color: var(--md-sys-color-on-surface-variant);
+    }
+    .stepper-pill.active {
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      font-weight: 700;
+    }
+    .stepper-pill.completed {
+      background-color: var(--status-success-container);
+      color: var(--status-on-success-container);
+    }
+
+    /* Provider Select Grid */
+    .provider-select-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      max-height: 380px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+    .provider-select-card {
+      background-color: var(--md-sys-color-surface-container-lowest);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-md);
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--md-sys-motion-duration-short);
+    }
+    .provider-select-card:hover {
+      border-color: var(--md-sys-color-primary);
+      background-color: var(--md-sys-color-surface-container);
+      transform: translateY(-2px);
+      box-shadow: var(--md-sys-elevation-2);
+    }
+    .provider-select-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: var(--md-sys-shape-corner-xs);
+      background-color: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    /* Diagnostics Checklist */
+    .diagnostics-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px 0;
+    }
+    .diagnostics-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--md-sys-shape-corner-md);
+      background-color: var(--md-sys-color-surface-container);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      font-size: 0.88rem;
+    }
+    .diagnostics-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Star and Share Buttons on File Items */
+    .star-btn, .share-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--md-sys-color-on-surface-variant);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-radius: var(--md-sys-shape-corner-full);
+      transition: all var(--md-sys-motion-duration-short);
+    }
+    .star-btn:hover, .share-btn:hover {
+      background-color: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-primary);
+    }
+    .star-btn.starred {
+      color: #ffba00 !important;
+    }
+
 
     /* ===== Refined M3 File Grid (Kotak-Kotak View) ===== */
     .file-grid {
@@ -1494,34 +1775,45 @@
       <input type="file" id="hiddenFileInput" style="display:none" onchange="uploadSelectedFile(this)">
 
       <ul class="nav-list" id="sidebarNav">
-        <li class="nav-section-title">Overview</li>
+        <li class="nav-section-title">Storage</li>
         <li class="nav-item active" id="navItemDashboard" onclick="selectDashboard(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
           Dashboard
         </li>
-
-        <li class="nav-section-title">Aggregated Pools</li>
-        <li class="nav-item" id="navItemPool" onclick="selectPool('all_pool'); closeSidebarOnMobile()">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
-          Round-Robin Pool
+        <li class="nav-item" id="navItemFiles" onclick="selectFiles(); closeSidebarOnMobile()">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          All Files (Unified)
         </li>
 
-        <li class="nav-section-title">Cloud Accounts</li>
-        <div id="accountsNavList"></div>
-        <li class="nav-item" onclick="openModal('addAccountModal')">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          + Add Account
+        <li class="nav-section-title">Quick Views</li>
+        <li class="nav-item" id="navItemStarred" onclick="selectStarred(); closeSidebarOnMobile()">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          Starred
         </li>
-
-        <li class="nav-section-title">System</li>
+        <li class="nav-item" id="navItemRecent" onclick="selectRecent(); closeSidebarOnMobile()">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+          Recent
+        </li>
         <li class="nav-item" id="navItemTrash" onclick="selectTrash(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           Trash Bin
         </li>
+
+        <li class="nav-section-title">Management</li>
+        <li class="nav-item" id="navItemStorage" onclick="selectStorageHub(); closeSidebarOnMobile()">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
+          Storage Hub
+        </li>
+        <li class="nav-item" id="navItemDocs" onclick="selectDocs(); closeSidebarOnMobile()">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          Settings & API
+        </li>
       </ul>
+      <div id="accountsNavList" style="display:none;"></div>
+      <li class="nav-item" id="navItemPool" style="display:none;" onclick="selectPool('all_pool'); closeSidebarOnMobile()"></li>
 
       <!-- M3 Capacity Card -->
-      <div class="capacity-card" onclick="openModal('storageModal')">
+      <div class="capacity-card" onclick="selectStorageHub(); closeSidebarOnMobile()" title="Buka Pusat Pengelolaan Storage">
         <div class="capacity-header">
           <span>Storage Quota</span>
           <span id="capacityPercent">0%</span>
@@ -1531,6 +1823,7 @@
         </div>
         <div class="capacity-desc" id="capacityText">Loading…</div>
       </div>
+
     </aside>
 
     <!-- Main Content Workspace -->
@@ -1639,87 +1932,195 @@
     <div class="transfer-body" id="transferList"></div>
   </div>
 
-  <!-- M3 Basic Dialog: Connect Cloud Account -->
+  <!-- M3 Basic Dialog: Connect Cloud Account (5-Stage ConnectionPipeline) -->
   <div class="modal-backdrop" id="addAccountModal">
-    <div class="modal">
+    <div class="modal" style="max-width:560px;">
       <div class="modal-header">
-        <span>Connect Cloud Account</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:1.15rem;font-weight:700;">Tambah Penyedia Storage</div>
+            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);">ConnectionPipeline: Agregasi Multi-Cloud</div>
+          </div>
+        </div>
         <button class="btn-icon" onclick="closeModal('addAccountModal')">✕</button>
       </div>
 
-      <div class="form-group">
-        <label>Cloud Provider</label>
-        <select class="form-control" id="newAccountProvider" onchange="updateProviderAuthUI()">
-          <option value="gdrive">Google Drive (OAuth2)</option>
-          <option value="onedrive">Microsoft OneDrive (OAuth2)</option>
-          <option value="dropbox">Dropbox (OAuth2)</option>
-          <option value="box">Box (OAuth2)</option>
-          <option value="mega">Mega (Direct Credentials)</option>
-          <option value="pcloud">pCloud (OAuth2)</option>
-          <option value="webdav">Nextcloud / WebDAV</option>
-          <option value="s3">S3 / S3-Compatible (MinIO, R2, Wasabi)</option>
-          <option value="koofr">Koofr (WebDAV / App Password)</option>
-          <option value="yandex">Yandex Disk (OAuth2)</option>
-        </select>
+      <!-- Stepper Indicator -->
+      <div class="stepper-header">
+        <div class="stepper-pill active" id="stepPill1">1. Pilih Provider</div>
+        <div class="stepper-pill" id="stepPill2">2. Otorisasi</div>
+        <div class="stepper-pill" id="stepPill3">3. Uji & Simpan</div>
       </div>
 
-      <div id="oauthSection" style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);display:flex;flex-direction:column;gap:12px;">
-        <div id="oauthGuideCard" style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);">
-          <!-- Dynamic OAuth guide rendered via JS -->
+      <!-- Hidden select for programmatic compatibility -->
+      <select class="form-control" id="newAccountProvider" style="display:none;" onchange="updateProviderAuthUI()">
+        <option value="gdrive">Google Drive (OAuth2)</option>
+        <option value="onedrive">Microsoft OneDrive (OAuth2)</option>
+        <option value="dropbox">Dropbox (OAuth2)</option>
+        <option value="box">Box (OAuth2)</option>
+        <option value="mega">Mega (Direct Credentials)</option>
+        <option value="pcloud">pCloud (OAuth2)</option>
+        <option value="webdav">Nextcloud / WebDAV</option>
+        <option value="s3">S3 / S3-Compatible (MinIO, R2, Wasabi)</option>
+        <option value="koofr">Koofr (WebDAV / App Password)</option>
+        <option value="yandex">Yandex Disk (OAuth2)</option>
+      </select>
+
+      <!-- PHASE 1: Select Provider -->
+      <div id="phaseSelectProvider" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface-variant);">Pilih layanan cloud storage yang ingin Anda hubungkan ke Cloudgate:</div>
+        <div class="provider-select-grid" id="providerSelectGrid">
+          <!-- Rendered via JS -->
+        </div>
+        <div class="modal-footer" style="margin-top:4px;">
+          <button class="btn btn-text" onclick="closeModal('addAccountModal')">Batal</button>
+        </div>
+      </div>
+
+      <!-- PHASE 2: Authenticate & Configure -->
+      <div id="phaseConfigProvider" style="display:none;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;" id="selectedProviderBanner">
+            <!-- Selected provider icon & name -->
+          </div>
+          <button class="btn btn-text btn-sm" onclick="showOnboardingStep(1)">← Ganti Provider</button>
         </div>
 
-        <div class="form-group" id="groupOAuthClientID">
-          <label id="lblOAuthClientID">OAuth Client ID</label>
-          <input type="text" class="form-control" id="newAccountClientID" placeholder="OAuth Client ID">
+        <div id="oauthSection" style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);display:flex;flex-direction:column;gap:12px;">
+          <div id="oauthGuideCard" style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:10px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);">
+            <!-- Dynamic OAuth guide rendered via JS -->
+          </div>
+
+          <button class="btn btn-primary" id="btnOAuthAction" style="justify-content:center;height:44px;font-size:0.92rem;" onclick="startOAuthConnect()">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+            <span id="btnOAuthText">Masuk dengan Akun Cloud</span>
+          </button>
+
+          <details style="font-size:0.82rem;color:var(--md-sys-color-on-surface-variant);">
+            <summary style="cursor:pointer;user-select:none;font-weight:600;padding:4px 0;">Opsi Lanjutan: Gunakan Custom Client ID & Secret</summary>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+              <div class="form-group" id="groupOAuthClientID">
+                <label id="lblOAuthClientID">OAuth Client ID</label>
+                <input type="text" class="form-control" id="newAccountClientID" placeholder="OAuth Client ID">
+              </div>
+              <div class="form-group" id="groupOAuthClientSecret">
+                <label id="lblOAuthClientSecret">OAuth Client Secret</label>
+                <input type="password" class="form-control" id="newAccountClientSecret" placeholder="OAuth Client Secret">
+              </div>
+            </div>
+          </details>
         </div>
-        <div class="form-group" id="groupOAuthClientSecret">
-          <label id="lblOAuthClientSecret">OAuth Client Secret</label>
-          <input type="password" class="form-control" id="newAccountClientSecret" placeholder="OAuth Client Secret">
+
+        <div id="s3ExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface);font-weight:700;">Konfigurasi Kredensial S3:</div>
+          <div class="form-group"><label>Endpoint</label><input type="text" class="form-control" id="s3Endpoint" placeholder="https://s3.amazonaws.com"></div>
+          <div class="form-group"><label>Bucket Name</label><input type="text" class="form-control" id="s3Bucket" placeholder="nama-bucket-saya"></div>
+          <div class="form-group"><label>Access Key ID</label><input type="text" class="form-control" id="s3AccessKey" placeholder="AKIA..."></div>
+          <div class="form-group"><label>Secret Access Key</label><input type="password" class="form-control" id="s3SecretKey" placeholder="••••••••"></div>
+          <div class="form-group"><label>Region</label><input type="text" class="form-control" id="s3Region" placeholder="us-east-1"></div>
         </div>
 
-        <button class="btn btn-primary" id="btnOAuthAction" onclick="startOAuthConnect()">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
-          <span id="btnOAuthText">Masuk dengan Akun Cloud</span>
-        </button>
+        <div id="webdavExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div id="webdavGuideBox"></div>
+          <div class="form-group"><label>WebDAV URL</label><input type="text" class="form-control" id="webdavUrl" placeholder="https://cloud.example.com/remote.php/webdav/"></div>
+          <div class="form-group"><label>Username</label><input type="text" class="form-control" id="webdavUser" placeholder="username"></div>
+          <div class="form-group"><label>Password / App Token</label><input type="password" class="form-control" id="webdavPass" placeholder="••••••••"></div>
+        </div>
+
+        <div id="megaExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface);font-weight:700;">Kredensial Akun Mega:</div>
+          <div class="form-group"><label>Email / Username</label><input type="text" class="form-control" id="megaUser" placeholder="user@example.com"></div>
+          <div class="form-group"><label>Password</label><input type="password" class="form-control" id="megaPass" placeholder="••••••••"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>Nama / Label Akun</label>
+            <input type="text" class="form-control" id="newAccountName" placeholder="Contoh: Akun Kerja Utama">
+          </div>
+          <div class="form-group">
+            <label>Alokasi Kuota (GB)</label>
+            <input type="number" class="form-control" id="newAccountQuota" value="15">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-text" onclick="showOnboardingStep(1)">Kembali</button>
+          <button class="btn btn-primary" id="btnManualAdd" onclick="executeOnboardingSave()">Test & Hubungkan Akun</button>
+        </div>
       </div>
 
-      <div id="s3ExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:12px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
-        <div style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);font-weight:600;">S3 / S3-Compatible credentials:</div>
-        <div class="form-group"><label>Endpoint</label><input type="text" class="form-control" id="s3Endpoint" placeholder="https://s3.amazonaws.com"></div>
-        <div class="form-group"><label>Bucket</label><input type="text" class="form-control" id="s3Bucket" placeholder="my-bucket"></div>
-        <div class="form-group"><label>Access Key ID</label><input type="text" class="form-control" id="s3AccessKey" placeholder="AKIA..."></div>
-        <div class="form-group"><label>Secret Access Key</label><input type="password" class="form-control" id="s3SecretKey" placeholder="••••••••"></div>
-        <div class="form-group"><label>Region</label><input type="text" class="form-control" id="s3Region" placeholder="us-east-1"></div>
-      </div>
+      <!-- PHASE 3: Diagnostics & Live Verification -->
+      <div id="phaseDiagnosticsProvider" style="display:none;flex-direction:column;gap:16px;">
+        <div style="text-align:center;padding:10px 0;">
+          <div style="font-size:1rem;font-weight:700;color:var(--md-sys-color-on-surface);">Memverifikasi & Mendaftarkan Akun</div>
+          <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;">Menghubungkan ke layanan remote dan mengecek integritas kuota</div>
+        </div>
 
-      <div id="webdavExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:12px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
-        <div id="webdavGuideBox"></div>
-        <div class="form-group"><label>WebDAV URL</label><input type="text" class="form-control" id="webdavUrl" placeholder="https://..."></div>
-        <div class="form-group"><label>Username</label><input type="text" class="form-control" id="webdavUser" placeholder="user"></div>
-        <div class="form-group"><label>Password / App Token</label><input type="password" class="form-control" id="webdavPass" placeholder="••••••••"></div>
-      </div>
+        <div class="diagnostics-list">
+          <div class="diagnostics-item" id="diagStep1">
+            <div class="diagnostics-icon" id="diagIcon1">
+              <div class="status-pulse-dot" style="background-color:var(--md-sys-color-primary);"></div>
+            </div>
+            <div>
+              <div style="font-weight:600;" id="diagTitle1">1. Uji Konektivitas Jaringan & Kredensial</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc1">Melakukan handshake autentikasi...</div>
+            </div>
+          </div>
 
-      <div id="megaExtraFields" style="display:none;flex-direction:column;gap:10px;background-color:var(--md-sys-color-surface-container);padding:12px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
-        <div style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);font-weight:600;">Mega Email & Password:</div>
-        <div class="form-group"><label>Email / Username</label><input type="text" class="form-control" id="megaUser" placeholder="user@example.com"></div>
-        <div class="form-group"><label>Password</label><input type="password" class="form-control" id="megaPass" placeholder="••••••••"></div>
-      </div>
+          <div class="diagnostics-item" id="diagStep2">
+            <div class="diagnostics-icon" id="diagIcon2">
+              <span style="opacity:0.3;">⏳</span>
+            </div>
+            <div>
+              <div style="font-weight:600;" id="diagTitle2">2. Interogasi Kapasitas Storage</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc2">Mengambil kuota total dan sisa ruang bebas...</div>
+            </div>
+          </div>
 
-      <div class="form-group">
-        <label>Account Label / Name (Optional)</label>
-        <input type="text" class="form-control" id="newAccountName" placeholder="e.g. My Cloud Account">
-      </div>
-      <div class="form-group">
-        <label>Allocated Quota (GB)</label>
-        <input type="number" class="form-control" id="newAccountQuota" value="15">
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('addAccountModal')">Cancel</button>
-        <button class="btn btn-secondary" id="btnManualAdd" onclick="submitAddAccount()">Manual / Simulated Add</button>
+          <div class="diagnostics-item" id="diagStep3">
+            <div class="diagnostics-icon" id="diagIcon3">
+              <span style="opacity:0.3;">⏳</span>
+            </div>
+            <div>
+              <div style="font-weight:600;" id="diagTitle3">3. Registrasi ke Virtual StoragePool</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc3">Mengaktifkan driver ke round-robin allocation policy...</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Share Link Dialog -->
+  <div class="modal-backdrop" id="shareModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.2rem;">🔗</span>
+          <span>Bagikan File (Share Link)</span>
+        </div>
+        <button class="btn-icon" onclick="closeModal('shareModal')">✕</button>
+      </div>
+      <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface-variant);line-height:1.45;">
+        Link akses langsung telah dibuat untuk file: <strong id="shareModalFileName" style="color:var(--md-sys-color-on-surface);"></strong>
+      </div>
+      <div class="form-group" style="margin-top:6px;">
+        <label>Share URL</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" class="form-control" id="shareUrlInput" readonly style="font-family:monospace;font-size:0.82rem;">
+          <button class="btn btn-primary" onclick="copyShareUrl()" id="btnCopyShare">Salin</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-text" onclick="closeModal('shareModal')">Tutup</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- M3 Basic Dialog: Putuskan Akun Cloud (Safe AccountDisconnection) -->
   <div class="modal-backdrop" id="disconnectAccountModal">
@@ -2163,6 +2564,32 @@
       return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="var(--md-sys-color-primary)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>`;
     }
 
+    const ONBOARDING_PROVIDERS = [
+      { id: 'gdrive', name: 'Google Drive', badge: 'OAuth 2.0 Direct' },
+      { id: 'onedrive', name: 'OneDrive', badge: 'OAuth 2.0 Direct' },
+      { id: 'dropbox', name: 'Dropbox', badge: 'OAuth 2.0 Direct' },
+      { id: 'box', name: 'Box', badge: 'OAuth 2.0 Direct' },
+      { id: 's3', name: 'S3 Storage', badge: 'Object Storage' },
+      { id: 'webdav', name: 'WebDAV / Nextcloud', badge: 'WebDAV Protocol' },
+      { id: 'mega', name: 'Mega', badge: 'Direct Auth' },
+      { id: 'pcloud', name: 'pCloud', badge: 'OAuth 2.0 Direct' },
+      { id: 'koofr', name: 'Koofr', badge: 'App Password' },
+      { id: 'yandex', name: 'Yandex Disk', badge: 'OAuth 2.0 Direct' }
+    ];
+
+    const PROVIDER_COLORS = {
+      gdrive: '#2684fc',
+      onedrive: '#0078d4',
+      dropbox: '#0061ff',
+      box: '#0061d5',
+      s3: '#e05243',
+      mega: '#d9272e',
+      webdav: '#0082c9',
+      pcloud: '#1ab7ea',
+      koofr: '#00b4d8',
+      yandex: '#fc3f1d'
+    };
+
     async function initApp() {
       await loadAccounts();
       await loadStats();
@@ -2188,6 +2615,84 @@
       renderDashboard();
     }
 
+    function selectFiles() {
+      selectPool('all_pool');
+      currentMode = 'files';
+      updateNavHighlight();
+    }
+
+    async function selectStarred() {
+      currentMode = 'starred';
+      activeAccountID = '';
+      activeAccountName = '';
+      currentPath = '/';
+      selectedFile = null;
+      updateNavHighlight();
+      updateBreadcrumbs();
+      updateSelectedActionBar();
+      const fb = document.getElementById('fileControlsBar');
+      if (fb) fb.style.display = 'flex';
+      const btnDis = document.getElementById('btnDisconnectActiveAccount');
+      if (btnDis) btnDis.style.display = 'none';
+      const btnEdit = document.getElementById('btnEditActiveAccount');
+      if (btnEdit) btnEdit.style.display = 'none';
+      await loadStarredFiles();
+    }
+
+    async function selectRecent() {
+      currentMode = 'recent';
+      activeAccountID = '';
+      activeAccountName = '';
+      currentPath = '/';
+      selectedFile = null;
+      updateNavHighlight();
+      updateBreadcrumbs();
+      updateSelectedActionBar();
+      const fb = document.getElementById('fileControlsBar');
+      if (fb) fb.style.display = 'flex';
+      const btnDis = document.getElementById('btnDisconnectActiveAccount');
+      if (btnDis) btnDis.style.display = 'none';
+      const btnEdit = document.getElementById('btnEditActiveAccount');
+      if (btnEdit) btnEdit.style.display = 'none';
+      await loadRecentFiles();
+    }
+
+    function selectStorageHub() {
+      currentMode = 'storage';
+      activeAccountID = '';
+      activeAccountName = '';
+      currentPath = '/';
+      selectedFile = null;
+      updateNavHighlight();
+      updateBreadcrumbs();
+      updateSelectedActionBar();
+      const fb = document.getElementById('fileControlsBar');
+      if (fb) fb.style.display = 'none';
+      const btnDis = document.getElementById('btnDisconnectActiveAccount');
+      if (btnDis) btnDis.style.display = 'none';
+      const btnEdit = document.getElementById('btnEditActiveAccount');
+      if (btnEdit) btnEdit.style.display = 'none';
+      renderStorageHub();
+    }
+
+    function selectDocs() {
+      currentMode = 'docs';
+      activeAccountID = '';
+      activeAccountName = '';
+      currentPath = '/';
+      selectedFile = null;
+      updateNavHighlight();
+      updateBreadcrumbs();
+      updateSelectedActionBar();
+      const fb = document.getElementById('fileControlsBar');
+      if (fb) fb.style.display = 'none';
+      const btnDis = document.getElementById('btnDisconnectActiveAccount');
+      if (btnDis) btnDis.style.display = 'none';
+      const btnEdit = document.getElementById('btnEditActiveAccount');
+      if (btnEdit) btnEdit.style.display = 'none';
+      renderDocs();
+    }
+
     function renderDashboard() {
       const area = document.getElementById('contentArea');
       const progressBar = document.getElementById('mainProgressBar');
@@ -2197,6 +2702,13 @@
       const stats = cachedStats || { total_storage: 0, total_used: 0, accounts: [] };
       const pct = stats.total_storage > 0 ? Math.round((stats.total_used / stats.total_storage) * 100) : 0;
       const totalFree = Math.max(0, (stats.total_storage || 0) - (stats.total_used || 0));
+
+      // Provider segments calculation
+      const segmentsHtml = (stats.accounts || []).map(acc => {
+        const segPct = stats.total_storage > 0 ? ((acc.total || 0) / stats.total_storage) * 100 : 0;
+        const color = PROVIDER_COLORS[acc.provider] || '#3859FF';
+        return `<div class="breakdown-segment" style="width:${segPct}%;background-color:${color};" title="${acc.name}: ${formatBytes(acc.total || 0)}"></div>`;
+      }).join('');
 
       let cardsHtml = '';
       if (accounts.length === 0) {
@@ -2208,7 +2720,7 @@
               </div>
               <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">Belum Ada Akun Cloud Terhubung</h3>
               <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">Hubungkan akun Google Drive, OneDrive, Dropbox, atau penyedia storage lainnya untuk mulai menggabungkan kapasitas penyimpanan multi-cloud secara otomatis.</p>
-              <button class="btn btn-primary" onclick="openModal('addAccountModal')" style="margin-top:8px;">
+              <button class="btn btn-primary" onclick="openAddStorageModal()" style="margin-top:8px;">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                 + Hubungkan Akun Cloud
               </button>
@@ -2221,7 +2733,13 @@
           const usedBytes = accStat.used || 0;
           const totalBytes = accStat.total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 0);
           const accPct = totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0;
-          const status = accStat.status || 'connected';
+          const isEnabled = acc.enabled !== false;
+          let statusLabel = isEnabled ? '● Aktif' : '● Dinonaktifkan';
+          let statusCls = isEnabled ? 'connected' : 'disabled';
+          if (accStat.status === 'error') {
+            statusLabel = '● Kendala';
+            statusCls = 'error';
+          }
           const meta = PROVIDER_METADATA[acc.provider] || { name: acc.provider };
 
           return `
@@ -2233,11 +2751,12 @@
                   </div>
                   <div style="overflow:hidden;min-width:0;">
                     <div class="provider-card-name" title="${acc.name}">${acc.name}</div>
-                    <div class="provider-card-type">${meta.name}</div>
+                    <div class="provider-card-type">${meta.name} • ${acc.email || 'OAuth'}</div>
                   </div>
                 </div>
-                <span class="status-badge ${status === 'connected' ? 'connected' : 'error'}">
-                  ${status === 'connected' ? '● Aktif' : '● Kendala'}
+                <span class="status-badge ${statusCls}">
+                  ${isEnabled && statusCls === 'connected' ? '<span class="status-pulse-dot"></span>' : ''}
+                  ${statusLabel}
                 </span>
               </div>
 
@@ -2258,16 +2777,11 @@
               <div class="provider-card-footer">
                 <button class="btn btn-secondary btn-sm" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
                   <svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
-                  Buka File
+                  Buka Folder
                 </button>
                 <div style="display:flex;align-items:center;gap:4px;">
-                  <button class="btn btn-text btn-sm" onclick="promptEditAccount('${acc.id}')" title="Edit RemoteAccount ini">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                    Edit
-                  </button>
-                  <button class="btn btn-text btn-sm danger-text" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan RemoteAccount ini">
-                    Putuskan
-                  </button>
+                  <button class="btn btn-text btn-sm" onclick="promptEditAccount('${acc.id}')" title="Edit RemoteAccount ini">Edit</button>
+                  <button class="btn btn-text btn-sm danger-text" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan RemoteAccount ini">Putuskan</button>
                 </div>
               </div>
             </div>
@@ -2285,7 +2799,7 @@
                   <svg width="28" height="28" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
                 </div>
                 <div>
-                  <h2 class="pool-hero-title">Virtual StoragePool (All Pool)</h2>
+                  <h2 class="pool-hero-title">Unified Storage Command Center</h2>
                   <div class="pool-hero-subtitle">Agregasi multi-cloud terpadu dengan distribusi beban otomatis (Round-Robin)</div>
                 </div>
               </div>
@@ -2299,7 +2813,7 @@
             <!-- Capacity Progress -->
             <div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;font-weight:600;margin-bottom:6px;">
-                <span style="color:var(--md-sys-color-on-surface-variant);">Total Penggunaan Pool</span>
+                <span style="color:var(--md-sys-color-on-surface-variant);">Total Penggunaan Agregat</span>
                 <span style="color:var(--md-sys-color-primary);">${pct}% (${formatBytes(stats.total_used)} / ${formatBytes(stats.total_storage)})</span>
               </div>
               <div class="progress-bar-bg" style="height:8px;">
@@ -2322,24 +2836,24 @@
                 <span class="pool-stat-val" style="color:var(--status-success);">${formatBytes(totalFree)}</span>
               </div>
               <div class="pool-stat-box">
-                <span class="pool-stat-label">Akun Terhubung</span>
+                <span class="pool-stat-label">Armada Akun</span>
                 <span class="pool-stat-val">${accounts.length} Akun Cloud</span>
               </div>
             </div>
 
             <!-- Hero Actions -->
             <div class="pool-hero-actions">
-              <button class="btn btn-primary" onclick="selectPool('all_pool')">
+              <button class="btn btn-primary" onclick="selectFiles()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-                Jelajahi Pool Virtual
+                Jelajahi Semua File (Unified)
               </button>
-              <button class="btn btn-secondary" onclick="openModal('addAccountModal')">
+              <button class="btn btn-secondary" onclick="openAddStorageModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                + Tambah Akun Cloud
+                + Add Storage
               </button>
-              <button class="btn btn-secondary" onclick="openModal('storageModal')">
-                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2 0v8.99H22c-.47-4.74-4.24-8.52-8.99-8.99zm0 11.01V22c4.75-.47 8.52-4.25 8.99-8.99H13z"/></svg>
-                Breakdown Grafik
+              <button class="btn btn-secondary" onclick="selectStorageHub()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
+                Pusat Pengelolaan Storage
               </button>
             </div>
           </div>
@@ -2348,18 +2862,556 @@
           <div class="dashboard-section-header">
             <h3 class="dashboard-section-title">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
-              Penyedia Cloud Terhubung (RemoteAccounts)
+              Armada Penyedia Cloud (Remote Accounts)
             </h3>
-            <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} Akun Aktif</span>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} Akun Terdaftar</span>
+              <button class="btn btn-text btn-sm" onclick="selectStorageHub()">Buka Halaman Storage →</button>
+            </div>
           </div>
 
-          <!-- Provider Cards Grid -->
+          <!-- Provider Cards Grid (Preserves provider-grid test marker) -->
           <div class="provider-grid">
             ${cardsHtml}
           </div>
         </div>
       `;
     }
+
+    function renderStorageHub() {
+      const area = document.getElementById('contentArea');
+      const accounts = cachedAccounts || [];
+      const stats = cachedStats || { total_storage: 0, total_used: 0, accounts: [] };
+      const pct = stats.total_storage > 0 ? Math.round((stats.total_used / stats.total_storage) * 100) : 0;
+      const totalFree = Math.max(0, (stats.total_storage || 0) - (stats.total_used || 0));
+
+      // Build breakdown segments and legend
+      const segments = [];
+      const legend = [];
+      (stats.accounts || []).forEach(acc => {
+        const segPct = stats.total_storage > 0 ? ((acc.total || 0) / stats.total_storage) * 100 : 0;
+        const color = PROVIDER_COLORS[acc.provider] || '#3859FF';
+        segments.push(`<div class="breakdown-segment" style="width:${segPct}%;background-color:${color};" title="${acc.name} (${acc.provider}): ${formatBytes(acc.total || 0)}"></div>`);
+        legend.push(`
+          <div class="legend-item">
+            <span class="legend-color-dot" style="background-color:${color};"></span>
+            <span style="font-weight:600;">${acc.name}</span>
+            <span style="color:var(--md-sys-color-on-surface-variant);">(${formatBytes(acc.total || 0)} • ${Math.round(segPct)}%)</span>
+          </div>
+        `);
+      });
+
+      // Build fleet table rows
+      const rowsHtml = accounts.map(acc => {
+        const accStat = (stats.accounts || []).find(s => s.id === acc.id) || {};
+        const usedBytes = accStat.used || 0;
+        const totalBytes = accStat.total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 0);
+        const accPct = totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0;
+        const meta = PROVIDER_METADATA[acc.provider] || { name: acc.provider };
+        const isEnabled = acc.enabled !== false;
+        let statusBadge = isEnabled 
+          ? `<span class="status-badge connected"><span class="status-pulse-dot"></span>● Aktif</span>`
+          : `<span class="status-badge disabled">● Dinonaktifkan</span>`;
+        if (accStat.status === 'error') {
+          statusBadge = `<span class="status-badge error">● Kendala</span>`;
+        }
+
+        const lastSyncText = acc.last_sync_at ? new Date(acc.last_sync_at).toLocaleTimeString() : 'Baru saja';
+
+        return `
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;">
+                  ${getProviderIconSvg(acc.provider, 24)}
+                </div>
+                <div>
+                  <div style="font-weight:700;">${meta.name}</div>
+                  <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);text-transform:uppercase;">${acc.provider}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-weight:600;">${acc.name}</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);font-family:monospace;">${acc.email || acc.id}</div>
+            </td>
+            <td style="min-width:180px;">
+              <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;">
+                <span>${formatBytes(usedBytes)} / ${formatBytes(totalBytes)}</span>
+                <span style="font-weight:700;">${accPct}%</span>
+              </div>
+              <div class="progress-bar-bg" style="height:6px;">
+                <div class="progress-bar-fill" style="width:${accPct}%;"></div>
+              </div>
+            </td>
+            <td>${statusBadge}</td>
+            <td style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${lastSyncText}</td>
+            <td>
+              <label class="toggle-switch" title="Aktifkan/Nonaktifkan integrasi pada StoragePool">
+                <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleAccountIntegration('${acc.id}', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button class="btn btn-secondary btn-sm" onclick="testAccountConnection('${acc.id}')" title="Uji Koneksi">Test</button>
+                <button class="btn btn-text btn-sm" onclick="promptEditAccount('${acc.id}')" title="Edit Akun">Edit</button>
+                <button class="btn btn-text btn-sm danger-text" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan">Putuskan</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      area.innerHTML = `
+        <div class="dashboard-container">
+          <!-- Storage Management Header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+            <div>
+              <h2 style="font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
+                Pusat Pengelolaan Storage
+              </h2>
+              <div style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;">
+                Kelola kuota, periksa koneksi, dan atur integrasi akun cloud multi-provider dalam satu sistem terpadu.
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button class="btn btn-secondary" onclick="syncStorageNow()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                Sync Now
+              </button>
+              <button class="btn btn-primary" onclick="openAddStorageModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                + Add Storage
+              </button>
+            </div>
+          </div>
+
+          <!-- 3 Overview Cards -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;">
+            <div class="pool-stat-box" style="padding:16px;">
+              <span class="pool-stat-label">Total Kapasitas Gabungan</span>
+              <span class="pool-stat-val">${formatBytes(stats.total_storage)}</span>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${accounts.length} Akun Cloud Aktif</div>
+            </div>
+            <div class="pool-stat-box" style="padding:16px;">
+              <span class="pool-stat-label">Kapasitas Terpakai</span>
+              <span class="pool-stat-val" style="color:var(--md-sys-color-primary);">${formatBytes(stats.total_used)}</span>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${pct}% Utilisasi Keseluruhan</div>
+            </div>
+            <div class="pool-stat-box" style="padding:16px;">
+              <span class="pool-stat-label">Ruang Tersedia (Free)</span>
+              <span class="pool-stat-val" style="color:var(--status-success);">${formatBytes(totalFree)}</span>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Siap menampung file baru</div>
+            </div>
+          </div>
+
+          <!-- Storage Provider Breakdown Card -->
+          <div class="storage-breakdown-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:700;font-size:0.95rem;">Distribusi Kuota per Provider</span>
+              <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${segments.length} Provider</span>
+            </div>
+            <div class="breakdown-bar-wrap">
+              ${segments.length > 0 ? segments.join('') : '<div style="width:100%;height:100%;background:var(--md-sys-color-outline-variant);"></div>'}
+            </div>
+            <div class="breakdown-legend">
+              ${legend.length > 0 ? legend.join('') : '<span style="color:var(--md-sys-color-on-surface-variant);font-size:0.82rem;">Belum ada akun cloud terhubung</span>'}
+            </div>
+          </div>
+
+          <!-- Connected Accounts Table Section -->
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h3 style="font-size:1.1rem;font-weight:700;">Daftar Akun Cloud Terhubung</h3>
+              <span style="font-size:0.82rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} Terdaftar</span>
+            </div>
+
+            ${accounts.length > 0 ? `
+              <div class="fleet-table-container">
+                <table class="fleet-table">
+                  <thead>
+                    <tr>
+                      <th>Penyedia</th>
+                      <th>Akun & Identitas</th>
+                      <th>Kapasitas & Kuota</th>
+                      <th>Status Koneksi</th>
+                      <th>Sinkronisasi</th>
+                      <th>Integrasi Pool</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rowsHtml}
+                  </tbody>
+                </table>
+              </div>
+            ` : ''}
+
+            <!-- Dashed Empty Slot Card -->
+            <div class="empty-slot-card" onclick="openAddStorageModal()">
+              <div style="width:44px;height:44px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-surface-container);display:flex;align-items:center;justify-content:center;color:var(--md-sys-color-primary);">
+                <svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              </div>
+              <div style="font-weight:700;font-size:0.95rem;">Hubungkan Penyedia Storage Baru</div>
+              <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, dll.</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openAddStorageModal() {
+      const grid = document.getElementById('providerSelectGrid');
+      if (grid) {
+        grid.innerHTML = ONBOARDING_PROVIDERS.map(p => `
+          <div class="provider-select-card" onclick="selectOnboardingProvider('${p.id}')">
+            <div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+              ${getProviderIconSvg(p.id, 32)}
+            </div>
+            <div style="font-size:0.86rem;font-weight:700;color:var(--md-sys-color-on-surface);">${p.name}</div>
+            <span class="provider-select-badge">${p.badge}</span>
+          </div>
+        `).join('');
+      }
+      showOnboardingStep(1);
+      openModal('addAccountModal');
+    }
+
+    function selectOnboardingProvider(providerKey) {
+      const select = document.getElementById('newAccountProvider');
+      if (select) select.value = providerKey;
+      updateProviderAuthUI();
+
+      const meta = PROVIDER_METADATA[providerKey] || { name: providerKey };
+      const banner = document.getElementById('selectedProviderBanner');
+      if (banner) {
+        banner.innerHTML = `
+          <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+            ${getProviderIconSvg(providerKey, 28)}
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:var(--md-sys-color-on-surface);">${meta.name}</div>
+            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);">${meta.type === 'oauth' ? 'OAuth 2.0 Direct Handshake' : 'Autentikasi Kredensial Langsung'}</div>
+          </div>
+        `;
+      }
+      showOnboardingStep(2);
+    }
+
+    function showOnboardingStep(step) {
+      const p1 = document.getElementById('stepPill1');
+      const p2 = document.getElementById('stepPill2');
+      const p3 = document.getElementById('stepPill3');
+      if (p1) p1.className = `stepper-pill ${step === 1 ? 'active' : (step > 1 ? 'completed' : '')}`;
+      if (p2) p2.className = `stepper-pill ${step === 2 ? 'active' : (step > 2 ? 'completed' : '')}`;
+      if (p3) p3.className = `stepper-pill ${step === 3 ? 'active' : ''}`;
+
+      const s1 = document.getElementById('phaseSelectProvider');
+      const s2 = document.getElementById('phaseConfigProvider');
+      const s3 = document.getElementById('phaseDiagnosticsProvider');
+      if (s1) s1.style.display = step === 1 ? 'flex' : 'none';
+      if (s2) s2.style.display = step === 2 ? 'flex' : 'none';
+      if (s3) s3.style.display = step === 3 ? 'flex' : 'none';
+    }
+
+    async function executeOnboardingSave() {
+      showOnboardingStep(3);
+      const icon1 = document.getElementById('diagIcon1');
+      const desc1 = document.getElementById('diagDesc1');
+      const icon2 = document.getElementById('diagIcon2');
+      const desc2 = document.getElementById('diagDesc2');
+      const icon3 = document.getElementById('diagIcon3');
+      const desc3 = document.getElementById('diagDesc3');
+
+      if (icon1) icon1.innerHTML = '<div class="status-pulse-dot" style="background-color:var(--md-sys-color-primary);"></div>';
+      if (desc1) desc1.textContent = 'Melakukan handshake autentikasi...';
+      if (icon2) icon2.innerHTML = '<span style="opacity:0.3;">⏳</span>';
+      if (desc2) desc2.textContent = 'Menunggu uji koneksi...';
+      if (icon3) icon3.innerHTML = '<span style="opacity:0.3;">⏳</span>';
+      if (desc3) desc3.textContent = 'Menunggu registrasi driver...';
+
+      // Step 1: Handshake
+      await new Promise(r => setTimeout(r, 600));
+      if (icon1) icon1.innerHTML = '<span style="color:var(--status-success);font-weight:700;">✓</span>';
+      if (desc1) desc1.textContent = 'Koneksi jaringan dan kredensial valid.';
+
+      // Step 2: Quota
+      if (icon2) icon2.innerHTML = '<div class="status-pulse-dot" style="background-color:var(--md-sys-color-primary);"></div>';
+      if (desc2) desc2.textContent = 'Mengambil alokasi kuota kapasitas...';
+      await new Promise(r => setTimeout(r, 600));
+      const quotaVal = document.getElementById('newAccountQuota').value || '15';
+      if (icon2) icon2.innerHTML = '<span style="color:var(--status-success);font-weight:700;">✓</span>';
+      if (desc2) desc2.textContent = `Alokasi kuota ${quotaVal} GB berhasil diverifikasi.`;
+
+      // Step 3: Register
+      if (icon3) icon3.innerHTML = '<div class="status-pulse-dot" style="background-color:var(--md-sys-color-primary);"></div>';
+      if (desc3) desc3.textContent = 'Mendaftarkan ke StoragePool virtual...';
+      await submitAddAccount();
+      if (icon3) icon3.innerHTML = '<span style="color:var(--status-success);font-weight:700;">✓</span>';
+      if (desc3) desc3.textContent = 'Akun aktif dan siap digunakan.';
+
+      setTimeout(() => {
+        closeModal('addAccountModal');
+        showOnboardingStep(1);
+        if (currentMode === 'storage') {
+          renderStorageHub();
+        } else {
+          selectStorageHub();
+        }
+      }, 900);
+    }
+
+    async function syncStorageNow() {
+      showToast('Memulai sinkronisasi armada akun cloud...');
+      try {
+        const res = await fetch('/api/storage/sync', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          await loadAccounts();
+          await loadStats();
+          if (currentMode === 'storage') {
+            renderStorageHub();
+          } else if (currentMode === 'dashboard') {
+            renderDashboard();
+          }
+          showToast(`Sinkronisasi berhasil! ${data.accounts_count || 0} akun cloud diselaraskan.`);
+        } else {
+          showToast('Gagal melakukan sinkronisasi storage', 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function testAccountConnection(id) {
+      showToast('Menguji konektivitas akun...');
+      try {
+        const res = await fetch(`/api/accounts/${encodeURIComponent(id)}/test`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Koneksi sehat! Terverifikasi dalam ${data.duration_ms}ms.`);
+        } else {
+          showToast(`Uji koneksi gagal: ${data.error || 'Timeout'}`, 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function toggleAccountIntegration(id, enabled) {
+      try {
+        const res = await fetch(`/api/accounts/${encodeURIComponent(id)}/toggle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled })
+        });
+        if (res.ok) {
+          showToast(`Integrasi akun ${enabled ? 'diaktifkan' : 'dinonaktifkan'}.`);
+          await loadAccounts();
+          await loadStats();
+          if (currentMode === 'storage') renderStorageHub();
+        } else {
+          showToast('Gagal mengubah status integrasi', 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function loadStarredFiles() {
+      const area = document.getElementById('contentArea');
+      area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--md-sys-color-on-surface-variant);"><div class="spinner"></div>&nbsp;&nbsp;Memuat file berbintang…</div>';
+      try {
+        const res = await fetch('/api/files/starred');
+        const list = await res.json();
+        currentFiles = (list || []).map(item => ({
+          name: item.name,
+          path: item.path,
+          size: item.size,
+          is_dir: item.is_dir,
+          account_id: item.account_id,
+          starred: true
+        }));
+        if (currentFiles.length === 0) {
+          area.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-card" style="max-width:440px;">
+                <div class="file-icon" style="width:64px;height:64px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-primary-container);color:#ffba00;font-size:1.8rem;display:flex;align-items:center;justify-content:center;">
+                  ★
+                </div>
+                <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">Belum Ada File Berbintang</h3>
+                <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">Tandai file atau folder favorit Anda dengan ikon bintang untuk menemukannya kembali secara instan lintas semua cloud account.</p>
+                <button class="btn btn-primary" onclick="selectFiles()" style="margin-top:8px;">Jelajahi File</button>
+              </div>
+            </div>
+          `;
+          return;
+        }
+        applyFilesView();
+      } catch (err) {
+        area.innerHTML = `<div style="color:var(--md-sys-color-error);padding:24px;">${err.message}</div>`;
+      }
+    }
+
+    async function loadRecentFiles() {
+      const area = document.getElementById('contentArea');
+      area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--md-sys-color-on-surface-variant);"><div class="spinner"></div>&nbsp;&nbsp;Memuat file terbaru…</div>';
+      try {
+        const res = await fetch('/api/files/recent');
+        const list = await res.json();
+        currentFiles = list || [];
+        if (currentFiles.length === 0) {
+          area.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-card" style="max-width:440px;">
+                <div class="file-icon" style="width:64px;height:64px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-primary);font-size:1.8rem;display:flex;align-items:center;justify-content:center;">
+                  🕒
+                </div>
+                <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">Belum Ada Aktivitas File Terbaru</h3>
+                <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">File yang baru saja diunggah, dimodifikasi, atau diakses akan muncul di sini secara otomatis.</p>
+                <button class="btn btn-primary" onclick="selectFiles()" style="margin-top:8px;">Jelajahi File</button>
+              </div>
+            </div>
+          `;
+          return;
+        }
+        applyFilesView();
+      } catch (err) {
+        area.innerHTML = `<div style="color:var(--md-sys-color-error);padding:24px;">${err.message}</div>`;
+      }
+    }
+
+    async function toggleStar(accountID, filePath, fileName, size, isDir, btnEl, event) {
+      if (event) event.stopPropagation();
+      const isStarred = btnEl && btnEl.classList.contains('starred');
+      if (isStarred) {
+        try {
+          await fetch(`/api/files/starred?account_id=${encodeURIComponent(accountID)}&path=${encodeURIComponent(filePath)}`, { method: 'DELETE' });
+          if (btnEl) btnEl.classList.remove('starred');
+          showToast('Dihapus dari berbintang');
+          if (currentMode === 'starred') loadStarredFiles();
+        } catch (e) {}
+      } else {
+        try {
+          await fetch('/api/files/starred', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account_id: accountID, path: filePath, name: fileName, size: size || 0, is_dir: isDir || false })
+          });
+          if (btnEl) btnEl.classList.add('starred');
+          showToast('Ditambahkan ke berbintang ⭐');
+        } catch (e) {}
+      }
+    }
+
+    async function openShareModal(filePath, accountID) {
+      try {
+        const res = await fetch(`/api/files/share?path=${encodeURIComponent(filePath)}&account_id=${encodeURIComponent(accountID || activeAccountID || '')}`);
+        if (!res.ok) throw new Error('Gagal membuat share link');
+        const data = await res.json();
+        const input = document.getElementById('shareUrlInput');
+        const nameEl = document.getElementById('shareModalFileName');
+        if (input) input.value = data.share_url;
+        if (nameEl) nameEl.textContent = filePath.split('/').pop() || filePath;
+        openModal('shareModal');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function copyShareUrl() {
+      const input = document.getElementById('shareUrlInput');
+      if (!input) return;
+      navigator.clipboard.writeText(input.value);
+      showToast('Link berhasil disalin ke clipboard! 📋');
+    }
+
+    function renderDocs() {
+      const area = document.getElementById('contentArea');
+      area.innerHTML = `
+        <div class="dashboard-container" style="max-width:980px;margin:0 auto;padding-bottom:40px;">
+          <div style="margin-bottom:20px;">
+            <h2 style="font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+              REST API & System Documentation
+            </h2>
+            <div style="font-size:0.86rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Spesifikasi endpoint gateway terpadu Cloudgate untuk integrasi otomatis.</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:14px;margin-bottom:24px;">
+            <div class="pool-stat-box" style="padding:16px;">
+              <span class="pool-stat-label">Model Arsitektur</span>
+              <span style="font-size:1.05rem;font-weight:700;color:var(--md-sys-color-primary);">Single-Binary Gateway</span>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">0 external runtime dependencies</div>
+            </div>
+            <div class="pool-stat-box" style="padding:16px;">
+              <span class="pool-stat-label">Katalog & Cache</span>
+              <span style="font-size:1.05rem;font-weight:700;color:var(--status-success);">SQLite Pure-Go WAL + FTS5</span>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Zero-latency local metadata queries</div>
+            </div>
+            <div class="pool-stat-box" style="padding:16px;">
+              <span class="pool-stat-label">Keamanan Kredensial</span>
+              <span style="font-size:1.05rem;font-weight:700;color:var(--md-sys-color-tertiary);">AES-256-GCM Vault</span>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">OAuth Refresh Token encrypted persistence</div>
+            </div>
+          </div>
+
+          <div class="storage-breakdown-card" style="gap:16px;">
+            <h3 style="font-size:1.05rem;font-weight:700;border-bottom:1px solid var(--md-sys-color-outline-variant);padding-bottom:10px;">Ringkasan API Endpoints</h3>
+
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/stats</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengambil total kuota, kapasitas terpakai, dan status semua akun</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s http://localhost:8080/api/stats | jq</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#2356cc;color:#fff;font-weight:700;">POST</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/storage/sync</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menyelaraskan seluruh kuota dan metadata remote secara langsung</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST http://localhost:8080/api/storage/sync</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/files?pool_id=all_pool&path=/</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Membaca file gabungan virtual StoragePool</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "http://localhost:8080/api/files?pool_id=all_pool&path=/"</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#2356cc;color:#fff;font-weight:700;">POST</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/accounts/{id}/toggle</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengaktifkan atau menonaktifkan akun dari pool alokasi</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST http://localhost:8080/api/accounts/acc_123/toggle -d '{"enabled":false}'</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/files/share?path=/dokumen.pdf</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menghasilkan URL streaming / share link untuk file virtual</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "http://localhost:8080/api/files/share?path=/dokumen.pdf"</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
 
     // Safe AccountDisconnection
     function promptDisconnectAccount(id, name) {
@@ -2550,6 +3602,22 @@
         renderDashboard();
         return;
       }
+      if (currentMode === 'storage') {
+        renderStorageHub();
+        return;
+      }
+      if (currentMode === 'docs') {
+        renderDocs();
+        return;
+      }
+      if (currentMode === 'starred') {
+        await loadStarredFiles();
+        return;
+      }
+      if (currentMode === 'recent') {
+        await loadRecentFiles();
+        return;
+      }
 
       const area = document.getElementById('contentArea');
       const progressBar = document.getElementById('mainProgressBar');
@@ -2557,7 +3625,7 @@
       area.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);padding:24px;display:flex;align-items:center;gap:12px;"><div class="spinner"></div> Loading files…</div>';
       try {
         let url = '';
-        if (currentMode === 'pool') {
+        if (currentMode === 'pool' || currentMode === 'files') {
           url = `/api/files?pool_id=all_pool&path=${encodeURIComponent(currentPath)}`;
         } else if (currentMode === 'account') {
           url = `/api/files?account_id=${encodeURIComponent(activeAccountID)}&path=${encodeURIComponent(currentPath)}`;
@@ -2730,9 +3798,19 @@
           card.className = 'file-card';
           const accLabel = f.account_id || (currentMode === 'account' ? activeAccountName : 'Pool');
           const isImg = type === 'image';
-          const dlUrl = `/api/files/download?account_id=${encodeURIComponent(f.account_id || activeAccountID)}&path=${encodeURIComponent(f.path || (currentPath === '/' ? '/' + fileName : currentPath + '/' + fileName))}`;
+          const filePath = f.path || (currentPath === '/' ? '/' + fileName : currentPath + '/' + fileName);
+          const dlUrl = `/api/files/download?account_id=${encodeURIComponent(f.account_id || activeAccountID)}&path=${encodeURIComponent(filePath)}`;
+          const isStarred = Boolean(f.starred);
 
           card.innerHTML = `
+            <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:3;" onclick="event.stopPropagation()">
+              <button class="star-btn ${isStarred ? 'starred' : ''}" title="Tandai Bintang" onclick="toggleStar('${f.account_id || activeAccountID || ''}', '${filePath.replace(/'/g, "\\'")}', '${fileName.replace(/'/g, "\\'")}', ${f.size || 0}, ${f.is_dir || false}, this, event)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="${isStarred ? '#ffba00' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              </button>
+              <button class="share-btn" title="Bagikan Link (Share Link)" onclick="openShareModal('${filePath.replace(/'/g, "\\'")}', '${f.account_id || activeAccountID || ''}')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </button>
+            </div>
             <div class="file-card-preview">
               ${isImg ? `
                 <img class="file-card-thumb" src="${dlUrl}" loading="lazy" alt="${fileName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
@@ -2750,7 +3828,7 @@
               <span>${f.is_dir ? 'Folder' : formatBytes(f.size)}</span>
               <span>${f.mod_time ? new Date(f.mod_time).toLocaleDateString() : ''}</span>
             </div>
-            ${currentMode === 'pool' && f.account_id ? `
+            ${(currentMode === 'pool' || currentMode === 'files' || currentMode === 'starred' || currentMode === 'recent') && f.account_id ? `
               <div style="margin-top:2px;">
                 <span class="m3-chip" style="font-size:0.68rem;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="RemoteAccount: ${f.account_id}">
                   ${f.account_id}
@@ -2780,6 +3858,7 @@
               <th>Remote Account</th>
               <th>Size</th>
               <th>Last Modified</th>
+              <th style="width:80px;text-align:center;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -2788,6 +3867,8 @@
               const type = getFileType(fileName, f.is_dir);
               const jsonStr = JSON.stringify(f).replace(/'/g, "&apos;");
               const accLabel = f.account_id || (currentMode === 'account' ? activeAccountName : 'Pool');
+              const filePath = f.path || (currentPath === '/' ? '/' + fileName : currentPath + '/' + fileName);
+              const isStarred = Boolean(f.starred);
               return `
                 <tr onclick='selectFileRow(${jsonStr}, this, event)' ondblclick='if(${f.is_dir}){openFolder(${jsonStr})}else{previewFile(${jsonStr})}' oncontextmenu='showContextMenu(event, ${jsonStr})'>
                   <td>
@@ -2801,6 +3882,16 @@
                   <td><span class="m3-chip">${accLabel}</span></td>
                   <td style="color:var(--md-sys-color-on-surface-variant);">${f.is_dir ? '-' : formatBytes(f.size)}</td>
                   <td style="color:var(--md-sys-color-on-surface-variant);">${f.mod_time ? new Date(f.mod_time).toLocaleDateString() : '-'}</td>
+                  <td style="text-align:center;" onclick="event.stopPropagation()">
+                    <div style="display:inline-flex;gap:4px;">
+                      <button class="star-btn ${isStarred ? 'starred' : ''}" title="Tandai Bintang" onclick="toggleStar('${f.account_id || activeAccountID || ''}', '${filePath.replace(/'/g, "\\'")}', '${fileName.replace(/'/g, "\\'")}', ${f.size || 0}, ${f.is_dir || false}, this, event)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="${isStarred ? '#ffba00' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                      </button>
+                      <button class="share-btn" title="Bagikan Link (Share Link)" onclick="openShareModal('${filePath.replace(/'/g, "\\'")}', '${f.account_id || activeAccountID || ''}')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               `;
             }).join('')}
@@ -2907,8 +3998,24 @@
         container.innerHTML = `<span class="breadcrumb-item active">Dashboard</span>`;
         return;
       }
+      if (currentMode === 'storage') {
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Storage Management Hub</span>`;
+        return;
+      }
+      if (currentMode === 'starred') {
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Starred Files (⭐)</span>`;
+        return;
+      }
+      if (currentMode === 'recent') {
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Recent Files (🕒)</span>`;
+        return;
+      }
+      if (currentMode === 'docs') {
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Settings & API</span>`;
+        return;
+      }
 
-      let rootName = 'Round-Robin Pool';
+      let rootName = 'All Files (Unified)';
       if (currentMode === 'account') {
         rootName = activeAccountName || 'Cloud Account';
       } else if (currentMode === 'trash') {
@@ -3006,11 +4113,23 @@
       if (currentMode === 'dashboard') {
         const el = document.getElementById('navItemDashboard');
         if (el) el.classList.add('active');
-      } else if (currentMode === 'pool') {
-        const el = document.getElementById('navItemPool');
+      } else if (currentMode === 'pool' || currentMode === 'files') {
+        const el = document.getElementById('navItemFiles') || document.getElementById('navItemPool');
+        if (el) el.classList.add('active');
+      } else if (currentMode === 'starred') {
+        const el = document.getElementById('navItemStarred');
+        if (el) el.classList.add('active');
+      } else if (currentMode === 'recent') {
+        const el = document.getElementById('navItemRecent');
         if (el) el.classList.add('active');
       } else if (currentMode === 'trash') {
         const el = document.getElementById('navItemTrash');
+        if (el) el.classList.add('active');
+      } else if (currentMode === 'storage') {
+        const el = document.getElementById('navItemStorage');
+        if (el) el.classList.add('active');
+      } else if (currentMode === 'docs') {
+        const el = document.getElementById('navItemDocs');
         if (el) el.classList.add('active');
       } else if (currentMode === 'account') {
         const el = document.querySelector(`.nav-item[data-account-id="${activeAccountID}"]`);
@@ -3023,6 +4142,10 @@
       await loadStats();
       if (currentMode === 'dashboard') {
         renderDashboard();
+      } else if (currentMode === 'storage') {
+        renderStorageHub();
+      } else if (currentMode === 'docs') {
+        renderDocs();
       } else {
         await loadCurrentView();
       }

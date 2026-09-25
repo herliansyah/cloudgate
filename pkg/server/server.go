@@ -13,10 +13,12 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
 
 	"github.com/herliansyah/cloudgate/pkg/auth"
 	"github.com/herliansyah/cloudgate/pkg/config"
@@ -69,8 +71,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/stats", s.handleStats)
 	mux.HandleFunc("GET /api/accounts", s.handleGetAccounts)
 	mux.HandleFunc("POST /api/accounts", s.handleAddAccount)
+	mux.HandleFunc("POST /api/accounts/test", s.handleTestConnectionNew)
+	mux.HandleFunc("POST /api/accounts/{id}/toggle", s.handleToggleAccount)
+	mux.HandleFunc("POST /api/accounts/{id}/test", s.handleTestAccount)
 	mux.HandleFunc("PATCH /api/accounts/{id}", s.handleUpdateAccount)
 	mux.HandleFunc("DELETE /api/accounts/{id}", s.handleDeleteAccount)
+	mux.HandleFunc("POST /api/storage/sync", s.handleSyncStorage)
 
 	// OAuth Routes
 	mux.HandleFunc("GET /api/auth/{provider}/login", s.handleOAuthLogin)
@@ -79,11 +85,17 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/pools", s.handleGetPools)
 
 	mux.HandleFunc("GET /api/files", s.handleListFiles)
+	mux.HandleFunc("GET /api/files/starred", s.handleGetStarred)
+	mux.HandleFunc("POST /api/files/starred", s.handleAddStarred)
+	mux.HandleFunc("DELETE /api/files/starred", s.handleRemoveStarred)
+	mux.HandleFunc("GET /api/files/recent", s.handleGetRecentFiles)
+	mux.HandleFunc("GET /api/files/share", s.handleGetShareLink)
 	mux.HandleFunc("POST /api/files/upload", s.handleUploadFile)
 	mux.HandleFunc("GET /api/files/download", s.handleDownloadFile)
 	mux.HandleFunc("POST /api/files/copy", s.handleCopyFile)
 	mux.HandleFunc("POST /api/files/move", s.handleMoveFile)
 	mux.HandleFunc("POST /api/files/trash", s.handleTrashFile)
+
 
 	mux.HandleFunc("GET /api/trash", s.handleGetTrash)
 	mux.HandleFunc("POST /api/trash/restore", s.handleRestoreTrash)
@@ -151,20 +163,36 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 
 	var totalStorage, totalUsed, totalFree int64
 	type AccountStat struct {
-		ID       string `json:"id"`
-		Name     string `json:"name"`
-		Provider string `json:"provider"`
-		Status   string `json:"status"`
-		Total    int64  `json:"total"`
-		Used     int64  `json:"used"`
-		Free     int64  `json:"free"`
+		ID         string     `json:"id"`
+		Name       string     `json:"name"`
+		Provider   string     `json:"provider"`
+		Status     string     `json:"status"`
+		Enabled    bool       `json:"enabled"`
+		Email      string     `json:"email,omitempty"`
+		LastSyncAt *time.Time `json:"last_sync_at,omitempty"`
+		Total      int64      `json:"total"`
+		Used       int64      `json:"used"`
+		Free       int64      `json:"free"`
+	}
+
+	dbAccounts, _ := s.database.GetAccounts()
+	dbMap := make(map[string]db.RemoteAccount)
+	for _, a := range dbAccounts {
+		dbMap[a.ID] = a
 	}
 
 	var accountStats []AccountStat
 	for id, driver := range s.drivers {
+		accInfo := dbMap[id]
+		name := id
+		if accInfo.Name != "" {
+			name = accInfo.Name
+		}
 		quota, err := driver.About(r.Context())
 		status := "connected"
-		if err != nil {
+		if !accInfo.Enabled && accInfo.Status == "disabled" {
+			status = "disabled"
+		} else if err != nil {
 			status = "error"
 		} else {
 			totalStorage += quota.Total
@@ -172,13 +200,16 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 			totalFree += quota.Free
 		}
 		accountStats = append(accountStats, AccountStat{
-			ID:       id,
-			Name:     id,
-			Provider: driver.Provider(),
-			Status:   status,
-			Total:    quota.Total,
-			Used:     quota.Used,
-			Free:     quota.Free,
+			ID:         id,
+			Name:       name,
+			Provider:   driver.Provider(),
+			Status:     status,
+			Enabled:    accInfo.Enabled,
+			Email:      accInfo.Email,
+			LastSyncAt: accInfo.LastSyncAt,
+			Total:      quota.Total,
+			Used:       quota.Used,
+			Free:       quota.Free,
 		})
 	}
 
@@ -189,6 +220,7 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 		"accounts":      accountStats,
 	})
 }
+
 
 func (s *Server) handleGetAccounts(w http.ResponseWriter, r *http.Request) {
 	accounts, err := s.database.GetAccounts()
@@ -417,6 +449,169 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	_ = s.database.RecordAudit("disconnect", id, id, "Account disconnected", "success", 0)
 	writeJSON(w, http.StatusOK, map[string]string{"status": "disconnected"})
 }
+
+func (s *Server) handleToggleAccount(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "missing account id")
+		return
+	}
+	acc, err := s.database.GetAccount(id)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "account not found")
+		return
+	}
+
+	var req struct {
+		Enabled *bool `json:"enabled"`
+	}
+	newEnabled := !acc.Enabled
+	if err := json.NewDecoder(r.Body).Decode(&req); err == nil && req.Enabled != nil {
+		newEnabled = *req.Enabled
+	}
+
+	if err := s.database.ToggleAccount(id, newEnabled); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	s.mu.Lock()
+	if allPool, ok := s.pools["all_pool"]; ok {
+		if newEnabled {
+			if drv, exists := s.drivers[id]; exists {
+				allPool.AddDriver(drv)
+			}
+		} else {
+			allPool.RemoveDriver(id)
+		}
+	}
+	s.mu.Unlock()
+
+	action := "disable"
+	if newEnabled {
+		action = "enable"
+	}
+	_ = s.database.RecordAudit(action, acc.Name, acc.ID, fmt.Sprintf("Account integration %sd", action), "success", 0)
+
+	acc.Enabled = newEnabled
+	if newEnabled {
+		acc.Status = "connected"
+	} else {
+		acc.Status = "disabled"
+	}
+	writeJSON(w, http.StatusOK, acc)
+}
+
+func (s *Server) handleTestAccount(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "missing account id")
+		return
+	}
+	s.mu.RLock()
+	drv, ok := s.drivers[id]
+	s.mu.RUnlock()
+	if !ok {
+		writeError(w, http.StatusNotFound, "active driver not found for account")
+		return
+	}
+
+	start := time.Now()
+	err := drv.TestConnection(r.Context())
+	durationMs := time.Since(start).Milliseconds()
+
+	if err != nil {
+		_ = s.database.RecordAudit("test_connection", id, id, err.Error(), "failed", durationMs)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success":     false,
+			"error":       err.Error(),
+			"duration_ms": durationMs,
+		})
+		return
+	}
+
+	quota, _ := drv.About(r.Context())
+	_ = s.database.RecordAudit("test_connection", id, id, "Handshake verified", "success", durationMs)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":     true,
+		"duration_ms": durationMs,
+		"quota":       quota,
+	})
+}
+
+func (s *Server) handleTestConnectionNew(w http.ResponseWriter, r *http.Request) {
+	var raw map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request payload")
+		return
+	}
+	provider, _ := raw["provider"].(string)
+	if provider == "" {
+		writeError(w, http.StatusBadRequest, "provider required")
+		return
+	}
+
+	extra := make(map[string]string)
+	for k, v := range raw {
+		if s, ok := v.(string); ok {
+			extra[k] = s
+		}
+	}
+
+	tempDrv := storage.NewRcloneAdapterWithExtra(provider, "test_"+strconv.FormatInt(time.Now().Unix(), 10), extra["client_id"], extra["client_secret"], extra["access_token"], extra["refresh_token"], "", "Test Connection", extra)
+	start := time.Now()
+	err := tempDrv.TestConnection(r.Context())
+	durationMs := time.Since(start).Milliseconds()
+
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success":     false,
+			"error":       err.Error(),
+			"duration_ms": durationMs,
+		})
+		return
+	}
+
+	quota, _ := tempDrv.About(r.Context())
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":     true,
+		"duration_ms": durationMs,
+		"quota":       quota,
+	})
+}
+
+func (s *Server) handleSyncStorage(w http.ResponseWriter, r *http.Request) {
+	s.mu.RLock()
+	drivers := make(map[string]storage.Driver, len(s.drivers))
+	for k, v := range s.drivers {
+		drivers[k] = v
+	}
+	s.mu.RUnlock()
+
+	now := time.Now().UTC()
+	updatedCount := 0
+	for id, drv := range drivers {
+		quota, err := drv.About(r.Context())
+		if err == nil {
+			if acc, err := s.database.GetAccount(id); err == nil && acc != nil {
+				acc.QuotaTotal = quota.Total
+				acc.QuotaUsed = quota.Used
+				acc.LastSyncAt = &now
+				_ = s.database.SaveAccount(*acc)
+				_ = s.database.UpdateAccountLastSync(id, now)
+				updatedCount++
+			}
+		}
+	}
+
+	_ = s.database.RecordAudit("sync", "StorageHub", "system", fmt.Sprintf("Reconciled %d accounts", updatedCount), "success", 0)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":         "synced",
+		"synced_at":      now,
+		"accounts_count": updatedCount,
+	})
+}
+
 
 func (s *Server) handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	provider := r.PathValue("provider")
@@ -863,6 +1058,10 @@ func (s *Server) handleListFiles(w http.ResponseWriter, r *http.Request) {
 	poolID := r.URL.Query().Get("pool_id")
 	dirPath := r.URL.Query().Get("path")
 
+	if poolID == "" && accountID == "" {
+		poolID = "all_pool"
+	}
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -898,6 +1097,137 @@ func (s *Server) handleListFiles(w http.ResponseWriter, r *http.Request) {
 
 	writeError(w, http.StatusBadRequest, "must provide either account_id or pool_id query parameter")
 }
+
+func (s *Server) handleGetStarred(w http.ResponseWriter, r *http.Request) {
+	list, err := s.database.GetStarredFiles()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, list)
+}
+
+func (s *Server) handleAddStarred(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		AccountID string `json:"account_id"`
+		Path      string `json:"path"`
+		Name      string `json:"name"`
+		Size      int64  `json:"size"`
+		IsDir     bool   `json:"is_dir"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.AccountID == "" || req.Path == "" {
+		writeError(w, http.StatusBadRequest, "account_id and path required")
+		return
+	}
+	if req.Name == "" {
+		req.Name = path.Base(req.Path)
+	}
+	rec := db.StarredRecord{
+		ID:        fmt.Sprintf("%s:%s", req.AccountID, req.Path),
+		AccountID: req.AccountID,
+		Path:      req.Path,
+		Name:      req.Name,
+		Size:      req.Size,
+		IsDir:     req.IsDir,
+		CreatedAt: time.Now().UTC(),
+	}
+	if err := s.database.AddStarredFile(rec); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusCreated, rec)
+}
+
+func (s *Server) handleRemoveStarred(w http.ResponseWriter, r *http.Request) {
+	accountID := r.URL.Query().Get("account_id")
+	filePath := r.URL.Query().Get("path")
+	id := r.URL.Query().Get("id")
+
+	if id != "" {
+		_ = s.database.RemoveStarredFile(id, "")
+		writeJSON(w, http.StatusOK, map[string]string{"status": "removed"})
+		return
+	}
+	if accountID != "" && filePath != "" {
+		_ = s.database.RemoveStarredFile(accountID, filePath)
+		writeJSON(w, http.StatusOK, map[string]string{"status": "removed"})
+		return
+	}
+	writeError(w, http.StatusBadRequest, "must provide id or account_id and path")
+}
+
+func (s *Server) handleGetRecentFiles(w http.ResponseWriter, r *http.Request) {
+	s.mu.RLock()
+	allPool, ok := s.pools["all_pool"]
+	s.mu.RUnlock()
+	if ok {
+		files, err := allPool.UnifiedList(r.Context(), "/")
+		if err == nil && len(files) > 0 {
+			sort.Slice(files, func(i, j int) bool {
+				return files[i].ModTime.After(files[j].ModTime)
+			})
+			limit := 30
+			if len(files) > limit {
+				files = files[:limit]
+			}
+			writeJSON(w, http.StatusOK, files)
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, []storage.FileInfo{})
+}
+
+
+func (s *Server) handleGetShareLink(w http.ResponseWriter, r *http.Request) {
+	accountID := r.URL.Query().Get("account_id")
+	filePath := r.URL.Query().Get("path")
+	if filePath == "" {
+		writeError(w, http.StatusBadRequest, "path required")
+		return
+	}
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var drv storage.Driver
+	if accountID != "" {
+		drv = s.drivers[accountID]
+	} else if len(s.drivers) > 0 {
+		for _, d := range s.drivers {
+			drv = d
+			break
+		}
+	}
+
+	if drv == nil {
+		writeError(w, http.StatusNotFound, "no storage driver available")
+		return
+	}
+
+	link, err := drv.GetShareLink(r.Context(), filePath)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	host := r.Host
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	fullURL := fmt.Sprintf("%s://%s%s", scheme, host, link)
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"share_url":  fullURL,
+		"path":       filePath,
+		"account_id": drv.ID(),
+	})
+}
+
 
 func (s *Server) handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
