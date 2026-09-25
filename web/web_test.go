@@ -89,3 +89,65 @@ func TestEmbeddedJavaScriptSyntax(t *testing.T) {
 	}
 }
 
+func TestEmbeddedModalHierarchyAndButtonConsistency(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	// 1. Verify balanced div tags
+	openDivs := strings.Count(content, "<div")
+	closeDivs := strings.Count(content, "</div")
+	if openDivs != closeDivs {
+		t.Errorf("unbalanced <div> tags in index.html: %d open vs %d close", openDivs, closeDivs)
+	}
+
+	// 2. Verify modals are not nested inside addAccountModal
+	addModalIdx := strings.Index(content, `id="addAccountModal"`)
+	editModalIdx := strings.Index(content, `id="editAccountModal"`)
+	disconnectModalIdx := strings.Index(content, `id="disconnectAccountModal"`)
+	if addModalIdx == -1 || editModalIdx == -1 || disconnectModalIdx == -1 {
+		t.Fatalf("required modal IDs not found in index.html")
+	}
+
+	sliceBeforeEdit := content[addModalIdx:editModalIdx]
+	if strings.Count(sliceBeforeEdit, "<div") > strings.Count(sliceBeforeEdit, "</div") {
+		t.Errorf("editAccountModal is nested inside addAccountModal (div depth not reset)")
+	}
+
+	sliceBeforeDisconnect := content[addModalIdx:disconnectModalIdx]
+	if strings.Count(sliceBeforeDisconnect, "<div") > strings.Count(sliceBeforeDisconnect, "</div") {
+		t.Errorf("disconnectAccountModal is nested inside addAccountModal (div depth not reset)")
+	}
+
+	// 3. Verify no redundant "+ Add Storage" text next to plus icon
+	if strings.Contains(content, "+ Add Storage") {
+		t.Errorf("found redundant '+ Add Storage' text next to plus icon")
+	}
+
+	// 4. Verify formatPercent and Storage Hub usage progress bar
+	if !strings.Contains(content, "formatPercent") {
+		t.Errorf("formatPercent helper function missing from index.html")
+	}
+	if !strings.Contains(content, "storageHubUsageBar") {
+		t.Errorf("storageHubUsageBar missing from Storage Hub in index.html")
+	}
+
+	// 5. Verify provider-card-footer uses structured layout preventing overflow
+	if !strings.Contains(content, "grid-template-columns:1fr 1fr") {
+		t.Errorf("provider-card-footer missing 2-tier structured button grid")
+	}
+}
+

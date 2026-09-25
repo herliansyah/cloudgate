@@ -15,9 +15,6 @@ import (
 const (
 	DefaultGoogleClientID     = "cloudgate-client-id.apps.googleusercontent.com"
 	DefaultGoogleClientSecret = "GOCSPX-dummysecret"
-
-	DefaultOneDriveClientID = "cloudgate-onedrive-client-id"
-	DefaultDropboxClientID  = "cloudgate-dropbox-app-key"
 )
 
 type TokenResponse struct {
@@ -63,38 +60,33 @@ var ProviderConfigs = map[string]ProviderConfig{
 		DefaultScopes: []string{
 			"files.readwrite",
 			"offline_access",
+			"User.Read",
 		},
-		DefaultID: DefaultOneDriveClientID,
 	},
 	"dropbox": {
 		AuthEndpoint:  "https://www.dropbox.com/oauth2/authorize",
 		TokenEndpoint: "https://api.dropboxapi.com/oauth2/token",
-		DefaultScopes: []string{"files.content.read", "files.content.write"},
-		DefaultID:     DefaultDropboxClientID,
+		DefaultScopes: []string{"files.content.read", "files.content.write", "account_info.read"},
 	},
 	"box": {
 		AuthEndpoint:  "https://account.box.com/api/oauth2/authorize",
 		TokenEndpoint: "https://api.box.com/oauth2/token",
-		DefaultScopes: []string{},
-		DefaultID:     "box-client-id",
+		DefaultScopes: []string{"root_readwrite"},
 	},
 	"pcloud": {
 		AuthEndpoint:  "https://my.pcloud.com/oauth2/authorize",
 		TokenEndpoint: "https://api.pcloud.com/oauth2_token",
 		DefaultScopes: []string{},
-		DefaultID:     "pcloud-client-id",
 	},
 	"yandex": {
 		AuthEndpoint:  "https://oauth.yandex.com/authorize",
 		TokenEndpoint: "https://oauth.yandex.com/token",
 		DefaultScopes: []string{},
-		DefaultID:     "yandex-client-id",
 	},
 	"koofr": {
 		AuthEndpoint:  "https://app.koofr.net/oauth2/auth",
 		TokenEndpoint: "https://app.koofr.net/oauth2/token",
 		DefaultScopes: []string{},
-		DefaultID:     "koofr-client-id",
 	},
 }
 
@@ -109,12 +101,17 @@ func GenerateAuthURL(provider string, redirectURI string, customClientID string,
 	if customClientID != "" {
 		clientID = customClientID
 	}
+	if clientID == "" {
+		clientID = "placeholder-client-id"
+	}
 
 	vals := url.Values{}
 	vals.Set("client_id", clientID)
 	vals.Set("redirect_uri", redirectURI)
 	vals.Set("response_type", "code")
-	vals.Set("scope", strings.Join(cfg.DefaultScopes, " "))
+	if len(cfg.DefaultScopes) > 0 {
+		vals.Set("scope", strings.Join(cfg.DefaultScopes, " "))
+	}
 	vals.Set("access_type", "offline")
 	vals.Set("prompt", "consent")
 	if state != "" {
@@ -138,6 +135,9 @@ func ExchangeCode(ctx context.Context, provider, code, redirectURI, customClient
 	clientSecret := cfg.DefaultSecret
 	if customClientSecret != "" {
 		clientSecret = customClientSecret
+	}
+	if clientID == "" || clientSecret == "" {
+		return nil, fmt.Errorf("provider %s membutuhkan Client ID dan Client Secret yang valid", provider)
 	}
 
 	vals := url.Values{}

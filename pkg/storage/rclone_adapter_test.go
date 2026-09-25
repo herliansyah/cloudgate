@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/herliansyah/cloudgate/pkg/storage"
 )
@@ -236,3 +237,53 @@ func TestRcloneAdapter_Dropbox_PutGetMoveMkdir(t *testing.T) {
 		t.Fatalf("Delete %v", err)
 	}
 }
+
+func TestRcloneAdapter_Mega_Basic(t *testing.T) {
+	creds := `{"username":"user@example.com","password":"secretpassword"}`
+	drv, err := storage.NewRcloneDriver("mega", "acc_mega_test", creds)
+	if err != nil {
+		t.Fatalf("failed to create mega driver: %v", err)
+	}
+	if drv.Provider() != "mega" {
+		t.Errorf("expected mega, got %s", drv.Provider())
+	}
+	ctx := context.Background()
+	// Test put/get in fallback/in-memory mode for offline test
+	drv.SetBaseURL("http://127.0.0.1:9999")
+	if err := drv.Put(ctx, "/test.txt", bytes.NewReader([]byte("megadata")), 8); err != nil {
+		t.Fatalf("put failed: %v", err)
+	}
+	files, err := drv.List(ctx, "/")
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatalf("expected at least 1 file, got 0")
+	}
+	rc, info, err := drv.Get(ctx, "/test.txt")
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	defer rc.Close()
+	data, _ := io.ReadAll(rc)
+	if string(data) != "megadata" || info.Name != "test.txt" {
+		t.Errorf("unexpected content: %s", string(data))
+	}
+}
+
+func TestRcloneAdapter_Mega_DirectDispatchWithoutBaseURL(t *testing.T) {
+	// Without baseURL set, provider mega routes to megaList and returns empty slice when in-memory is fallback
+	creds := `{"username":"fake@example.com","password":"bad"}`
+	drv, err := storage.NewRcloneDriver("mega", "acc_mega_nobase", creds)
+	if err != nil {
+		t.Fatalf("failed to create driver: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+	// Should not panic, should route directly to megaList
+	files, err := drv.List(ctx, "/")
+	if err == nil && files == nil {
+		t.Errorf("expected non-nil slice, got nil")
+	}
+}
+
