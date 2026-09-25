@@ -851,6 +851,7 @@
       height: 100%;
       transition: width 0.5s var(--md-sys-motion-easing-standard);
       position: relative;
+      min-width: 6px;
     }
     .breakdown-segment:hover {
       filter: brightness(1.15);
@@ -2743,7 +2744,8 @@
       const segmentsHtml = (stats.accounts || []).map(acc => {
         const segPct = stats.total_storage > 0 ? ((acc.total || 0) / stats.total_storage) * 100 : 0;
         const color = PROVIDER_COLORS[acc.provider] || '#3859FF';
-        return `<div class="breakdown-segment" style="width:${segPct}%;background-color:${color};" title="${acc.name}: ${formatBytes(acc.total || 0)}"></div>`;
+        const pctText = segPct < 1 ? segPct.toFixed(1) : Math.round(segPct);
+        return `<div class="breakdown-segment" style="width:${Math.max(segPct, 1.5)}%;background-color:${color};min-width:8px;" title="${acc.name} (${acc.provider}): ${formatBytes(acc.total || 0)} (${pctText}%)"></div>`;
       }).join('');
 
       let cardsHtml = '';
@@ -2863,11 +2865,25 @@
               </div>
             </div>
 
+            <!-- Multi-Cloud Fleet Distribution Bar -->
+            <div style="background:var(--md-sys-color-surface-container-low);padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;margin-bottom:6px;color:var(--md-sys-color-on-surface-variant);flex-wrap:wrap;gap:6px;">
+                <span style="font-weight:700;color:var(--md-sys-color-on-surface);">Komposisi Kapasitas Armada Multi-Cloud:</span>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                  ${(stats.accounts || []).map(a => `<span style="display:inline-flex;align-items:center;gap:5px;font-size:0.75rem;"><span style="width:8px;height:8px;border-radius:50%;background:${PROVIDER_COLORS[a.provider] || '#3859FF'};display:inline-block;"></span><strong>${a.name}</strong> (${formatBytes(a.total)})</span>`).join('')}
+                </div>
+              </div>
+              <div class="breakdown-bar-wrap" style="height:8px;margin-bottom:0;">
+                ${segmentsHtml || '<div style="width:100%;height:100%;background:var(--md-sys-color-outline-variant);"></div>'}
+              </div>
+            </div>
+
             <!-- Stats Row -->
             <div class="pool-stats-row">
               <div class="pool-stat-box">
                 <span class="pool-stat-label">Total Kapasitas</span>
                 <span class="pool-stat-val">${formatBytes(stats.total_storage)}</span>
+                <div style="font-size:0.72rem;color:var(--md-sys-color-on-surface-variant);margin-top:3px;" title="Rincian kuota">${(stats.accounts || []).map(a => `${a.name}: ${formatBytes(a.total)}`).join(' + ')}</div>
               </div>
               <div class="pool-stat-box">
                 <span class="pool-stat-label">Terpakai</span>
@@ -2935,12 +2951,13 @@
         const accTotal = accStat.total || acc.quota_total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 15 * 1024 * 1024 * 1024);
         const segPct = stats.total_storage > 0 ? (accTotal / stats.total_storage) * 100 : 0;
         const color = PROVIDER_COLORS[acc.provider] || '#3859FF';
-        segments.push(`<div class="breakdown-segment" style="width:${segPct}%;background-color:${color};" title="${acc.name} (${acc.provider}): ${formatBytes(accTotal)}"></div>`);
+        const pctText = segPct < 1 ? segPct.toFixed(1) : Math.round(segPct);
+        segments.push(`<div class="breakdown-segment" style="width:${Math.max(segPct, 1.5)}%;background-color:${color};min-width:8px;" title="${acc.name} (${acc.provider}): ${formatBytes(accTotal)} (${pctText}%)"></div>`);
         legend.push(`
           <div class="legend-item">
             <span class="legend-color-dot" style="background-color:${color};"></span>
             <span style="font-weight:600;">${acc.name}</span>
-            <span style="color:var(--md-sys-color-on-surface-variant);">(${formatBytes(accTotal)} • ${Math.round(segPct)}%)</span>
+            <span style="color:var(--md-sys-color-on-surface-variant);">(${formatBytes(accTotal)} • ${pctText}%)</span>
           </div>
         `);
       });
@@ -3046,7 +3063,7 @@
             <div class="pool-stat-box" style="padding:16px;">
               <span class="pool-stat-label">Total Kapasitas Gabungan</span>
               <span class="pool-stat-val">${formatBytes(stats.total_storage)}</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${accounts.length} Akun Cloud Aktif</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${(stats.accounts || []).map(a => `${a.name}: ${formatBytes(a.total)}`).join(' + ')} • ${accounts.length} Akun Aktif</div>
             </div>
             <div class="pool-stat-box" style="padding:16px;">
               <span class="pool-stat-label">Kapasitas Terpakai</span>
@@ -3891,7 +3908,7 @@
           const accTotal = acc.total || 0;
           if (accTotal > 0) {
             const accShare = accTotal / total;
-            const dashLength = accShare * circumference;
+            const dashLength = Math.max(accShare * circumference, 4); // Minimal 4px agar akun proporsi kecil (Mega 50GB di samping 5TB) tetap terlihat
             const dashOffset = -cumulativePct * circumference;
             const color = PROVIDER_COLORS[acc.provider] || colors[i % colors.length];
             pathsHtml += `
@@ -5286,12 +5303,26 @@
       }
     }
 
-    function formatBytes(bytes) {
+    function formatBytes(bytes, decimals = null) {
       if (!bytes || bytes === 0) return '0 B';
       const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      const val = bytes / Math.pow(k, i);
+      if (decimals !== null) {
+        return parseFloat(val.toFixed(decimals)) + ' ' + sizes[i];
+      }
+      let d = 0;
+      if (val % 1 !== 0) {
+        if (i >= 4) { // TB: tampilkan 2 desimal jika ada pecahan agar 5.05 TB terbaca jelas
+          d = 2;
+        } else if (i >= 2) { // MB atau GB: tampilkan 1 desimal (atau 2 jika < 10)
+          d = (val < 10) ? 2 : 1;
+        } else {
+          d = 1;
+        }
+      }
+      return parseFloat(val.toFixed(d)) + ' ' + sizes[i];
     }
 
     function formatPercent(used, total) {
