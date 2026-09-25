@@ -1724,32 +1724,61 @@
       position: fixed;
       bottom: 24px;
       left: 24px;
-      z-index: 999;
+      z-index: 9999;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
+      pointer-events: none;
     }
     .snackbar {
+      pointer-events: auto;
       background-color: var(--md-sys-color-inverse-surface);
       color: var(--md-sys-color-inverse-on-surface);
-      border-radius: var(--md-sys-shape-corner-xs);
+      border-radius: var(--md-sys-shape-corner-sm);
+      border: 1px solid var(--md-sys-color-outline-variant);
       padding: 12px 18px;
       font-size: 0.88rem;
-      box-shadow: var(--md-sys-elevation-3);
+      font-weight: 500;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
       min-width: 280px;
       max-width: 460px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       animation: snackbarSlideUp var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
     }
     @keyframes snackbarSlideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from { transform: translateY(16px) translateZ(0); opacity: 0; }
+      to { transform: translateY(0) translateZ(0); opacity: 1; }
     }
     .snackbar.error {
       border-left: 4px solid var(--md-sys-color-error);
+    }
+    .snackbar-action {
+      background: transparent;
+      border: none;
+      color: var(--md-sys-color-inverse-primary);
+      font-family: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      padding: 6px 10px;
+      border-radius: var(--md-sys-shape-corner-xs);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background-color var(--md-sys-motion-duration-short);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .snackbar-action:hover {
+      background-color: rgba(0, 0, 0, 0.08);
+    }
+    [data-theme="light"] .snackbar-action:hover {
+      background-color: rgba(255, 255, 255, 0.12);
     }
 
     /* Overlay Scrim for Mobile Sidebar */
@@ -1841,26 +1870,29 @@
         <span class="search-icon">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         </span>
-        <input type="text" id="searchInput" placeholder="Cari file di semua akun cloud…" oninput="handleSearch(this.value)">
+        <input type="text" id="searchInput" data-i18n-placeholder="topbar.search" placeholder="Cari file di semua akun cloud…" oninput="handleSearch(this.value)">
       </div>
       <div class="search-dropdown" id="searchDropdown"></div>
     </div>
 
     <!-- Actions -->
     <div class="nav-actions">
-      <button class="btn-icon" id="btnGatewayLock" title="Kunci Gateway (GatewayAuth)" onclick="lockGateway()" style="display:none;">
+      <button class="btn-icon" id="btnGatewayLock" data-i18n-title="topbar.lockGateway" title="Kunci Gateway (GatewayAuth)" onclick="lockGateway()" style="display:none;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
       </button>
-      <button class="btn-icon" id="btnTheme" title="Ganti Tema Gelap/Terang" onclick="toggleTheme()">
+      <button class="btn-icon" id="btnLang" data-i18n-title="topbar.lang" title="Ganti Bahasa (ID/EN)" onclick="toggleLanguage()">
+        <span id="langLabel" style="font-size:0.75rem;font-weight:700;letter-spacing:0.04em;">EN</span>
+      </button>
+      <button class="btn-icon" id="btnTheme" data-i18n-title="topbar.theme" title="Ganti Tema Gelap/Terang" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span>
       </button>
-      <button class="btn-icon" title="Riwayat Aktivitas & Detail" onclick="toggleSideSheet()">
+      <button class="btn-icon" data-i18n-title="topbar.activity" title="Riwayat Aktivitas & Detail" onclick="toggleSideSheet()">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
       </button>
-      <button class="btn-icon" title="Sinkronisasi Vault GitHub" onclick="openModal('syncModal')">
+      <button class="btn-icon" data-i18n-title="topbar.sync" title="Sinkronisasi Vault GitHub" onclick="openModal('syncModal')">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
       </button>
-      <button class="btn-icon" title="Tentang Cloudgate" onclick="openModal('aboutModal')">
+      <button class="btn-icon" data-i18n-title="topbar.about" title="Tentang Cloudgate" onclick="openModal('aboutModal')">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
       </button>
     </div>
@@ -1880,52 +1912,52 @@
       <!-- M3 Extended FAB -->
       <button class="btn-upload" onclick="triggerFileInput()">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        Unggah Baru
+        <span data-i18n="nav.upload">Unggah Baru</span>
       </button>
       <input type="file" id="hiddenFileInput" style="display:none" onchange="uploadSelectedFile(this)">
 
       <ul class="nav-list" id="sidebarNav">
-        <li class="nav-section-title">Penyimpanan</li>
+        <li class="nav-section-title" data-i18n="nav.storage">Penyimpanan</li>
         <li class="nav-item active" id="navItemDashboard" onclick="selectDashboard(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-          Dashboard
+          <span data-i18n="nav.dashboard">Dashboard</span>
         </li>
         <li class="nav-item" id="navItemFiles" onclick="selectFiles(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
-          Semua File
+          <span data-i18n="nav.allFiles">Semua File</span>
         </li>
 
-        <li class="nav-section-title">Akses Cepat</li>
+        <li class="nav-section-title" data-i18n="nav.quickAccess">Akses Cepat</li>
         <li class="nav-item" id="navItemStarred" onclick="selectStarred(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          Berbintang
+          <span data-i18n="nav.starred">Berbintang</span>
         </li>
         <li class="nav-item" id="navItemRecent" onclick="selectRecent(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-          Terbaru
+          <span data-i18n="nav.recent">Terbaru</span>
         </li>
         <li class="nav-item" id="navItemTrash" onclick="selectTrash(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-          Sampah
+          <span data-i18n="nav.trash">Sampah</span>
         </li>
 
-        <li class="nav-section-title">Pengelolaan</li>
+        <li class="nav-section-title" data-i18n="nav.management">Pengelolaan</li>
         <li class="nav-item" id="navItemStorage" onclick="selectStorageHub(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
-          Pusat Penyimpanan
+          <span data-i18n="nav.storageHub">StorageHub</span>
         </li>
         <li class="nav-item" id="navItemDocs" onclick="selectDocs(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-          Pengaturan & API
+          <span data-i18n="nav.settings">Pengaturan & API</span>
         </li>
       </ul>
       <div id="accountsNavList" style="display:none;"></div>
       <li class="nav-item" id="navItemPool" style="display:none;" onclick="selectPool('all_pool'); closeSidebarOnMobile()"></li>
 
       <!-- M3 Capacity Card -->
-      <div class="capacity-card" onclick="selectStorageHub(); closeSidebarOnMobile()" title="Buka Pusat Penyimpanan">
+      <div class="capacity-card" onclick="selectStorageHub(); closeSidebarOnMobile()" data-i18n-title="nav.openStorageHub" title="Buka StorageHub">
         <div class="capacity-header">
-          <span>Kuota Penyimpanan</span>
+          <span data-i18n="nav.quota">Kuota Penyimpanan</span>
           <span id="capacityPercent">0%</span>
         </div>
         <div class="progress-bar-bg">
@@ -1943,8 +1975,8 @@
         <div class="brand-mark" style="width:64px;height:64px;border-radius:var(--md-sys-shape-corner-lg);">
           <svg width="32" height="32" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
         </div>
-        <span style="font-size:1.1rem;font-weight:700;">Drop files here to upload</span>
-        <span style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);">Distributing through active StoragePool</span>
+        <span data-i18n="dropzone.title" style="font-size:1.1rem;font-weight:700;">Drop files here to upload</span>
+        <span data-i18n="dropzone.desc" style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);">Distributing through active StoragePool</span>
       </div>
 
       <!-- Toolbar -->
@@ -1963,16 +1995,16 @@
         <div class="view-toggles">
           <button class="btn btn-secondary btn-sm" id="btnEditActiveAccount" style="display:none;" onclick="promptEditAccount(activeAccountID)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-            Edit Akun
+            <span data-i18n="toolbar.editAccount">Edit Akun</span>
           </button>
           <button class="btn btn-outline-danger btn-sm" id="btnDisconnectActiveAccount" style="display:none;" onclick="promptDisconnectAccount(activeAccountID, activeAccountName)">
             <svg width="14" height="14" viewBox="0 0 24 24"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>
-            Putuskan Akun
+            <span data-i18n="toolbar.disconnectAccount">Putuskan Akun</span>
           </button>
-          <button class="btn-icon" id="btnRefresh" title="Refresh files" onclick="refreshCurrentView()">
+          <button class="btn-icon" id="btnRefresh" data-i18n-title="toolbar.refresh" title="Refresh files" onclick="refreshCurrentView()">
             <svg width="18" height="18" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
           </button>
-          <button class="btn-icon" id="btnToggleView" title="Toggle Grid/List" onclick="toggleViewMode()">
+          <button class="btn-icon" id="btnToggleView" data-i18n-title="toolbar.toggleView" title="Toggle Grid/List" onclick="toggleViewMode()">
             <svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
           </button>
         </div>
@@ -1981,33 +2013,33 @@
       <!-- File Management Controls Bar (Sort, Filter, Group By) -->
       <div class="file-controls-bar" id="fileControlsBar" style="display:none;">
         <div class="filter-chips" id="filterChips">
-          <button class="filter-chip active" data-filter="all" onclick="setFileFilter('all')">Semua</button>
-          <button class="filter-chip" data-filter="folder" onclick="setFileFilter('folder')">📁 Folder</button>
-          <button class="filter-chip" data-filter="image" onclick="setFileFilter('image')">🖼️ Gambar</button>
-          <button class="filter-chip" data-filter="doc" onclick="setFileFilter('doc')">📄 Dokumen</button>
-          <button class="filter-chip" data-filter="media" onclick="setFileFilter('media')">🎬 Media</button>
-          <button class="filter-chip" data-filter="archive" onclick="setFileFilter('archive')">📦 Arsip</button>
+          <button class="filter-chip active" data-filter="all" data-i18n="filter.all" onclick="setFileFilter('all')">Semua</button>
+          <button class="filter-chip" data-filter="folder" data-i18n="filter.folder" onclick="setFileFilter('folder')">📁 Folder</button>
+          <button class="filter-chip" data-filter="image" data-i18n="filter.image" onclick="setFileFilter('image')">🖼️ Gambar</button>
+          <button class="filter-chip" data-filter="doc" data-i18n="filter.doc" onclick="setFileFilter('doc')">📄 Dokumen</button>
+          <button class="filter-chip" data-filter="media" data-i18n="filter.media" onclick="setFileFilter('media')">🎬 Media</button>
+          <button class="filter-chip" data-filter="archive" data-i18n="filter.archive" onclick="setFileFilter('archive')">📦 Arsip</button>
         </div>
         <div class="sort-group-controls">
           <div class="control-select-wrap">
-            <label for="sortSelect">Urut:</label>
+            <label for="sortSelect" data-i18n="sort.label">Urut:</label>
             <select id="sortSelect" class="form-select-sm" onchange="setFileSort(this.value)">
-              <option value="name_asc">Nama (A-Z)</option>
-              <option value="name_desc">Nama (Z-A)</option>
-              <option value="size_desc">Ukuran (Besar-Kecil)</option>
-              <option value="size_asc">Ukuran (Kecil-Besar)</option>
-              <option value="date_desc">Tanggal (Terbaru)</option>
-              <option value="date_asc">Tanggal (Terlama)</option>
-              <option value="type_asc">Tipe File</option>
+              <option value="name_asc" data-i18n="sort.nameAsc">Nama (A-Z)</option>
+              <option value="name_desc" data-i18n="sort.nameDesc">Nama (Z-A)</option>
+              <option value="size_desc" data-i18n="sort.sizeDesc">Ukuran (Besar-Kecil)</option>
+              <option value="size_asc" data-i18n="sort.sizeAsc">Ukuran (Kecil-Besar)</option>
+              <option value="date_desc" data-i18n="sort.dateDesc">Tanggal (Terbaru)</option>
+              <option value="date_asc" data-i18n="sort.dateAsc">Tanggal (Terlama)</option>
+              <option value="type_asc" data-i18n="sort.typeAsc">Tipe File</option>
             </select>
           </div>
           <div class="control-select-wrap">
-            <label for="groupSelect">Grup:</label>
+            <label for="groupSelect" data-i18n="group.label">Grup:</label>
             <select id="groupSelect" class="form-select-sm" onchange="setFileGroup(this.value)">
-              <option value="none">Tanpa Grup</option>
-              <option value="type">Tipe File</option>
-              <option value="date">Waktu Modifikasi</option>
-              <option value="account" id="optGroupAccount" style="display:none;">Akun Cloud</option>
+              <option value="none" data-i18n="group.none">Tanpa Grup</option>
+              <option value="type" data-i18n="group.type">Tipe File</option>
+              <option value="date" data-i18n="group.date">Waktu Modifikasi</option>
+              <option value="account" id="optGroupAccount" data-i18n="group.account" style="display:none;">RemoteAccount</option>
             </select>
           </div>
         </div>
@@ -2021,12 +2053,12 @@
   <!-- Unified M3 Side Sheet (Inspector & Audit Log) -->
   <div class="side-sheet" id="sideSheet">
     <div class="side-sheet-header">
-      <div class="side-sheet-title" id="sideSheetTitle">Detail & Aktivitas</div>
+      <div class="side-sheet-title" id="sideSheetTitle" data-i18n="sheet.title">Detail & Aktivitas</div>
       <button class="btn-icon" onclick="toggleSideSheet(false)">✕</button>
     </div>
     <div class="sheet-tabs">
-      <div class="sheet-tab active" id="tabInspector" onclick="switchSideSheetTab('inspector')">Detail File</div>
-      <div class="sheet-tab" id="tabAudit" onclick="switchSideSheetTab('audit')">Riwayat Aktivitas</div>
+      <div class="sheet-tab active" id="tabInspector" data-i18n="sheet.tabInspector" onclick="switchSideSheetTab('inspector')">Detail File</div>
+      <div class="sheet-tab" id="tabAudit" data-i18n="sheet.tabAudit" onclick="switchSideSheetTab('audit')">Riwayat Aktivitas</div>
     </div>
     <div class="sheet-content" id="sheetContentArea">
       <!-- Dynamic Content Rendered by JS -->
@@ -2036,7 +2068,7 @@
   <!-- Floating Transfer Manager -->
   <div class="transfer-manager" id="transferManager">
     <div class="transfer-header">
-      <span>Transfer Berjalan</span>
+      <span data-i18n="transfer.title">Transfer Berjalan</span>
       <button class="btn-icon" style="width:28px;height:28px;" onclick="toggleTransferManager()">✕</button>
     </div>
     <div class="transfer-body" id="transferList"></div>
@@ -2461,15 +2493,15 @@
       <div style="width:64px; height:64px; border-radius:50%; background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
       </div>
-      <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:8px; color:var(--md-sys-color-on-surface);">Cloudgate Terkunci</h2>
-      <p style="font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); margin-bottom:24px; line-height:1.4;">Masukkan MasterPassword untuk mengakses gateway penyimpanan cloud Anda.</p>
+      <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:8px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.lockedTitle">Cloudgate Terkunci</h2>
+      <p style="font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); margin-bottom:24px; line-height:1.4;" data-i18n="gateway.lockedDesc">Masukkan MasterPassword untuk mengakses gateway penyimpanan cloud Anda.</p>
       
       <form onsubmit="submitGatewayUnlock(event)">
         <div style="margin-bottom:16px; text-align:left;">
           <input type="password" id="gatewayUnlockPassword" placeholder="MasterPassword" style="width:100%; padding:14px 16px; border-radius:var(--md-sys-shape-corner-md); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font-size:1rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--md-sys-color-primary)'" onblur="this.style.borderColor='var(--md-sys-color-outline)'">
         </div>
         <div id="gatewayUnlockError" style="display:none; color:var(--md-sys-color-error); font-size:0.82rem; margin-bottom:16px; text-align:left;"></div>
-        <button type="submit" id="btnGatewayUnlock" class="btn btn-primary" style="width:100%; padding:12px; font-size:1rem; justify-content:center;">
+        <button type="submit" id="btnGatewayUnlock" class="btn btn-primary" style="width:100%; padding:12px; font-size:1rem; justify-content:center;" data-i18n="gateway.unlock">
           Buka Kunci
         </button>
       </form>
@@ -2484,25 +2516,25 @@
           <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
           </div>
-          <span>Aktifkan MasterPassword</span>
+          <span data-i18n="gateway.setupModalTitle">Aktifkan MasterPassword</span>
         </div>
         <button class="btn-icon" onclick="closeModal('setupMasterPasswordModal')">✕</button>
       </div>
       <div style="margin:12px 0; font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); line-height:1.5;">
-        <p style="margin-bottom:14px;">MasterPassword akan melindungi dashboard dan REST API Cloudgate dari akses tidak sah di jaringan lokal (LAN).</p>
+        <p style="margin-bottom:14px;" data-i18n="gateway.setupModalDesc">MasterPassword akan melindungi dashboard dan REST API Cloudgate dari akses tidak sah di jaringan lokal (LAN).</p>
         <div style="margin-bottom:12px;">
-          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Kata Sandi Baru (Min. 4 karakter)</label>
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.newPasswordLabel">Kata Sandi Baru (Min. 4 karakter)</label>
           <input type="password" id="setupMasterPwdInput" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
         </div>
         <div style="margin-bottom:12px;">
-          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Konfirmasi Kata Sandi</label>
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.confirmPasswordLabel">Konfirmasi Kata Sandi</label>
           <input type="password" id="setupMasterPwdConfirm" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
         </div>
         <div id="setupMasterPwdError" style="display:none; color:var(--md-sys-color-error); font-size:0.8rem; margin-top:8px;"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('setupMasterPasswordModal')">Batal</button>
-        <button class="btn btn-primary" onclick="submitSetupMasterPassword()">Aktifkan</button>
+        <button class="btn btn-text" onclick="closeModal('setupMasterPasswordModal')" data-i18n="gateway.cancel">Batal</button>
+        <button class="btn btn-primary" onclick="submitSetupMasterPassword()" data-i18n="gateway.activate">Aktifkan</button>
       </div>
     </div>
   </div>
@@ -2515,28 +2547,28 @@
           <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>
           </div>
-          <span>Ganti Kata Sandi Master</span>
+          <span data-i18n="gateway.changeModalTitle">Ganti Kata Sandi Master</span>
         </div>
         <button class="btn-icon" onclick="closeModal('changeMasterPasswordModal')">✕</button>
       </div>
       <div style="margin:12px 0; font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); line-height:1.5;">
         <div style="margin-bottom:12px;">
-          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Kata Sandi Saat Ini</label>
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.currentPasswordLabel">Kata Sandi Saat Ini</label>
           <input type="password" id="changeMasterPwdCurrent" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
         </div>
         <div style="margin-bottom:12px;">
-          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Kata Sandi Baru</label>
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.newPasswordLabel2">Kata Sandi Baru</label>
           <input type="password" id="changeMasterPwdNew" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
         </div>
         <div style="margin-bottom:12px;">
-          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Konfirmasi Kata Sandi Baru</label>
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.confirmNewPasswordLabel">Konfirmasi Kata Sandi Baru</label>
           <input type="password" id="changeMasterPwdConfirm" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
         </div>
         <div id="changeMasterPwdError" style="display:none; color:var(--md-sys-color-error); font-size:0.8rem; margin-top:8px;"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('changeMasterPasswordModal')">Batal</button>
-        <button class="btn btn-primary" onclick="submitChangeMasterPassword()">Simpan</button>
+        <button class="btn btn-text" onclick="closeModal('changeMasterPasswordModal')" data-i18n="gateway.cancel">Batal</button>
+        <button class="btn btn-primary" onclick="submitChangeMasterPassword()" data-i18n="gateway.save">Simpan</button>
       </div>
     </div>
   </div>
@@ -2549,21 +2581,21 @@
           <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);background-color:var(--md-sys-color-error-container);color:var(--md-sys-color-error);">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
           </div>
-          <span>Nonaktifkan GatewayAuth?</span>
+          <span data-i18n="gateway.disableModalTitle">Nonaktifkan GatewayAuth?</span>
         </div>
         <button class="btn-icon" onclick="closeModal('disableGatewayModal')">✕</button>
       </div>
       <div style="margin:12px 0; font-size:0.88rem; color:var(--md-sys-color-on-surface-variant); line-height:1.5;">
-        <p style="margin-bottom:12px;">Menonaktifkan proteksi ini akan membuat dashboard dan API Cloudgate dapat diakses secara bebas tanpa kata sandi oleh siapapun di jaringan.</p>
+        <p style="margin-bottom:12px;" data-i18n="gateway.disableModalDesc">Menonaktifkan proteksi ini akan membuat dashboard dan API Cloudgate dapat diakses secara bebas tanpa kata sandi oleh siapapun di jaringan.</p>
         <div>
-          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);">Masukkan MasterPassword untuk Konfirmasi</label>
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--md-sys-color-on-surface);" data-i18n="gateway.confirmWithPasswordLabel">Masukkan MasterPassword untuk Konfirmasi</label>
           <input type="password" id="disableGatewayPwdInput" style="width:100%; padding:10px 12px; border-radius:var(--md-sys-shape-corner-sm); border:1px solid var(--md-sys-color-outline); background:var(--md-sys-color-surface-container); color:var(--md-sys-color-on-surface);">
         </div>
         <div id="disableGatewayPwdError" style="display:none; color:var(--md-sys-color-error); font-size:0.8rem; margin-top:8px;"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('disableGatewayModal')">Batal</button>
-        <button class="btn btn-primary" style="background-color:var(--md-sys-color-error);color:#fff;" onclick="submitDisableGateway()">Nonaktifkan</button>
+        <button class="btn btn-text" onclick="closeModal('disableGatewayModal')" data-i18n="gateway.cancel">Batal</button>
+        <button class="btn btn-primary" style="background-color:var(--md-sys-color-error);color:#fff;" onclick="submitDisableGateway()" data-i18n="gateway.disableBtn">Nonaktifkan</button>
       </div>
     </div>
   </div>
@@ -2643,6 +2675,348 @@
       }
     }
 
+    // ===== Internationalization (i18n) Engine =====
+    const I18N = {
+      en: {
+        'topbar.search': 'Search files, folders across all accounts…',
+        'topbar.lockGateway': 'Lock Gateway (GatewayAuth)',
+        'topbar.lang': 'Switch Language (ID/EN)',
+        'topbar.theme': 'Toggle Dark/Light Theme',
+        'topbar.activity': 'Activity History & Details',
+        'topbar.sync': 'GitHub Vault Sync',
+        'topbar.about': 'About Cloudgate',
+        'nav.upload': 'Upload New',
+        'nav.storage': 'Storage',
+        'nav.dashboard': 'Dashboard',
+        'nav.allFiles': 'All Files',
+        'nav.quickAccess': 'Quick Access',
+        'nav.starred': 'Starred',
+        'nav.recent': 'Recent',
+        'nav.trash': 'Trash',
+        'nav.management': 'Management',
+        'nav.storageHub': 'StorageHub',
+        'nav.settings': 'Settings & API',
+        'nav.openStorageHub': 'Open StorageHub',
+        'nav.quota': 'Storage Quota',
+        'nav.quotaLoading': 'Loading…',
+        'toolbar.editAccount': 'Edit Account',
+        'toolbar.disconnectAccount': 'Disconnect Account',
+        'toolbar.refresh': 'Refresh files',
+        'toolbar.toggleView': 'Toggle Grid/List',
+        'filter.all': 'All',
+        'filter.folder': '📁 Folders',
+        'filter.image': '🖼️ Images',
+        'filter.doc': '📄 Documents',
+        'filter.media': '🎬 Media',
+        'filter.archive': '📦 Archives',
+        'sort.label': 'Sort:',
+        'sort.nameAsc': 'Name (A-Z)',
+        'sort.nameDesc': 'Name (Z-A)',
+        'sort.sizeDesc': 'Size (Large-Small)',
+        'sort.sizeAsc': 'Size (Small-Large)',
+        'sort.dateDesc': 'Date (Newest)',
+        'sort.dateAsc': 'Date (Oldest)',
+        'sort.typeAsc': 'File Type',
+        'group.label': 'Group:',
+        'group.none': 'No Group',
+        'group.type': 'File Type',
+        'group.date': 'Modified Time',
+        'group.account': 'RemoteAccount',
+        'sheet.title': 'Details & Activity',
+        'sheet.tabInspector': 'File Details',
+        'sheet.tabAudit': 'Activity History',
+        'transfer.title': 'Active Transfers',
+        'dropzone.title': 'Drop files here to upload',
+        'dropzone.desc': 'Distributing through active StoragePool',
+        'toast.langChanged': 'Language switched to English',
+        'toast.lightActive': '☀️ Light mode active',
+        'toast.darkActive': '🌙 Dark mode active',
+        'table.name': 'Name',
+        'table.remoteAccount': 'RemoteAccount',
+        'table.size': 'Size',
+        'table.modified': 'Last Modified',
+        'table.actions': 'Actions',
+        'dash.title': 'Unified Storage Command Center',
+        'dash.subtitle': 'Unified multi-cloud aggregation with capacity-aware round-robin allocation',
+        'dash.policy': 'AllocationPolicy: Capacity-Aware',
+        'dash.totalUsage': 'Total Aggregate Usage',
+        'dash.totalCap': 'Total Capacity',
+        'dash.used': 'Used',
+        'dash.free': 'Available Space',
+        'dash.connected': 'Connected Accounts',
+        'dash.connectedCount': 'Accounts Connected',
+        'dash.accountsCount': 'Accounts',
+        'dash.accountsTitle': 'Connected Cloud Accounts',
+        'dash.accountsRegistered': 'Accounts Registered',
+        'dash.explore': 'Explore All Files',
+        'dash.addAccount': 'Add Cloud Account',
+        'dash.emptyTitle': 'No Cloud Accounts Connected',
+        'dash.emptyDesc': 'Connect your Google Drive, OneDrive, Dropbox, or other cloud providers to aggregate multi-cloud capacity automatically.',
+        'dash.open': 'Open',
+        'dash.statusActive': 'Active',
+        'dash.statusError': 'Connection Issue',
+        'dash.statusInactive': 'Inactive',
+        'dash.usedCap': 'Capacity Used',
+        'dash.of': 'of',
+        'hub.title': 'StorageHub',
+        'hub.subtitle': 'Manage storage quotas, verify connections, and configure multi-provider cloud account integrations in a unified system.',
+        'hub.syncNow': 'Sync Now',
+        'hub.addStorage': 'Add Account',
+        'hub.totalCap': 'Total Aggregate Capacity',
+        'hub.usedCap': 'Used Capacity',
+        'hub.freeSpace': 'Available Space',
+        'hub.policyDesc': 'Capacity-Aware Round-Robin Policy',
+        'hub.readyDesc': 'Ready for incoming files',
+        'hub.testConn': 'Test Connection',
+        'hub.editAcc': 'Edit Account',
+        'hub.disconnect': 'Disconnect Account',
+        'hub.enable': 'Enable',
+        'hub.disable': 'Disable',
+        'hub.connectNew': 'Connect New Cloud Account',
+        'hub.connectNewDesc': 'Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, etc.',
+        'gateway.cardTitle': 'Gateway Security (GatewayAuth)',
+        'gateway.active': 'ACTIVE',
+        'gateway.inactive': 'INACTIVE',
+        'gateway.descActive': 'Local dashboard and REST API are protected by MasterPassword.',
+        'gateway.descInactive': 'Open access without password (suitable for personal local desktop use).',
+        'gateway.setupMasterPassword': 'Set up MasterPassword',
+        'gateway.changePassword': 'Change Password',
+        'gateway.disableProtection': 'Disable Protection',
+        'gateway.lockedTitle': 'Cloudgate Locked',
+        'gateway.lockedDesc': 'Enter MasterPassword to access your cloud storage gateway.',
+        'gateway.unlock': 'Unlock',
+        'gateway.setupModalTitle': 'Set up MasterPassword',
+        'gateway.setupModalDesc': 'MasterPassword will protect your Cloudgate dashboard and REST API from unauthorized access on the local network (LAN).',
+        'gateway.newPasswordLabel': 'New Password (Min. 4 characters)',
+        'gateway.confirmPasswordLabel': 'Confirm Password',
+        'gateway.cancel': 'Cancel',
+        'gateway.activate': 'Activate',
+        'gateway.changeModalTitle': 'Change MasterPassword',
+        'gateway.currentPasswordLabel': 'Current Password',
+        'gateway.newPasswordLabel2': 'New Password',
+        'gateway.confirmNewPasswordLabel': 'Confirm New Password',
+        'gateway.save': 'Save',
+        'gateway.disableModalTitle': 'Disable GatewayAuth?',
+        'gateway.disableModalDesc': 'Disabling this protection will allow anyone on the network to freely access the Cloudgate dashboard and API without a password.',
+        'gateway.confirmWithPasswordLabel': 'Enter MasterPassword to Confirm',
+        'gateway.disableBtn': 'Disable',
+      },
+      id: {
+        'topbar.search': 'Cari file di semua akun cloud…',
+        'topbar.lockGateway': 'Kunci Gateway (GatewayAuth)',
+        'topbar.lang': 'Ganti Bahasa (ID/EN)',
+        'topbar.theme': 'Ganti Tema Gelap/Terang',
+        'topbar.activity': 'Riwayat Aktivitas & Detail',
+        'topbar.sync': 'Sinkronisasi Vault GitHub',
+        'topbar.about': 'Tentang Cloudgate',
+        'nav.upload': 'Unggah Baru',
+        'nav.storage': 'Penyimpanan',
+        'nav.dashboard': 'Dashboard',
+        'nav.allFiles': 'Semua File',
+        'nav.quickAccess': 'Akses Cepat',
+        'nav.starred': 'Berbintang',
+        'nav.recent': 'Terbaru',
+        'nav.trash': 'Sampah',
+        'nav.management': 'Pengelolaan',
+        'nav.storageHub': 'StorageHub',
+        'nav.settings': 'Pengaturan & API',
+        'nav.openStorageHub': 'Buka StorageHub',
+        'nav.quota': 'Kuota Penyimpanan',
+        'nav.quotaLoading': 'Memuat…',
+        'toolbar.editAccount': 'Edit Akun',
+        'toolbar.disconnectAccount': 'Putuskan Akun',
+        'toolbar.refresh': 'Segarkan file',
+        'toolbar.toggleView': 'Tampilan Grid/Daftar',
+        'filter.all': 'Semua',
+        'filter.folder': '📁 Folder',
+        'filter.image': '🖼️ Gambar',
+        'filter.doc': '📄 Dokumen',
+        'filter.media': '🎬 Media',
+        'filter.archive': '📦 Arsip',
+        'sort.label': 'Urut:',
+        'sort.nameAsc': 'Nama (A-Z)',
+        'sort.nameDesc': 'Nama (Z-A)',
+        'sort.sizeDesc': 'Ukuran (Besar-Kecil)',
+        'sort.sizeAsc': 'Ukuran (Kecil-Besar)',
+        'sort.dateDesc': 'Tanggal (Terbaru)',
+        'sort.dateAsc': 'Tanggal (Terlama)',
+        'sort.typeAsc': 'Tipe File',
+        'group.label': 'Grup:',
+        'group.none': 'Tanpa Grup',
+        'group.type': 'Tipe File',
+        'group.date': 'Waktu Modifikasi',
+        'group.account': 'RemoteAccount',
+        'sheet.title': 'Detail & Aktivitas',
+        'sheet.tabInspector': 'Detail File',
+        'sheet.tabAudit': 'Riwayat Aktivitas',
+        'transfer.title': 'Transfer Berjalan',
+        'dropzone.title': 'Lepaskan file di sini untuk mengunggah',
+        'dropzone.desc': 'Mendistribusikan melalui StoragePool aktif',
+        'toast.langChanged': 'Bahasa Indonesia aktif',
+        'toast.lightActive': '☀️ Mode Terang aktif',
+        'toast.darkActive': '🌙 Mode Gelap aktif',
+        'table.name': 'Nama',
+        'table.remoteAccount': 'RemoteAccount',
+        'table.size': 'Ukuran',
+        'table.modified': 'Terakhir Diubah',
+        'table.actions': 'Aksi',
+        'dash.title': 'Unified Storage Command Center',
+        'dash.subtitle': 'Agregasi multi-cloud terpadu dengan distribusi beban otomatis Round-Robin',
+        'dash.policy': 'Kebijakan Alokasi: Berbasis Kapasitas',
+        'dash.totalUsage': 'Total Penggunaan Agregat',
+        'dash.totalCap': 'Total Kapasitas',
+        'dash.used': 'Terpakai',
+        'dash.free': 'Ruang Tersedia',
+        'dash.connected': 'Akun Terhubung',
+        'dash.connectedCount': 'Akun Terhubung',
+        'dash.accountsCount': 'Akun',
+        'dash.accountsTitle': 'Daftar Akun Cloud',
+        'dash.accountsRegistered': 'Akun Terdaftar',
+        'dash.explore': 'Jelajahi Semua File',
+        'dash.addAccount': 'Hubungkan Akun Cloud',
+        'dash.emptyTitle': 'Belum Ada Akun Cloud Terhubung',
+        'dash.emptyDesc': 'Hubungkan akun Google Drive, OneDrive, Dropbox, atau penyedia storage lainnya untuk mulai menggabungkan kapasitas penyimpanan multi-cloud secara otomatis.',
+        'dash.open': 'Buka',
+        'dash.statusActive': 'Aktif',
+        'dash.statusError': 'Kendala Koneksi',
+        'dash.statusInactive': 'Nonaktif',
+        'dash.usedCap': 'Kapasitas Digunakan',
+        'dash.of': 'dari',
+        'hub.title': 'StorageHub',
+        'hub.subtitle': 'Kelola kuota, periksa koneksi, dan atur integrasi akun cloud multi-provider dalam satu sistem terpadu.',
+        'hub.syncNow': 'Sinkronisasi Sekarang',
+        'hub.addStorage': 'Tambah Akun',
+        'hub.totalCap': 'Total Kapasitas Gabungan',
+        'hub.usedCap': 'Kapasitas Terpakai',
+        'hub.freeSpace': 'Ruang Tersedia',
+        'hub.policyDesc': 'Kebijakan Kapasitas Round-Robin',
+        'hub.readyDesc': 'Siap digunakan untuk file baru',
+        'hub.testConn': 'Uji Koneksi',
+        'hub.editAcc': 'Edit Akun',
+        'hub.disconnect': 'Putuskan Sambungan',
+        'hub.enable': 'Aktifkan',
+        'hub.disable': 'Nonaktifkan',
+        'hub.connectNew': 'Hubungkan Akun Penyimpanan Baru',
+        'hub.connectNewDesc': 'Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, dll.',
+        'gateway.cardTitle': 'Keamanan Gateway (GatewayAuth)',
+        'gateway.active': 'AKTIF',
+        'gateway.inactive': 'NONAKTIF',
+        'gateway.descActive': 'Dashboard dan API lokal dilindungi dengan MasterPassword.',
+        'gateway.descInactive': 'Akses terbuka tanpa kata sandi (cocok untuk pemakaian desktop lokal pribadi).',
+        'gateway.setupMasterPassword': 'Aktifkan MasterPassword',
+        'gateway.changePassword': 'Ganti Kata Sandi',
+        'gateway.disableProtection': 'Nonaktifkan Proteksi',
+        'gateway.lockedTitle': 'Cloudgate Terkunci',
+        'gateway.lockedDesc': 'Masukkan MasterPassword untuk mengakses gateway penyimpanan cloud Anda.',
+        'gateway.unlock': 'Buka Kunci',
+        'gateway.setupModalTitle': 'Aktifkan MasterPassword',
+        'gateway.setupModalDesc': 'MasterPassword akan melindungi dashboard dan REST API Cloudgate dari akses tidak sah di jaringan lokal (LAN).',
+        'gateway.newPasswordLabel': 'Kata Sandi Baru (Min. 4 karakter)',
+        'gateway.confirmPasswordLabel': 'Konfirmasi Kata Sandi',
+        'gateway.cancel': 'Batal',
+        'gateway.activate': 'Aktifkan',
+        'gateway.changeModalTitle': 'Ganti Kata Sandi Master',
+        'gateway.currentPasswordLabel': 'Kata Sandi Saat Ini',
+        'gateway.newPasswordLabel2': 'Kata Sandi Baru',
+        'gateway.confirmNewPasswordLabel': 'Konfirmasi Kata Sandi Baru',
+        'gateway.save': 'Simpan',
+        'gateway.disableModalTitle': 'Nonaktifkan GatewayAuth?',
+        'gateway.disableModalDesc': 'Menonaktifkan proteksi ini akan membuat dashboard dan API Cloudgate dapat diakses secara bebas tanpa kata sandi oleh siapapun di jaringan.',
+        'gateway.confirmWithPasswordLabel': 'Masukkan MasterPassword untuk Konfirmasi',
+        'gateway.disableBtn': 'Nonaktifkan',
+      }
+    };
+
+    let currentLang = 'en';
+
+    function t(key, defaultVal = '') {
+      if (I18N[currentLang] && I18N[currentLang][key]) {
+        return I18N[currentLang][key];
+      }
+      if (I18N.en && I18N.en[key]) {
+        return I18N.en[key];
+      }
+      return defaultVal || key;
+    }
+
+    function initLang() {
+      const saved = localStorage.getItem('cloudgate-lang');
+      if (saved && (saved === 'id' || saved === 'en')) {
+        currentLang = saved;
+      } else {
+        const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        currentLang = browserLang.startsWith('id') ? 'id' : 'en';
+      }
+      document.documentElement.setAttribute('lang', currentLang);
+      updateLangUI();
+      applyTranslations();
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'en' ? 'id' : 'en';
+      localStorage.setItem('cloudgate-lang', currentLang);
+      document.documentElement.setAttribute('lang', currentLang);
+      updateLangUI();
+      applyTranslations();
+      if (typeof updateCapacityCard === 'function') {
+        updateCapacityCard();
+      }
+      showToast(t('toast.langChanged'));
+      if (typeof loadCurrentView === 'function') {
+        loadCurrentView();
+      }
+    }
+
+    function setLanguage(lang) {
+      if (lang !== 'en' && lang !== 'id') return;
+      currentLang = lang;
+      localStorage.setItem('cloudgate-lang', currentLang);
+      document.documentElement.setAttribute('lang', currentLang);
+      updateLangUI();
+      applyTranslations();
+      if (typeof updateCapacityCard === 'function') {
+        updateCapacityCard();
+      }
+      if (typeof loadCurrentView === 'function') {
+        loadCurrentView();
+      }
+    }
+
+    function updateLangUI() {
+      const el = document.getElementById('langLabel');
+      if (el) {
+        el.textContent = currentLang.toUpperCase();
+      }
+      const btn = document.getElementById('btnLang');
+      if (btn) {
+        btn.setAttribute('title', t('topbar.lang'));
+      }
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (key && I18N[currentLang] && I18N[currentLang][key]) {
+          el.textContent = I18N[currentLang][key];
+        }
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (key && I18N[currentLang] && I18N[currentLang][key]) {
+          el.setAttribute('title', I18N[currentLang][key]);
+        }
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (key && I18N[currentLang] && I18N[currentLang][key]) {
+          el.setAttribute('placeholder', I18N[currentLang][key]);
+        }
+      });
+      if (typeof updateCapacityCard === 'function') {
+        updateCapacityCard();
+      }
+    }
+
     // Theme (Light / Dark)
     function initTheme() {
       const saved = localStorage.getItem('cloudgate-theme');
@@ -2657,7 +3031,7 @@
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('cloudgate-theme', next);
       updateThemeIcon(next);
-      showToast(next === 'light' ? '☀️ Light mode active' : '🌙 Dark mode active');
+      showToast(next === 'light' ? t('toast.lightActive') : t('toast.darkActive'));
     }
     function updateThemeIcon(theme) {
       const el = document.getElementById('themeIcon');
@@ -2759,6 +3133,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       initViewMode();
+      initLang();
       initApp();
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.search-box')) {
@@ -3210,11 +3585,11 @@
               <div class="file-icon" style="width:64px;height:64px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
               </div>
-              <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">Belum Ada Akun Cloud Terhubung</h3>
-              <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">Hubungkan akun Google Drive, OneDrive, Dropbox, atau penyedia storage lainnya untuk mulai menggabungkan kapasitas penyimpanan multi-cloud secara otomatis.</p>
+              <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">${t('dash.emptyTitle')}</h3>
+              <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">${t('dash.emptyDesc')}</p>
               <button class="btn btn-primary" onclick="openAddStorageModal()" style="margin-top:8px;">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                + Hubungkan Akun Cloud
+                ${t('dash.addAccount')}
               </button>
             </div>
           </div>
@@ -3227,13 +3602,13 @@
           const accUsage = formatPercent(usedBytes, totalBytes);
           const isEnabled = acc.enabled !== false;
           let dotCls = 'active';
-          let dotTooltip = 'Aktif';
+          let dotTooltip = t('dash.statusActive');
           if (accStat.status === 'error') {
             dotCls = 'error';
-            dotTooltip = 'Kendala Koneksi';
+            dotTooltip = t('dash.statusError');
           } else if (!isEnabled) {
             dotCls = 'inactive';
-            dotTooltip = 'Nonaktif';
+            dotTooltip = t('dash.statusInactive');
           }
           const meta = PROVIDER_METADATA[acc.provider] || { name: acc.provider };
 
@@ -3258,15 +3633,15 @@
                     <div class="action-dropdown-menu" id="cardMenu_${acc.id}">
                       <div class="action-dropdown-item" onclick="testAccountConnection('${acc.id}')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        Uji Koneksi
+                        ${t('hub.testConn')}
                       </div>
                       <div class="action-dropdown-item" onclick="promptEditAccount('${acc.id}')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                        Edit Akun
+                        ${t('hub.editAcc')}
                       </div>
                       <div class="action-dropdown-item danger" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>
-                        Putuskan Sambungan
+                        ${t('hub.disconnect')}
                       </div>
                     </div>
                   </div>
@@ -3275,7 +3650,7 @@
 
               <div class="provider-card-body">
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.76rem;color:var(--md-sys-color-on-surface-variant);">
-                  <span>Kapasitas Digunakan</span>
+                  <span>${t('dash.usedCap')}</span>
                   <span style="font-weight:700;color:var(--md-sys-color-on-surface);">${accUsage.text}</span>
                 </div>
                 <div class="progress-bar-bg" style="height:6px;margin:4px 0;">
@@ -3283,14 +3658,14 @@
                 </div>
                 <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);display:flex;justify-content:space-between;">
                   <span>${formatBytes(usedBytes)}</span>
-                  <span>dari ${formatBytes(totalBytes)}</span>
+                  <span>${t('dash.of')} ${formatBytes(totalBytes)}</span>
                 </div>
               </div>
 
               <div class="provider-card-footer">
                 <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
                   <svg width="15" height="15" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
-                  Buka
+                  ${t('dash.open')}
                 </button>
               </div>
             </div>
@@ -3308,13 +3683,13 @@
                   <svg width="28" height="28" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
                 </div>
                 <div>
-                  <h2 class="pool-hero-title">Unified Storage Command Center</h2>
-                  <div class="pool-hero-subtitle">Agregasi multi-cloud terpadu dengan distribusi beban otomatis Round-Robin</div>
+                  <h2 class="pool-hero-title">${t('dash.title')}</h2>
+                  <div class="pool-hero-subtitle">${t('dash.subtitle')}</div>
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;">
-                <span class="m3-chip" style="background-color:rgba(180,197,255,0.18);color:var(--md-sys-color-primary);font-weight:700;">
-                  Kebijakan Alokasi: Berbasis Kapasitas
+                <span class="m3-chip" style="background-color:rgba(180,197,255,0.18);color:var(--md-sys-color-primary);font-weight:700;max-width:none;height:auto;padding:4px 12px;font-size:0.75rem;border-radius:var(--md-sys-shape-corner-full);">
+                  ${t('dash.policy')}
                 </span>
               </div>
             </div>
@@ -3322,7 +3697,7 @@
             <!-- Capacity Progress -->
             <div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;font-weight:600;margin-bottom:6px;">
-                <span style="color:var(--md-sys-color-on-surface-variant);">Total Penggunaan Agregat</span>
+                <span style="color:var(--md-sys-color-on-surface-variant);">${t('dash.totalUsage')}</span>
                 <span style="color:var(--md-sys-color-primary);">${heroUsage.text} (${formatBytes(stats.total_used)} / ${formatBytes(stats.total_storage)})</span>
               </div>
               <div class="progress-bar-bg" style="height:8px;">
@@ -3333,20 +3708,20 @@
             <!-- Stats Row -->
             <div class="pool-stats-row">
               <div class="pool-stat-box">
-                <span class="pool-stat-label">Total Kapasitas</span>
+                <span class="pool-stat-label">${t('dash.totalCap')}</span>
                 <span class="pool-stat-val">${formatBytes(stats.total_storage)}</span>
               </div>
               <div class="pool-stat-box">
-                <span class="pool-stat-label">Terpakai</span>
+                <span class="pool-stat-label">${t('dash.used')}</span>
                 <span class="pool-stat-val" style="color:var(--md-sys-color-primary);">${formatBytes(stats.total_used)}</span>
               </div>
               <div class="pool-stat-box">
-                <span class="pool-stat-label">Ruang Tersedia</span>
+                <span class="pool-stat-label">${t('dash.free')}</span>
                 <span class="pool-stat-val" style="color:var(--status-success);">${formatBytes(totalFree)}</span>
               </div>
               <div class="pool-stat-box">
-                <span class="pool-stat-label">Akun Terhubung</span>
-                <span class="pool-stat-val">${accounts.length} Akun Cloud</span>
+                <span class="pool-stat-label">${t('dash.connected')}</span>
+                <span class="pool-stat-val">${accounts.length} ${t('dash.accountsCount')}</span>
               </div>
             </div>
 
@@ -3354,15 +3729,15 @@
             <div class="pool-hero-actions">
               <button class="btn btn-primary" onclick="selectFiles()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-                Jelajahi Semua File
+                ${t('dash.explore')}
               </button>
               <button class="btn btn-secondary" onclick="openAddStorageModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                Tambah Penyimpanan
+                ${t('dash.addAccount')}
               </button>
               <button class="btn btn-secondary" onclick="selectStorageHub()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
-                Pusat Penyimpanan
+                StorageHub
               </button>
             </div>
           </div>
@@ -3371,11 +3746,11 @@
           <div class="dashboard-section-header">
             <h3 class="dashboard-section-title">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
-              Daftar Akun Cloud
+              ${t('dash.accountsTitle')}
             </h3>
             <div style="display:flex;align-items:center;gap:12px;">
-              <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} Akun Terdaftar</span>
-              <button class="btn btn-text btn-sm" onclick="selectStorageHub()">Buka Pusat Penyimpanan →</button>
+              <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} ${t('dash.accountsRegistered')}</span>
+              <button class="btn btn-text btn-sm" onclick="selectStorageHub()">${currentLang === 'id' ? 'Buka StorageHub →' : 'Open StorageHub →'}</button>
             </div>
           </div>
 
@@ -3473,9 +3848,9 @@
             </td>
             <td>
               <div style="display:flex;align-items:center;gap:8px;">
-                <button class="btn btn-secondary btn-sm" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Buka Akun">
+                <button class="btn btn-secondary btn-sm" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="${t('dash.open')}">
                   <svg width="14" height="14" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
-                  Buka
+                  ${t('dash.open')}
                 </button>
                 <div class="action-menu-wrap">
                   <button class="btn-icon-kebab" onclick="toggleActionMenu(event, 'tblMenu_${acc.id}')" title="Opsi Akun">
@@ -3484,15 +3859,15 @@
                   <div class="action-dropdown-menu" id="tblMenu_${acc.id}">
                     <div class="action-dropdown-item" onclick="testAccountConnection('${acc.id}')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                      Uji Koneksi
+                      ${t('hub.testConn')}
                     </div>
                     <div class="action-dropdown-item" onclick="promptEditAccount('${acc.id}')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                      Edit Akun
+                      ${t('hub.editAcc')}
                     </div>
                     <div class="action-dropdown-item danger" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>
-                      Putuskan Sambungan
+                      ${t('hub.disconnect')}
                     </div>
                   </div>
                 </div>
@@ -3509,20 +3884,20 @@
             <div>
               <h2 style="font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px;">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
-                Pusat Penyimpanan
+                StorageHub
               </h2>
               <div style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;">
-                Kelola kuota, periksa koneksi, dan atur integrasi akun cloud multi-provider dalam satu sistem terpadu.
+                ${t('hub.subtitle')}
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
               <button class="btn btn-secondary" onclick="syncStorageNow()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-                Sinkronisasi Sekarang
+                ${t('hub.syncNow')}
               </button>
               <button class="btn btn-primary" onclick="openAddStorageModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                Tambah Penyimpanan
+                ${t('hub.addStorage')}
               </button>
             </div>
           </div>
@@ -3530,19 +3905,19 @@
           <!-- 3 Overview Cards -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;">
             <div class="pool-stat-box" style="padding:16px;">
-              <span class="pool-stat-label">Total Kapasitas Gabungan</span>
+              <span class="pool-stat-label">${t('hub.totalCap')}</span>
               <span class="pool-stat-val">${formatBytes(stats.total_storage)}</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${accounts.length} Akun Terhubung • Kebijakan Kapasitas Round-Robin</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${accounts.length} ${t('dash.connectedCount')} • ${t('hub.policyDesc')}</div>
             </div>
             <div class="pool-stat-box" style="padding:16px;">
-              <span class="pool-stat-label">Kapasitas Terpakai</span>
+              <span class="pool-stat-label">${t('hub.usedCap')}</span>
               <span class="pool-stat-val" style="color:var(--md-sys-color-primary);">${formatBytes(stats.total_used)}</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${hubUsage.text} Utilisasi Keseluruhan</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${hubUsage.text}</div>
             </div>
             <div class="pool-stat-box" style="padding:16px;">
-              <span class="pool-stat-label">Ruang Tersedia</span>
+              <span class="pool-stat-label">${t('hub.freeSpace')}</span>
               <span class="pool-stat-val" style="color:var(--status-success);">${formatBytes(totalFree)}</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Siap digunakan untuk file baru</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${t('hub.readyDesc')}</div>
             </div>
           </div>
 
@@ -3608,8 +3983,8 @@
               <div style="width:44px;height:44px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-surface-container);display:flex;align-items:center;justify-content:center;color:var(--md-sys-color-primary);">
                 <svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
               </div>
-              <div style="font-weight:700;font-size:0.95rem;">Hubungkan Akun Penyimpanan Baru</div>
-              <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, dll.</div>
+              <div style="font-weight:700;font-size:0.95rem;">${t('hub.connectNew')}</div>
+              <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${t('hub.connectNewDesc')}</div>
             </div>
 
             <!-- Gateway Security Card -->
@@ -3621,25 +3996,25 @@
                   </div>
                   <div>
                     <div style="font-weight:700;font-size:1rem;display:flex;align-items:center;gap:8px;">
-                      Keamanan Gateway (GatewayAuth)
-                      ${gatewayAuthEnabled ? '<span class="status-indicator-dot active" title="Aktif"></span><span style="font-size:0.75rem;font-weight:700;color:var(--status-success);">AKTIF</span>' : '<span class="status-indicator-dot inactive" title="Nonaktif"></span><span style="font-size:0.75rem;font-weight:700;color:var(--md-sys-color-on-surface-variant);">NONAKTIF</span>'}
+                      ${t('gateway.cardTitle')}
+                      ${gatewayAuthEnabled ? `<span class="status-indicator-dot active" title="${t('dash.statusActive')}"></span><span style="font-size:0.75rem;font-weight:700;color:var(--status-success);">${t('gateway.active')}</span>` : `<span class="status-indicator-dot inactive" title="${t('dash.statusInactive')}"></span><span style="font-size:0.75rem;font-weight:700;color:var(--md-sys-color-on-surface-variant);">${t('gateway.inactive')}</span>`}
                     </div>
                     <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;">
-                      ${gatewayAuthEnabled ? 'Dashboard dan API lokal dilindungi dengan MasterPassword.' : 'Akses terbuka tanpa kata sandi (cocok untuk pemakaian desktop lokal pribadi).'}
+                      ${gatewayAuthEnabled ? t('gateway.descActive') : t('gateway.descInactive')}
                     </div>
                   </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;">
                   ${gatewayAuthEnabled ? `
                     <button class="btn btn-secondary btn-sm" onclick="openModal('changeMasterPasswordModal')">
-                      Ganti Kata Sandi
+                      ${t('gateway.changePassword')}
                     </button>
                     <button class="btn btn-text btn-sm" style="color:var(--md-sys-color-error);" onclick="openModal('disableGatewayModal')">
-                      Nonaktifkan Proteksi
+                      ${t('gateway.disableProtection')}
                     </button>
                   ` : `
                     <button class="btn btn-primary btn-sm" onclick="openModal('setupMasterPasswordModal')">
-                      Aktifkan MasterPassword
+                      ${t('gateway.setupMasterPassword')}
                     </button>
                   `}
                 </div>
@@ -4372,17 +4747,25 @@
       }
     }
 
+    function updateCapacityCard() {
+      const capPct = document.getElementById('capacityPercent');
+      const capFill = document.getElementById('capacityFill');
+      const capTxt = document.getElementById('capacityText');
+      if (!cachedStats) {
+        if (capTxt) capTxt.innerText = t('nav.quotaLoading');
+        return;
+      }
+      const pInfo = formatPercent(cachedStats.total_used, cachedStats.total_storage);
+      if (capPct) capPct.innerText = pInfo.text;
+      if (capFill) capFill.style.width = `${pInfo.fillWidth}%`;
+      if (capTxt) capTxt.innerText = `${formatBytes(cachedStats.total_used)} ${t('dash.of')} ${formatBytes(cachedStats.total_storage)}`;
+    }
+
     async function loadStats() {
       try {
         const res = await fetch('/api/stats');
         cachedStats = await res.json();
-        const pInfo = formatPercent(cachedStats.total_used, cachedStats.total_storage);
-        const capPct = document.getElementById('capacityPercent');
-        const capFill = document.getElementById('capacityFill');
-        const capTxt = document.getElementById('capacityText');
-        if (capPct) capPct.innerText = pInfo.text;
-        if (capFill) capFill.style.width = `${pInfo.fillWidth}%`;
-        if (capTxt) capTxt.innerText = `${formatBytes(cachedStats.total_used)} of ${formatBytes(cachedStats.total_storage)}`;
+        updateCapacityCard();
         renderDonutChart(cachedStats);
         if (currentMode === 'dashboard') {
           renderDashboard();
@@ -4714,11 +5097,11 @@
         table.innerHTML = `
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Remote Account</th>
-              <th>Size</th>
-              <th>Last Modified</th>
-              <th style="width:80px;text-align:center;">Actions</th>
+              <th>${t('table.name')}</th>
+              <th>${t('table.remoteAccount')}</th>
+              <th>${t('table.size')}</th>
+              <th>${t('table.modified')}</th>
+              <th style="width:80px;text-align:center;">${t('table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -5858,7 +6241,7 @@
       const tc = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       toast.className = `snackbar ${type === 'error' ? 'error' : ''}`;
-      toast.innerHTML = `<span>${msg}</span><button class="btn-text" style="color:var(--md-sys-color-inverse-primary);font-size:0.78rem;height:auto;padding:0;" onclick="this.parentElement.remove()">OK</button>`;
+      toast.innerHTML = `<span style="line-height:1.4;">${msg}</span><button type="button" class="snackbar-action" onclick="this.parentElement.remove()">OK</button>`;
       tc.appendChild(toast);
       setTimeout(() => toast.remove(), 4000);
     }

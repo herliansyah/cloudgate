@@ -194,4 +194,143 @@ func TestGatewayAuthUIComponents(t *testing.T) {
 	}
 }
 
+func TestDualLanguageUIAndDocumentation(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	requiredI18nMarkers := []string{
+		`id="btnLang"`,
+		`id="langLabel"`,
+		"function initLang",
+		"function toggleLanguage",
+		"function setLanguage",
+		"function applyTranslations",
+		"function t(",
+		"const I18N =",
+		"cloudgate-lang",
+		"data-i18n=",
+		"data-i18n-title=",
+	}
+
+	for _, marker := range requiredI18nMarkers {
+		if !strings.Contains(content, marker) {
+			t.Errorf("expected embedded index.html to contain i18n marker %q, but was not found", marker)
+		}
+	}
+}
+
+func TestGatewayAuthBilingualSupport(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	requiredGatewayKeys := []string{
+		"gateway.cardTitle",
+		"gateway.descActive",
+		"gateway.descInactive",
+		"gateway.setupMasterPassword",
+		"gateway.changePassword",
+		"gateway.disableProtection",
+	}
+
+	for _, key := range requiredGatewayKeys {
+		if !strings.Contains(content, key) {
+			t.Errorf("expected embedded index.html to contain GatewayAuth translation key %q, but was not found", key)
+		}
+	}
+}
+
+func TestSnackbarActionButtonContrastAndClarity(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	// 1. Must use inverse-primary color for high contrast on inverse-surface background
+	if strings.Contains(content, `style="color:var(--md-sys-color-primary);font-size:0.82rem;font-weight:700;height:auto;padding:4px 8px;border:none;background:transparent;cursor:pointer;min-width:auto;flex-shrink:0;" onclick="this.parentElement.remove()">OK</button>`) {
+		t.Errorf("found low-contrast primary color on snackbar action button; must use var(--md-sys-color-inverse-primary)")
+	}
+
+	if !strings.Contains(content, "var(--md-sys-color-inverse-primary)") {
+		t.Errorf("expected snackbar action button to utilize var(--md-sys-color-inverse-primary)")
+	}
+
+	if !strings.Contains(content, "snackbar-action") {
+		t.Errorf("expected dedicated snackbar-action class for clean crisp action button styling")
+	}
+}
+
+func TestCapacityCardBilingualPersistence(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	// 1. capacityText must not have data-i18n="nav.quotaLoading", which clobbers loaded stats on language switch
+	if strings.Contains(content, `id="capacityText" data-i18n="nav.quotaLoading"`) {
+		t.Errorf("capacityText has data-i18n='nav.quotaLoading' which clobbers loaded storage stats when language is switched")
+	}
+
+	// 2. updateCapacityCard helper must exist and update stats bilingual display
+	if !strings.Contains(content, "function updateCapacityCard()") {
+		t.Errorf("updateCapacityCard function missing from index.html")
+	}
+
+	// 3. updateCapacityCard must be wired to language changes
+	if !strings.Contains(content, "updateCapacityCard();") {
+		t.Errorf("updateCapacityCard() call missing from language change flow or stats loading")
+	}
+}
+
 
