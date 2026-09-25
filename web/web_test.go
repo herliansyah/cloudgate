@@ -145,9 +145,12 @@ func TestEmbeddedModalHierarchyAndButtonConsistency(t *testing.T) {
 		t.Errorf("storageHubUsageBar missing from Storage Hub in index.html")
 	}
 
-	// 5. Verify provider-card-footer uses structured layout preventing overflow
-	if !strings.Contains(content, "grid-template-columns:1fr 1fr") {
-		t.Errorf("provider-card-footer missing 2-tier structured button grid")
+	// 5. Verify provider-card-footer uses clean single action and action-dropdown-menu
+	if !strings.Contains(content, "action-dropdown-menu") {
+		t.Errorf("action-dropdown-menu missing from index.html")
+	}
+	if !strings.Contains(content, "status-indicator-dot") {
+		t.Errorf("status-indicator-dot missing from index.html")
 	}
 }
 

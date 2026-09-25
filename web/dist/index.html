@@ -828,6 +828,90 @@
       animation: statusPulse 2s infinite ease-in-out;
     }
 
+    /* Minimalist blinking status dot with tooltip */
+    .status-indicator-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+    .status-indicator-dot.active {
+      background-color: var(--status-success);
+      box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+      animation: statusPulse 2s infinite ease-in-out;
+    }
+    .status-indicator-dot.inactive {
+      background-color: var(--md-sys-color-error);
+    }
+    .status-indicator-dot.error {
+      background-color: var(--status-warning, #f59e0b);
+    }
+
+    /* Action Kebab Menu & Dropdown */
+    .action-menu-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-icon-kebab {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--md-sys-shape-corner-full);
+      border: none;
+      background: transparent;
+      color: var(--md-sys-color-on-surface-variant);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+      padding: 0;
+    }
+    .btn-icon-kebab:hover {
+      background-color: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-on-surface);
+    }
+    .action-dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 1000;
+      min-width: 175px;
+      background-color: var(--md-sys-color-surface-container-high);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-md);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+      padding: 6px 0;
+      display: none;
+    }
+    .action-dropdown-menu.show {
+      display: flex;
+      flex-direction: column;
+    }
+    .action-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface);
+      cursor: pointer;
+      transition: background-color 0.12s ease;
+      white-space: nowrap;
+    }
+    .action-dropdown-item:hover {
+      background-color: var(--md-sys-color-surface-container-highest);
+    }
+    .action-dropdown-item.danger {
+      color: var(--md-sys-color-error);
+    }
+    .action-dropdown-item.danger:hover {
+      background-color: rgba(255, 180, 171, 0.12);
+    }
+
     /* ===== StorageHub: Breakdown Bar & Legend ===== */
     .storage-breakdown-card {
       background-color: var(--md-sys-color-surface-container-low);
@@ -1757,23 +1841,23 @@
         <span class="search-icon">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         </span>
-        <input type="text" id="searchInput" placeholder="Search across all cloud drives…" oninput="handleSearch(this.value)">
+        <input type="text" id="searchInput" placeholder="Cari file di semua akun cloud…" oninput="handleSearch(this.value)">
       </div>
       <div class="search-dropdown" id="searchDropdown"></div>
     </div>
 
     <!-- Actions -->
     <div class="nav-actions">
-      <button class="btn-icon" id="btnTheme" title="Toggle Light/Dark Theme" onclick="toggleTheme()">
+      <button class="btn-icon" id="btnTheme" title="Ganti Tema Gelap/Terang" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span>
       </button>
-      <button class="btn-icon" title="Activity & Inspector Sheet" onclick="toggleSideSheet()">
+      <button class="btn-icon" title="Riwayat Aktivitas & Detail" onclick="toggleSideSheet()">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
       </button>
-      <button class="btn-icon" title="GitHub Encrypted Vault" onclick="openModal('syncModal')">
+      <button class="btn-icon" title="Sinkronisasi Vault GitHub" onclick="openModal('syncModal')">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
       </button>
-      <button class="btn-icon" title="About Cloudgate" onclick="openModal('aboutModal')">
+      <button class="btn-icon" title="Tentang Cloudgate" onclick="openModal('aboutModal')">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
       </button>
     </div>
@@ -1793,58 +1877,58 @@
       <!-- M3 Extended FAB -->
       <button class="btn-upload" onclick="triggerFileInput()">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        New Upload
+        Unggah Baru
       </button>
       <input type="file" id="hiddenFileInput" style="display:none" onchange="uploadSelectedFile(this)">
 
       <ul class="nav-list" id="sidebarNav">
-        <li class="nav-section-title">Storage</li>
+        <li class="nav-section-title">Penyimpanan</li>
         <li class="nav-item active" id="navItemDashboard" onclick="selectDashboard(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
           Dashboard
         </li>
         <li class="nav-item" id="navItemFiles" onclick="selectFiles(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
-          All Files (Unified)
+          Semua File
         </li>
 
-        <li class="nav-section-title">Quick Views</li>
+        <li class="nav-section-title">Akses Cepat</li>
         <li class="nav-item" id="navItemStarred" onclick="selectStarred(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          Starred
+          Berbintang
         </li>
         <li class="nav-item" id="navItemRecent" onclick="selectRecent(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-          Recent
+          Terbaru
         </li>
         <li class="nav-item" id="navItemTrash" onclick="selectTrash(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-          Trash Bin
+          Sampah
         </li>
 
-        <li class="nav-section-title">Management</li>
+        <li class="nav-section-title">Pengelolaan</li>
         <li class="nav-item" id="navItemStorage" onclick="selectStorageHub(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
-          Storage Hub
+          Pusat Penyimpanan
         </li>
         <li class="nav-item" id="navItemDocs" onclick="selectDocs(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-          Settings & API
+          Pengaturan & API
         </li>
       </ul>
       <div id="accountsNavList" style="display:none;"></div>
       <li class="nav-item" id="navItemPool" style="display:none;" onclick="selectPool('all_pool'); closeSidebarOnMobile()"></li>
 
       <!-- M3 Capacity Card -->
-      <div class="capacity-card" onclick="selectStorageHub(); closeSidebarOnMobile()" title="Buka Pusat Pengelolaan Storage">
+      <div class="capacity-card" onclick="selectStorageHub(); closeSidebarOnMobile()" title="Buka Pusat Penyimpanan">
         <div class="capacity-header">
-          <span>Storage Quota</span>
+          <span>Kuota Penyimpanan</span>
           <span id="capacityPercent">0%</span>
         </div>
         <div class="progress-bar-bg">
           <div class="progress-bar-fill" id="capacityFill"></div>
         </div>
-        <div class="capacity-desc" id="capacityText">Loading…</div>
+        <div class="capacity-desc" id="capacityText">Memuat…</div>
       </div>
 
     </aside>
@@ -1934,12 +2018,12 @@
   <!-- Unified M3 Side Sheet (Inspector & Audit Log) -->
   <div class="side-sheet" id="sideSheet">
     <div class="side-sheet-header">
-      <div class="side-sheet-title" id="sideSheetTitle">Details & Activity</div>
+      <div class="side-sheet-title" id="sideSheetTitle">Detail & Aktivitas</div>
       <button class="btn-icon" onclick="toggleSideSheet(false)">✕</button>
     </div>
     <div class="sheet-tabs">
-      <div class="sheet-tab active" id="tabInspector" onclick="switchSideSheetTab('inspector')">File Inspector</div>
-      <div class="sheet-tab" id="tabAudit" onclick="switchSideSheetTab('audit')">Activity Log</div>
+      <div class="sheet-tab active" id="tabInspector" onclick="switchSideSheetTab('inspector')">Detail File</div>
+      <div class="sheet-tab" id="tabAudit" onclick="switchSideSheetTab('audit')">Riwayat Aktivitas</div>
     </div>
     <div class="sheet-content" id="sheetContentArea">
       <!-- Dynamic Content Rendered by JS -->
@@ -1949,7 +2033,7 @@
   <!-- Floating Transfer Manager -->
   <div class="transfer-manager" id="transferManager">
     <div class="transfer-header">
-      <span>Active Transfers</span>
+      <span>Transfer Berjalan</span>
       <button class="btn-icon" style="width:28px;height:28px;" onclick="toggleTransferManager()">✕</button>
     </div>
     <div class="transfer-body" id="transferList"></div>
@@ -2772,11 +2856,14 @@
           const totalBytes = accStat.total || acc.quota_total || (acc.quota_gb ? acc.quota_gb * 1024 * 1024 * 1024 : 15 * 1024 * 1024 * 1024);
           const accUsage = formatPercent(usedBytes, totalBytes);
           const isEnabled = acc.enabled !== false;
-          let statusLabel = isEnabled ? '● Aktif' : '● Dinonaktifkan';
-          let statusCls = isEnabled ? 'connected' : 'disabled';
+          let dotCls = 'active';
+          let dotTooltip = 'Aktif';
           if (accStat.status === 'error') {
-            statusLabel = '● Kendala';
-            statusCls = 'error';
+            dotCls = 'error';
+            dotTooltip = 'Kendala Koneksi';
+          } else if (!isEnabled) {
+            dotCls = 'inactive';
+            dotTooltip = 'Nonaktif';
           }
           const meta = PROVIDER_METADATA[acc.provider] || { name: acc.provider };
 
@@ -2792,10 +2879,28 @@
                     <div class="provider-card-type">${meta.name} • ${acc.email || 'OAuth'}</div>
                   </div>
                 </div>
-                <span class="status-badge ${statusCls}">
-                  ${isEnabled && statusCls === 'connected' ? '<span class="status-pulse-dot"></span>' : ''}
-                  ${statusLabel}
-                </span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span class="status-indicator-dot ${dotCls}" title="${dotTooltip}"></span>
+                  <div class="action-menu-wrap">
+                    <button class="btn-icon-kebab" onclick="toggleActionMenu(event, 'cardMenu_${acc.id}')" title="Opsi Akun">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    </button>
+                    <div class="action-dropdown-menu" id="cardMenu_${acc.id}">
+                      <div class="action-dropdown-item" onclick="testAccountConnection('${acc.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Uji Koneksi
+                      </div>
+                      <div class="action-dropdown-item" onclick="promptEditAccount('${acc.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        Edit Akun
+                      </div>
+                      <div class="action-dropdown-item danger" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>
+                        Putuskan Sambungan
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="provider-card-body">
@@ -2812,21 +2917,11 @@
                 </div>
               </div>
 
-              <div class="provider-card-footer" style="flex-direction:column;gap:8px;align-items:stretch;">
+              <div class="provider-card-footer">
                 <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
                   <svg width="15" height="15" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
-                  Buka Folder
+                  Buka
                 </button>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                  <button class="btn btn-secondary btn-sm" style="justify-content:center;" onclick="promptEditAccount('${acc.id}')" title="Edit Akun ini">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                    Edit
-                  </button>
-                  <button class="btn btn-outline-danger btn-sm" style="justify-content:center;" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan Akun ini">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>
-                    Putuskan
-                  </button>
-                </div>
               </div>
             </div>
           `;
@@ -2844,12 +2939,12 @@
                 </div>
                 <div>
                   <h2 class="pool-hero-title">Unified Storage Command Center</h2>
-                  <div class="pool-hero-subtitle">Agregasi multi-cloud terpadu dengan distribusi beban otomatis (Round-Robin)</div>
+                  <div class="pool-hero-subtitle">Agregasi multi-cloud terpadu dengan distribusi beban otomatis Round-Robin</div>
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;">
                 <span class="m3-chip" style="background-color:rgba(180,197,255,0.18);color:var(--md-sys-color-primary);font-weight:700;">
-                  AllocationPolicy: Capacity-Aware
+                  Kebijakan Alokasi: Berbasis Kapasitas
                 </span>
               </div>
             </div>
@@ -2865,36 +2960,22 @@
               </div>
             </div>
 
-            <!-- Multi-Cloud Fleet Distribution Bar -->
-            <div style="background:var(--md-sys-color-surface-container-low);padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);">
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;margin-bottom:6px;color:var(--md-sys-color-on-surface-variant);flex-wrap:wrap;gap:6px;">
-                <span style="font-weight:700;color:var(--md-sys-color-on-surface);">Komposisi Kapasitas Armada Multi-Cloud:</span>
-                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                  ${(stats.accounts || []).map(a => `<span style="display:inline-flex;align-items:center;gap:5px;font-size:0.75rem;"><span style="width:8px;height:8px;border-radius:50%;background:${PROVIDER_COLORS[a.provider] || '#3859FF'};display:inline-block;"></span><strong>${a.name}</strong> (${formatBytes(a.total)})</span>`).join('')}
-                </div>
-              </div>
-              <div class="breakdown-bar-wrap" style="height:8px;margin-bottom:0;">
-                ${segmentsHtml || '<div style="width:100%;height:100%;background:var(--md-sys-color-outline-variant);"></div>'}
-              </div>
-            </div>
-
             <!-- Stats Row -->
             <div class="pool-stats-row">
               <div class="pool-stat-box">
                 <span class="pool-stat-label">Total Kapasitas</span>
                 <span class="pool-stat-val">${formatBytes(stats.total_storage)}</span>
-                <div style="font-size:0.72rem;color:var(--md-sys-color-on-surface-variant);margin-top:3px;" title="Rincian kuota">${(stats.accounts || []).map(a => `${a.name}: ${formatBytes(a.total)}`).join(' + ')}</div>
               </div>
               <div class="pool-stat-box">
                 <span class="pool-stat-label">Terpakai</span>
                 <span class="pool-stat-val" style="color:var(--md-sys-color-primary);">${formatBytes(stats.total_used)}</span>
               </div>
               <div class="pool-stat-box">
-                <span class="pool-stat-label">Tersedia (Free)</span>
+                <span class="pool-stat-label">Ruang Tersedia</span>
                 <span class="pool-stat-val" style="color:var(--status-success);">${formatBytes(totalFree)}</span>
               </div>
               <div class="pool-stat-box">
-                <span class="pool-stat-label">Armada Akun</span>
+                <span class="pool-stat-label">Akun Terhubung</span>
                 <span class="pool-stat-val">${accounts.length} Akun Cloud</span>
               </div>
             </div>
@@ -2903,15 +2984,15 @@
             <div class="pool-hero-actions">
               <button class="btn btn-primary" onclick="selectFiles()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-                Jelajahi Semua File (Unified)
+                Jelajahi Semua File
               </button>
               <button class="btn btn-secondary" onclick="openAddStorageModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                Add Storage
+                Tambah Penyimpanan
               </button>
               <button class="btn btn-secondary" onclick="selectStorageHub()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
-                Pusat Pengelolaan Storage
+                Pusat Penyimpanan
               </button>
             </div>
           </div>
@@ -2920,11 +3001,11 @@
           <div class="dashboard-section-header">
             <h3 class="dashboard-section-title">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
-              Armada Penyedia Cloud (Remote Accounts)
+              Daftar Akun Cloud
             </h3>
             <div style="display:flex;align-items:center;gap:12px;">
               <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} Akun Terdaftar</span>
-              <button class="btn btn-text btn-sm" onclick="selectStorageHub()">Buka Halaman Storage →</button>
+              <button class="btn btn-text btn-sm" onclick="selectStorageHub()">Buka Pusat Penyimpanan →</button>
             </div>
           </div>
 
@@ -2970,11 +3051,14 @@
         const accUsage = formatPercent(usedBytes, totalBytes);
         const meta = PROVIDER_METADATA[acc.provider] || { name: acc.provider };
         const isEnabled = acc.enabled !== false;
-        let statusBadge = isEnabled 
-          ? `<span class="status-badge connected"><span class="status-pulse-dot"></span>● Aktif</span>`
-          : `<span class="status-badge disabled">● Dinonaktifkan</span>`;
+        let dotCls = 'active';
+        let dotTooltip = 'Aktif';
         if (accStat.status === 'error') {
-          statusBadge = `<span class="status-badge error">● Kendala</span>`;
+          dotCls = 'error';
+          dotTooltip = 'Kendala Koneksi';
+        } else if (!isEnabled) {
+          dotCls = 'inactive';
+          dotTooltip = 'Nonaktif';
         }
 
         const lastSyncText = acc.last_sync_at ? new Date(acc.last_sync_at).toLocaleTimeString() : 'Baru saja';
@@ -3005,7 +3089,11 @@
                 <div class="progress-bar-fill" style="width:${accUsage.fillWidth}%;"></div>
               </div>
             </td>
-            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="status-indicator-dot ${dotCls}" title="${dotTooltip}"></span>
+              </div>
+            </td>
             <td style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${lastSyncText}</td>
             <td>
               <label class="toggle-switch" title="Aktifkan/Nonaktifkan integrasi pada StoragePool">
@@ -3014,19 +3102,30 @@
               </label>
             </td>
             <td>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <button class="btn btn-secondary btn-sm" onclick="testAccountConnection('${acc.id}')" title="Uji Koneksi">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                  Test
+              <div style="display:flex;align-items:center;gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="selectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Buka Akun">
+                  <svg width="14" height="14" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                  Buka
                 </button>
-                <button class="btn btn-secondary btn-sm" onclick="promptEditAccount('${acc.id}')" title="Edit Akun">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                  Edit
-                </button>
-                <button class="btn btn-outline-danger btn-sm" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')" title="Putuskan Akun">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>
-                  Putuskan
-                </button>
+                <div class="action-menu-wrap">
+                  <button class="btn-icon-kebab" onclick="toggleActionMenu(event, 'tblMenu_${acc.id}')" title="Opsi Akun">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                  </button>
+                  <div class="action-dropdown-menu" id="tblMenu_${acc.id}">
+                    <div class="action-dropdown-item" onclick="testAccountConnection('${acc.id}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                      Uji Koneksi
+                    </div>
+                    <div class="action-dropdown-item" onclick="promptEditAccount('${acc.id}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                      Edit Akun
+                    </div>
+                    <div class="action-dropdown-item danger" onclick="promptDisconnectAccount('${acc.id}', '${acc.name.replace(/'/g, "\\'")}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z"/></svg>
+                      Putuskan Sambungan
+                    </div>
+                  </div>
+                </div>
               </div>
             </td>
           </tr>
@@ -3040,7 +3139,7 @@
             <div>
               <h2 style="font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px;">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
-                Pusat Pengelolaan Storage
+                Pusat Penyimpanan
               </h2>
               <div style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;">
                 Kelola kuota, periksa koneksi, dan atur integrasi akun cloud multi-provider dalam satu sistem terpadu.
@@ -3049,11 +3148,11 @@
             <div style="display:flex;align-items:center;gap:10px;">
               <button class="btn btn-secondary" onclick="syncStorageNow()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-                Sync Now
+                Sinkronisasi Sekarang
               </button>
               <button class="btn btn-primary" onclick="openAddStorageModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                Add Storage
+                Tambah Penyimpanan
               </button>
             </div>
           </div>
@@ -3063,7 +3162,7 @@
             <div class="pool-stat-box" style="padding:16px;">
               <span class="pool-stat-label">Total Kapasitas Gabungan</span>
               <span class="pool-stat-val">${formatBytes(stats.total_storage)}</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${(stats.accounts || []).map(a => `${a.name}: ${formatBytes(a.total)}`).join(' + ')} • ${accounts.length} Akun Aktif</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${accounts.length} Akun Terhubung • Kebijakan Kapasitas Round-Robin</div>
             </div>
             <div class="pool-stat-box" style="padding:16px;">
               <span class="pool-stat-label">Kapasitas Terpakai</span>
@@ -3071,9 +3170,9 @@
               <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${hubUsage.text} Utilisasi Keseluruhan</div>
             </div>
             <div class="pool-stat-box" style="padding:16px;">
-              <span class="pool-stat-label">Ruang Tersedia (Free)</span>
+              <span class="pool-stat-label">Ruang Tersedia</span>
               <span class="pool-stat-val" style="color:var(--status-success);">${formatBytes(totalFree)}</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Siap menampung file baru</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Siap digunakan untuk file baru</div>
             </div>
           </div>
 
@@ -3121,7 +3220,7 @@
                       <th>Penyedia</th>
                       <th>Akun & Identitas</th>
                       <th>Kapasitas & Kuota</th>
-                      <th>Status Koneksi</th>
+                      <th>Status</th>
                       <th>Sinkronisasi</th>
                       <th>Integrasi Pool</th>
                       <th>Aksi</th>
@@ -3139,7 +3238,7 @@
               <div style="width:44px;height:44px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-surface-container);display:flex;align-items:center;justify-content:center;color:var(--md-sys-color-primary);">
                 <svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
               </div>
-              <div style="font-weight:700;font-size:0.95rem;">Hubungkan Penyedia Storage Baru</div>
+              <div style="font-weight:700;font-size:0.95rem;">Hubungkan Akun Penyimpanan Baru</div>
               <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">Google Drive, Microsoft OneDrive, Dropbox, S3, WebDAV, Mega, dll.</div>
             </div>
           </div>
@@ -3653,7 +3752,7 @@
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
                   <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. Pilih Mega pada modal Add Storage. Masukkan Email dan Password akun Mega Anda.</div>
+                  <div>1. Pilih Mega pada modal Tambah Penyimpanan. Masukkan Email dan Password akun Mega Anda.</div>
                   <div>2. Cloudgate menggunakan modul native pure-Go MEGA API untuk mengautentikasi kunci enkripsi client-side secara real-time.</div>
                   <div>3. Tekan tombol <strong>Test & Hubungkan Akun</strong>. Cloudgate akan melakukan live handshake dan menarik kuota real akun Anda.</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
@@ -4350,27 +4449,27 @@
         return;
       }
       if (currentMode === 'storage') {
-        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Storage Management Hub</span>`;
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Pusat Penyimpanan</span>`;
         return;
       }
       if (currentMode === 'starred') {
-        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Starred Files (⭐)</span>`;
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">File Berbintang</span>`;
         return;
       }
       if (currentMode === 'recent') {
-        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Recent Files (🕒)</span>`;
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">File Terbaru</span>`;
         return;
       }
       if (currentMode === 'docs') {
-        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Settings & API</span>`;
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Pengaturan & API</span>`;
         return;
       }
 
-      let rootName = 'All Files (Unified)';
+      let rootName = 'Semua File';
       if (currentMode === 'account') {
-        rootName = activeAccountName || 'Cloud Account';
+        rootName = activeAccountName || 'Akun Cloud';
       } else if (currentMode === 'trash') {
-        rootName = 'Trash Bin';
+        rootName = 'Sampah';
       }
       const isRoot = currentPath === '/' || !currentPath;
       let html = `
@@ -5353,6 +5452,25 @@
       tc.appendChild(toast);
       setTimeout(() => toast.remove(), 4000);
     }
+
+    function toggleActionMenu(event, menuId) {
+      if (event) {
+        event.stopPropagation();
+      }
+      document.querySelectorAll('.action-dropdown-menu.show').forEach(el => {
+        if (el.id !== menuId) el.classList.remove('show');
+      });
+      const menu = document.getElementById(menuId);
+      if (menu) {
+        menu.classList.toggle('show');
+      }
+    }
+
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('.action-menu-wrap')) {
+        document.querySelectorAll('.action-dropdown-menu.show').forEach(el => el.classList.remove('show'));
+      }
+    });
   </script>
 </body>
 </html>
