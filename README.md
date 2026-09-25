@@ -1,5 +1,7 @@
 # Cloudgate
 
+[English](README.md) | [Bahasa Indonesia](README.id.md)
+
 **Cloudgate** is a lightweight, unified cloud storage gateway and multi-account aggregator compiled into a single static Go binary with an embedded Google Drive-inspired dark-mode Web UI and command-line interface.
 
 - **Author**: Herliansyah
