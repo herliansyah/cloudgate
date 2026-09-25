@@ -159,16 +159,16 @@ func runServer(rawArgs []string) {
 			switch creds.Provider {
 			case storage.ProviderGDrive, storage.Provider("google"):
 				if hasToken {
-					d = storage.NewGDriveDriver(acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name)
+					d = storage.NewGDriveDriver(acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, acc.Email, acc.Name)
 				}
 			case storage.ProviderOneDrive, storage.ProviderDropbox, storage.ProviderBox, storage.ProviderPCloud, storage.ProviderYandex, storage.ProviderKoofr, storage.ProviderS3, storage.ProviderWebDAV, storage.ProviderMega:
 				if hasToken || hasExtra {
-					d = storage.NewRcloneAdapterWithExtra(string(creds.Provider), acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, credMap)
+					d = storage.NewRcloneAdapterWithExtra(string(creds.Provider), acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, acc.Email, acc.Name, credMap)
 				}
 			default:
 				// Unknown provider with credentials — try generic rclone adapter
 				if hasToken || hasExtra {
-					d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, "", acc.Name, credMap)
+					d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, acc.Email, acc.Name, credMap)
 				}
 			}
 		}
@@ -176,7 +176,7 @@ func runServer(rawArgs []string) {
 			// Synthetic adapter for known rclone providers without credentials (legacy or pre-auth)
 			switch storage.Provider(acc.Provider) {
 			case storage.ProviderS3, storage.ProviderWebDAV, storage.ProviderMega, storage.ProviderKoofr, storage.ProviderBox, storage.ProviderPCloud, storage.ProviderYandex, storage.ProviderOneDrive, storage.ProviderDropbox:
-				d = storage.NewRcloneAdapter(acc.Provider, acc.ID, "", "", "", "", "", acc.Name)
+				d = storage.NewRcloneAdapter(acc.Provider, acc.ID, "", "", "", "", acc.Email, acc.Name)
 			default:
 				d = storage.NewMemDriver(acc.ID, acc.Provider, quota)
 			}

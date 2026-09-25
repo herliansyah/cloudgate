@@ -2039,7 +2039,7 @@
               <option value="none" data-i18n="group.none">Tanpa Grup</option>
               <option value="type" data-i18n="group.type">Tipe File</option>
               <option value="date" data-i18n="group.date">Waktu Modifikasi</option>
-              <option value="account" id="optGroupAccount" data-i18n="group.account" style="display:none;">RemoteAccount</option>
+              <option value="account" id="optGroupAccount" data-i18n="group.account" style="display:none;">Akun Penyimpanan</option>
             </select>
           </div>
         </div>
@@ -2721,7 +2721,7 @@
         'group.none': 'No Group',
         'group.type': 'File Type',
         'group.date': 'Modified Time',
-        'group.account': 'RemoteAccount',
+        'group.account': 'Storage Account',
         'sheet.title': 'Details & Activity',
         'sheet.tabInspector': 'File Details',
         'sheet.tabAudit': 'Activity History',
@@ -2732,7 +2732,7 @@
         'toast.lightActive': '☀️ Light mode active',
         'toast.darkActive': '🌙 Dark mode active',
         'table.name': 'Name',
-        'table.remoteAccount': 'RemoteAccount',
+        'table.remoteAccount': 'Storage Account',
         'table.size': 'Size',
         'table.modified': 'Last Modified',
         'table.actions': 'Actions',
@@ -2845,7 +2845,7 @@
         'group.none': 'Tanpa Grup',
         'group.type': 'Tipe File',
         'group.date': 'Waktu Modifikasi',
-        'group.account': 'RemoteAccount',
+        'group.account': 'Akun Penyimpanan',
         'sheet.title': 'Detail & Aktivitas',
         'sheet.tabInspector': 'Detail File',
         'sheet.tabAudit': 'Riwayat Aktivitas',
@@ -2856,7 +2856,7 @@
         'toast.lightActive': '☀️ Mode Terang aktif',
         'toast.darkActive': '🌙 Mode Gelap aktif',
         'table.name': 'Nama',
-        'table.remoteAccount': 'RemoteAccount',
+        'table.remoteAccount': 'Akun Penyimpanan',
         'table.size': 'Ukuran',
         'table.modified': 'Terakhir Diubah',
         'table.actions': 'Aksi',
@@ -3085,14 +3085,16 @@
         const name = selectedFile.name || selectedFile.file_name;
         const isDir = selectedFile.is_dir;
         const type = getFileType(name, isDir);
-        const hostAcc = selectedFile.account_id || (currentMode === 'account' ? activeAccountName : 'Automatic Allocation');
+        const accObj = (cachedAccounts || []).find(a => a.id === selectedFile.account_id);
+        const hostAcc = accObj ? (accObj.email ? `${accObj.name} (${accObj.email})` : accObj.name) : (selectedFile.account_id || (currentMode === 'account' ? activeAccountName : 'Automatic Allocation'));
+        const hostBadge = selectedFile.account_id ? getAccountBadge(selectedFile.account_id) : `<span class="m3-chip">${hostAcc}</span>`;
         content.innerHTML = `
           <div class="inspector-card">
             <div style="display:flex;align-items:center;gap:12px;">
               <div class="file-icon">${getFileIconSvg(type, 24)}</div>
               <div style="overflow:hidden;flex:1;">
                 <div style="font-weight:700;font-size:0.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</div>
-                <div class="m3-chip" style="margin-top:4px;">${hostAcc}</div>
+                <div style="margin-top:4px;">${hostBadge}</div>
               </div>
             </div>
           </div>
@@ -3103,7 +3105,7 @@
               <span class="inspector-value">VirtualFile ➔ Intact Remote File</span>
             </div>
             <div class="inspector-prop">
-              <span class="inspector-label">Host RemoteAccount</span>
+              <span class="inspector-label">${t('table.remoteAccount')}</span>
               <span class="inspector-value">${hostAcc}</span>
             </div>
             <div class="inspector-prop">
@@ -3195,6 +3197,22 @@
         return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><circle cx="12" cy="12" r="11" fill="#fc3f1d"/><path d="M13.5 16h-2v-4.5L8.5 7h2.2l1.8 3.5L14.3 7h2.2l-3 4.5z" fill="#ffffff"/></svg>`;
       }
       return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="var(--md-sys-color-primary)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>`;
+    }
+
+    function getAccountBadge(accountId) {
+      if (!accountId) return '';
+      const acc = (cachedAccounts || []).find(a => a.id === accountId);
+      if (!acc) {
+        return `<span class="m3-chip" style="font-size:0.75rem;padding:2px 8px;">${accountId}</span>`;
+      }
+      const iconSvg = getProviderIconSvg(acc.provider, 14);
+      const tooltip = acc.email ? `${acc.name} (${acc.email})` : acc.name;
+      return `
+        <span class="m3-chip" style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;padding:2px 8px;max-width:220px;" title="${tooltip}">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;flex-shrink:0;">${iconSvg}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.name}</span>
+        </span>
+      `;
     }
 
     const ONBOARDING_PROVIDERS = [
@@ -3621,7 +3639,7 @@
                   </div>
                   <div style="overflow:hidden;min-width:0;">
                     <div class="provider-card-name" title="${acc.name}">${acc.name}</div>
-                    <div class="provider-card-type">${meta.name} • ${acc.email || 'OAuth'}</div>
+                    <div class="provider-card-type">${meta.name}${acc.email ? ' • ' + acc.email : ''}</div>
                   </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
@@ -3817,13 +3835,12 @@
                 </div>
                 <div>
                   <div style="font-weight:700;">${meta.name}</div>
-                  <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);text-transform:uppercase;">${acc.provider}</div>
                 </div>
               </div>
             </td>
             <td>
               <div style="font-weight:600;">${acc.name}</div>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);font-family:monospace;">${acc.email || acc.id}</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);font-family:monospace;">${acc.email || '-'}</div>
             </td>
             <td style="min-width:180px;">
               <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;">
@@ -5072,10 +5089,8 @@
               <span>${f.mod_time ? new Date(f.mod_time).toLocaleDateString() : ''}</span>
             </div>
             ${(currentMode === 'pool' || currentMode === 'files' || currentMode === 'starred' || currentMode === 'recent') && f.account_id ? `
-              <div style="margin-top:2px;">
-                <span class="m3-chip" style="font-size:0.68rem;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="RemoteAccount: ${f.account_id}">
-                  ${f.account_id}
-                </span>
+              <div style="margin-top:4px;">
+                ${getAccountBadge(f.account_id)}
               </div>
             ` : ''}
           `;
@@ -5109,7 +5124,7 @@
               const fileName = f.name || f.file_name;
               const type = getFileType(fileName, f.is_dir);
               const jsonStr = JSON.stringify(f).replace(/'/g, "&apos;");
-              const accLabel = f.account_id || (currentMode === 'account' ? activeAccountName : 'Pool');
+              const targetAccId = f.account_id || (currentMode === 'account' ? activeAccountID : '');
               const filePath = f.path || (currentPath === '/' ? '/' + fileName : currentPath + '/' + fileName);
               const isStarred = Boolean(f.starred);
               return `
@@ -5122,7 +5137,7 @@
                       <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${fileName}">${fileName}</span>
                     </div>
                   </td>
-                  <td><span class="m3-chip">${accLabel}</span></td>
+                  <td>${getAccountBadge(targetAccId)}</td>
                   <td style="color:var(--md-sys-color-on-surface-variant);">${f.is_dir ? '-' : formatBytes(f.size)}</td>
                   <td style="color:var(--md-sys-color-on-surface-variant);">${f.mod_time ? new Date(f.mod_time).toLocaleDateString() : '-'}</td>
                   <td style="text-align:center;" onclick="event.stopPropagation()">
@@ -6037,8 +6052,10 @@
       const width = 600, height = 700;
       const left = (window.innerWidth - width) / 2;
       const top = (window.innerHeight - height) / 2;
+      const name = (document.getElementById('newAccountName').value || '').trim();
+      const nameParam = name ? `&name=${encodeURIComponent(name)}` : '';
       try {
-        const res = await fetch(`/api/auth/${provider}/login?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`);
+        const res = await fetch(`/api/auth/${provider}/login?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}${nameParam}`);
         const data = await res.json();
         if (data.auth_url) {
           window.open(data.auth_url, 'CloudgateOAuth', `width=${width},height=${height},top=${top},left=${left}`);
@@ -6064,12 +6081,11 @@
     async function submitAddAccount() {
       const provider = document.getElementById('newAccountProvider').value;
       const meta = PROVIDER_METADATA[provider] || { name: provider };
-      const name = document.getElementById('newAccountName').value.trim() || `${meta.name} Account`;
+      const rawName = (document.getElementById('newAccountName').value || '').trim();
       const quota = parseInt(document.getElementById('newAccountQuota').value) || meta.defaultQuota || 15;
       const payload = {
         id: 'acc_' + Date.now(),
         provider,
-        name,
         root_folder: '/',
         quota_total: quota * 1024 * 1024 * 1024
       };
@@ -6079,15 +6095,24 @@
         payload.access_key_id = document.getElementById('s3AccessKey').value.trim();
         payload.secret_access_key = document.getElementById('s3SecretKey').value.trim();
         payload.region = document.getElementById('s3Region').value.trim();
+        payload.email = payload.bucket + (payload.endpoint ? ' (' + payload.endpoint + ')' : '');
       } else if (provider === 'webdav' || provider === 'koofr') {
         payload.url = document.getElementById('webdavUrl').value.trim();
         payload.username = document.getElementById('webdavUser').value.trim();
         payload.password = document.getElementById('webdavPass').value.trim();
+        try {
+          const u = new URL(payload.url);
+          payload.email = payload.username + (u.host ? '@' + u.host : '');
+        } catch(e) {
+          payload.email = payload.username;
+        }
       } else if (provider === 'mega') {
         payload.username = document.getElementById('megaUser').value.trim();
         payload.password = document.getElementById('megaPass').value.trim();
         payload.email = payload.username;
       }
+      payload.name = rawName || (payload.email ? `${meta.name} (${payload.email})` : `${meta.name} Account`);
+      const name = payload.name;
       try {
         const res = await fetch('/api/accounts', {
           method: 'POST',

@@ -64,8 +64,16 @@ func (g *GDriveDriver) getBaseURL() string {
 
 func (g *GDriveDriver) ID() string       { return g.accountID }
 func (g *GDriveDriver) Provider() string { return "gdrive" }
-func (g *GDriveDriver) UserEmail() string { return g.userEmail }
-func (g *GDriveDriver) UserName() string  { return g.userName }
+func (g *GDriveDriver) UserEmail() string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.userEmail
+}
+func (g *GDriveDriver) UserName() string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.userName
+}
 
 func (g *GDriveDriver) getValidAccessToken(ctx context.Context) (string, error) {
 	g.mu.Lock()
@@ -146,9 +154,22 @@ func (g *GDriveDriver) About(ctx context.Context) (QuotaInfo, error) {
 			Limit string `json:"limit"`
 			Usage string `json:"usage"`
 		} `json:"storageQuota"`
+		User struct {
+			DisplayName  string `json:"displayName"`
+			EmailAddress string `json:"emailAddress"`
+		} `json:"user"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return QuotaInfo{}, err
+	}
+
+	if res.User.EmailAddress != "" {
+		g.mu.Lock()
+		g.userEmail = res.User.EmailAddress
+		if res.User.DisplayName != "" {
+			g.userName = res.User.DisplayName
+		}
+		g.mu.Unlock()
 	}
 
 	total, _ := strconv.ParseInt(res.StorageQuota.Limit, 10, 64)

@@ -7,8 +7,12 @@ Gateway penyimpanan cloud terpadu dan agregator multi-akun yang ringan, dikompil
 ## Bahasa Domain (Ubiquitous Language)
 
 **RemoteAccount**:
-Koneksi terkonfigurasi dan terautentikasi ke penyedia penyimpanan cloud tertentu dengan kredensial pengguna unik serta pelacakan kapasitas penyimpanan.
+Koneksi terkonfigurasi dan terautentikasi ke penyedia penyimpanan cloud tertentu dengan kredensial pengguna unik, sebuah AccountPrincipal, alias tampilan opsional yang ditentukan pengguna, serta pelacakan kapasitas penyimpanan.
 _Hindari_: Drive connection, cloud user, session
+
+**AccountPrincipal**:
+Identitas eksternal kanonikal pengguna atau sumber daya target yang terkait dengan RemoteAccount (misalnya alamat email terotentikasi untuk layanan OAuth/Mega, `username@host` untuk WebDAV, atau `bucket_name` untuk S3).
+_Hindari_: ID pengguna, kunci internal penyedia, nomor akun
 
 **Provider**:
 Layanan penyimpanan cloud pihak ketiga yang didukung (misalnya: Google Drive, OneDrive, Dropbox, S3, Mega).
