@@ -80,3 +80,32 @@ _Avoid_: Account removal, unmount
 The process of modifying non-sensitive configuration parameters (such as display alias, root mount folder, and allocated quota) of an existing RemoteAccount, triggering selective cache invalidation without severing active provider authentication.
 _Avoid_: Account edit, profile update
 
+**StorageHub**:
+The central control and telemetry view dedicated to managing all connected RemoteAccounts, aggregating quota distributions, providing connection diagnostics, and triggering system-wide synchronization.
+_Avoid_: Accounts page, settings screen, connection list
+
+**UnifiedExplorer**:
+The consolidated file browsing and manipulation interface presenting an aggregate virtual hierarchy across all enabled RemoteAccounts as a single seamless storage system.
+_Avoid_: Drive view, file manager window, bucket explorer
+
+**ConnectionPipeline**:
+The structured 5-phase onboarding protocol for attaching a new RemoteAccount: Provider Selection → Authentication → Connection Diagnostic Testing → Storage Quota Retrieval → Account Persistence.
+_Avoid_: Connect wizard, add account popup, login form
+
+**AccountIntegrationState**:
+The operational availability flag (`enabled` or `disabled`) of an authenticated RemoteAccount, allowing an account to be temporarily excluded from write distribution and sync pools without severing credentials or deleting cached metadata.
+_Avoid_: Account pause, sleep mode, disable toggle
+
+**SyncSession**:
+A manual or scheduled reconciliation routine ("Sync Now") that queries live provider drivers to refresh quota statistics, verify remote reachability, and synchronize the local MetadataIndex.
+_Avoid_: Re-scan, refresh task, cache reload
+
+**StarredRecord**:
+A user-flagged bookmark pointing to a specific VirtualFile or path stored in the local SQLite catalog for instant cross-account retrieval.
+_Avoid_: Favorite item, pinned file, bookmark
+
+**ShareLink**:
+A temporary or direct access URL generated for a VirtualFile, utilizing native provider sharing capabilities or Cloudgate's authenticated streaming gateway.
+_Avoid_: Public URL, download link
+
+

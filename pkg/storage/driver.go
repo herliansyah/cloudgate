@@ -41,4 +41,7 @@ type Driver interface {
 	Delete(ctx context.Context, path string) error
 	Move(ctx context.Context, srcPath, dstPath string) error
 	Mkdir(ctx context.Context, path string) error
+	TestConnection(ctx context.Context) error
+	GetShareLink(ctx context.Context, path string) (string, error)
 }
+

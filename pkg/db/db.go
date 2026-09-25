@@ -10,16 +10,30 @@ import (
 )
 
 type RemoteAccount struct {
-	ID          string    `json:"id"`
-	Provider    string    `json:"provider"`
-	Name        string    `json:"name"`
-	RootFolder  string    `json:"root_folder"`
-	Status      string    `json:"status"` // "connected", "disconnected", "error"
-	QuotaTotal  int64     `json:"quota_total"`
-	QuotaUsed   int64     `json:"quota_used"`
-	Credentials string    `json:"credentials,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          string     `json:"id"`
+	Provider    string     `json:"provider"`
+	Name        string     `json:"name"`
+	RootFolder  string     `json:"root_folder"`
+	Status      string     `json:"status"` // "connected", "disconnected", "error"
+	QuotaTotal  int64      `json:"quota_total"`
+	QuotaUsed   int64      `json:"quota_used"`
+	Credentials string     `json:"credentials,omitempty"`
+	Enabled     bool       `json:"enabled"`
+	Email       string     `json:"email,omitempty"`
+	LastSyncAt  *time.Time `json:"last_sync_at,omitempty"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
+
+type StarredRecord struct {
+	ID        string    `json:"id"`
+	AccountID string    `json:"account_id"`
+	Path      string    `json:"path"`
+	Name      string    `json:"name"`
+	Size      int64     `json:"size"`
+	IsDir     bool      `json:"is_dir"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 
 type TrashRecord struct {
 	ID              string    `json:"id"`
@@ -118,12 +132,25 @@ func (d *DB) migrate() error {
 			SELECT id FROM audit_events ORDER BY id DESC LIMIT 100
 		);
 	END;
+
+	CREATE TABLE IF NOT EXISTS starred_files (
+		id TEXT PRIMARY KEY,
+		account_id TEXT NOT NULL,
+		path TEXT NOT NULL,
+		name TEXT NOT NULL,
+		size INTEGER NOT NULL DEFAULT 0,
+		is_dir INTEGER NOT NULL DEFAULT 0,
+		created_at DATETIME NOT NULL
+	);
 	`
 	if _, err := d.conn.Exec(schema); err != nil {
 		return err
 	}
 	// Best-effort column addition for existing databases
 	_, _ = d.conn.Exec(`ALTER TABLE accounts ADD COLUMN credentials TEXT DEFAULT ''`)
+	_, _ = d.conn.Exec(`ALTER TABLE accounts ADD COLUMN enabled INTEGER DEFAULT 1`)
+	_, _ = d.conn.Exec(`ALTER TABLE accounts ADD COLUMN email TEXT DEFAULT ''`)
+	_, _ = d.conn.Exec(`ALTER TABLE accounts ADD COLUMN last_sync_at DATETIME`)
 	return nil
 }
 
@@ -168,9 +195,13 @@ func (d *DB) CountAuditEvents() (int, error) {
 
 // SaveAccount inserts or updates a RemoteAccount.
 func (d *DB) SaveAccount(acc RemoteAccount) error {
+	enabledInt := 1
+	if !acc.Enabled && acc.Status == "disabled" {
+		enabledInt = 0
+	}
 	_, err := d.conn.Exec(`
-		INSERT INTO accounts (id, provider, name, root_folder, status, quota_total, quota_used, credentials, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO accounts (id, provider, name, root_folder, status, quota_total, quota_used, credentials, enabled, email, last_sync_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			provider=excluded.provider,
 			name=excluded.name,
@@ -179,15 +210,36 @@ func (d *DB) SaveAccount(acc RemoteAccount) error {
 			quota_total=excluded.quota_total,
 			quota_used=excluded.quota_used,
 			credentials=excluded.credentials,
+			enabled=COALESCE(excluded.enabled, accounts.enabled, 1),
+			email=COALESCE(excluded.email, accounts.email, ''),
+			last_sync_at=COALESCE(excluded.last_sync_at, accounts.last_sync_at),
 			updated_at=excluded.updated_at
-	`, acc.ID, acc.Provider, acc.Name, acc.RootFolder, acc.Status, acc.QuotaTotal, acc.QuotaUsed, acc.Credentials, time.Now().UTC())
+	`, acc.ID, acc.Provider, acc.Name, acc.RootFolder, acc.Status, acc.QuotaTotal, acc.QuotaUsed, acc.Credentials, enabledInt, acc.Email, acc.LastSyncAt, time.Now().UTC())
+	return err
+}
+
+// ToggleAccount toggles the active/paused integration state of an account.
+func (d *DB) ToggleAccount(id string, enabled bool) error {
+	enabledInt := 0
+	status := "disabled"
+	if enabled {
+		enabledInt = 1
+		status = "connected"
+	}
+	_, err := d.conn.Exec(`UPDATE accounts SET enabled = ?, status = ?, updated_at = ? WHERE id = ?`, enabledInt, status, time.Now().UTC(), id)
+	return err
+}
+
+// UpdateAccountLastSync records the timestamp of a successful sync operation.
+func (d *DB) UpdateAccountLastSync(id string, t time.Time) error {
+	_, err := d.conn.Exec(`UPDATE accounts SET last_sync_at = ?, updated_at = ? WHERE id = ?`, t.UTC(), time.Now().UTC(), id)
 	return err
 }
 
 // GetAccounts retrieves all saved remote accounts.
 func (d *DB) GetAccounts() ([]RemoteAccount, error) {
 	rows, err := d.conn.Query(`
-		SELECT id, provider, name, root_folder, status, quota_total, quota_used, COALESCE(credentials, ''), updated_at
+		SELECT id, provider, name, root_folder, status, quota_total, quota_used, COALESCE(credentials, ''), COALESCE(enabled, 1), COALESCE(email, ''), last_sync_at, updated_at
 		FROM accounts
 		ORDER BY name ASC
 	`)
@@ -199,8 +251,16 @@ func (d *DB) GetAccounts() ([]RemoteAccount, error) {
 	accounts := make([]RemoteAccount, 0)
 	for rows.Next() {
 		var acc RemoteAccount
-		if err := rows.Scan(&acc.ID, &acc.Provider, &acc.Name, &acc.RootFolder, &acc.Status, &acc.QuotaTotal, &acc.QuotaUsed, &acc.Credentials, &acc.UpdatedAt); err != nil {
+		var enabledInt int
+		var email sql.NullString
+		var lastSync sql.NullTime
+		if err := rows.Scan(&acc.ID, &acc.Provider, &acc.Name, &acc.RootFolder, &acc.Status, &acc.QuotaTotal, &acc.QuotaUsed, &acc.Credentials, &enabledInt, &email, &lastSync, &acc.UpdatedAt); err != nil {
 			return nil, err
+		}
+		acc.Enabled = (enabledInt == 1)
+		acc.Email = email.String
+		if lastSync.Valid {
+			acc.LastSyncAt = &lastSync.Time
 		}
 		accounts = append(accounts, acc)
 	}
@@ -210,16 +270,77 @@ func (d *DB) GetAccounts() ([]RemoteAccount, error) {
 // GetAccount retrieves a single remote account by ID.
 func (d *DB) GetAccount(id string) (*RemoteAccount, error) {
 	var acc RemoteAccount
+	var enabledInt int
+	var email sql.NullString
+	var lastSync sql.NullTime
 	err := d.conn.QueryRow(`
-		SELECT id, provider, name, root_folder, status, quota_total, quota_used, COALESCE(credentials, ''), updated_at
+		SELECT id, provider, name, root_folder, status, quota_total, quota_used, COALESCE(credentials, ''), COALESCE(enabled, 1), COALESCE(email, ''), last_sync_at, updated_at
 		FROM accounts
 		WHERE id = ?
-	`, id).Scan(&acc.ID, &acc.Provider, &acc.Name, &acc.RootFolder, &acc.Status, &acc.QuotaTotal, &acc.QuotaUsed, &acc.Credentials, &acc.UpdatedAt)
+	`, id).Scan(&acc.ID, &acc.Provider, &acc.Name, &acc.RootFolder, &acc.Status, &acc.QuotaTotal, &acc.QuotaUsed, &acc.Credentials, &enabledInt, &email, &lastSync, &acc.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
+	acc.Enabled = (enabledInt == 1)
+	acc.Email = email.String
+	if lastSync.Valid {
+		acc.LastSyncAt = &lastSync.Time
+	}
 	return &acc, nil
 }
+
+// GetStarredFiles returns all bookmarked files.
+func (d *DB) GetStarredFiles() ([]StarredRecord, error) {
+	rows, err := d.conn.Query(`
+		SELECT id, account_id, path, name, size, is_dir, created_at
+		FROM starred_files
+		ORDER BY created_at DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := make([]StarredRecord, 0)
+	for rows.Next() {
+		var rec StarredRecord
+		var isDirInt int
+		if err := rows.Scan(&rec.ID, &rec.AccountID, &rec.Path, &rec.Name, &rec.Size, &isDirInt, &rec.CreatedAt); err != nil {
+			return nil, err
+		}
+		rec.IsDir = (isDirInt == 1)
+		list = append(list, rec)
+	}
+	return list, rows.Err()
+}
+
+// AddStarredFile bookmarks a file.
+func (d *DB) AddStarredFile(rec StarredRecord) error {
+	isDirInt := 0
+	if rec.IsDir {
+		isDirInt = 1
+	}
+	_, err := d.conn.Exec(`
+		INSERT INTO starred_files (id, account_id, path, name, size, is_dir, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET
+			name=excluded.name,
+			size=excluded.size,
+			is_dir=excluded.is_dir
+	`, rec.ID, rec.AccountID, rec.Path, rec.Name, rec.Size, isDirInt, time.Now().UTC())
+	return err
+}
+
+// RemoveStarredFile unbookmarks a file.
+func (d *DB) RemoveStarredFile(idOrAccountID, filePath string) error {
+	if filePath == "" {
+		_, err := d.conn.Exec(`DELETE FROM starred_files WHERE id = ?`, idOrAccountID)
+		return err
+	}
+	_, err := d.conn.Exec(`DELETE FROM starred_files WHERE account_id = ? AND path = ?`, idOrAccountID, filePath)
+	return err
+}
+
 
 // DeleteAccount permanently deletes an account from the database.
 func (d *DB) DeleteAccount(id string) error {

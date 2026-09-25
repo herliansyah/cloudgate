@@ -203,3 +203,17 @@ func (m *MemDriver) Move(ctx context.Context, srcPath, dstPath string) error {
 func (m *MemDriver) Mkdir(ctx context.Context, dirPath string) error {
 	return nil // Implicit in virtual path map
 }
+
+func (m *MemDriver) TestConnection(ctx context.Context) error {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if !m.connected {
+		return ErrDriverNotAvailable
+	}
+	return nil
+}
+
+func (m *MemDriver) GetShareLink(ctx context.Context, filePath string) (string, error) {
+	return fmt.Sprintf("/api/files/download?path=%s&account_id=%s", filePath, m.id), nil
+}
+

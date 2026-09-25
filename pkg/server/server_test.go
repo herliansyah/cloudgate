@@ -278,3 +278,116 @@ func TestUpdateAccount(t *testing.T) {
 	}
 }
 
+func TestUnifiedStorageHubAndFiles(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "cloudgate_hub_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	database, err := db.Open(tempDir)
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer database.Close()
+
+	srv := server.NewServer(database, nil)
+	memDriver := storage.NewMemDriver("acc_hub", "gdrive", 1024*1024)
+	srv.RegisterDriver(memDriver)
+	pool := storage.NewStoragePool("all_pool", "Virtual StoragePool", []storage.Driver{memDriver})
+	srv.RegisterPool(pool)
+
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	// 1. Create Account
+	_ = database.SaveAccount(db.RemoteAccount{
+		ID:         "acc_hub",
+		Provider:   "gdrive",
+		Name:       "Hub Account",
+		RootFolder: "/",
+		Status:     "connected",
+		QuotaTotal: 1024 * 1024,
+		QuotaUsed:  100,
+		Enabled:    true,
+	})
+
+	// 2. Test Connection on account
+	testResp, err := http.Post(ts.URL+"/api/accounts/acc_hub/test", "application/json", nil)
+	if err != nil || testResp.StatusCode != http.StatusOK {
+		t.Fatalf("test connection failed: %v", err)
+	}
+	var testResult map[string]any
+	_ = json.NewDecoder(testResp.Body).Decode(&testResult)
+	testResp.Body.Close()
+	if testResult["success"] != true {
+		t.Fatalf("expected test connection success=true, got %v", testResult)
+	}
+
+	// 3. Toggle account (disable integration)
+	toggleResp, err := http.Post(ts.URL+"/api/accounts/acc_hub/toggle", "application/json", bytes.NewReader([]byte(`{"enabled":false}`)))
+	if err != nil || toggleResp.StatusCode != http.StatusOK {
+		t.Fatalf("toggle failed: %v", err)
+	}
+	var toggled db.RemoteAccount
+	_ = json.NewDecoder(toggleResp.Body).Decode(&toggled)
+	toggleResp.Body.Close()
+	if toggled.Enabled != false || toggled.Status != "disabled" {
+		t.Fatalf("expected account to be disabled, got %v", toggled)
+	}
+
+	// 4. Sync Now
+	syncResp, err := http.Post(ts.URL+"/api/storage/sync", "application/json", nil)
+	if err != nil || syncResp.StatusCode != http.StatusOK {
+		t.Fatalf("sync storage failed: %v", err)
+	}
+	var syncResult map[string]any
+	_ = json.NewDecoder(syncResp.Body).Decode(&syncResult)
+	syncResp.Body.Close()
+	if syncResult["status"] != "synced" {
+		t.Fatalf("expected synced status, got %v", syncResult)
+	}
+
+	// 5. Starred Files
+	starReq, _ := json.Marshal(map[string]any{
+		"account_id": "acc_hub",
+		"path":       "/important.doc",
+		"name":       "important.doc",
+		"size":       2048,
+		"is_dir":     false,
+	})
+	starResp, err := http.Post(ts.URL+"/api/files/starred", "application/json", bytes.NewReader(starReq))
+	if err != nil || starResp.StatusCode != http.StatusCreated {
+		t.Fatalf("add starred failed: %v", err)
+	}
+	starResp.Body.Close()
+
+	getStarredResp, _ := http.Get(ts.URL + "/api/files/starred")
+	var starredList []db.StarredRecord
+	_ = json.NewDecoder(getStarredResp.Body).Decode(&starredList)
+	getStarredResp.Body.Close()
+	if len(starredList) != 1 || starredList[0].Path != "/important.doc" {
+		t.Fatalf("expected 1 starred file, got %v", starredList)
+	}
+
+	// 6. Recent Files
+	recentResp, err := http.Get(ts.URL + "/api/files/recent")
+	if err != nil || recentResp.StatusCode != http.StatusOK {
+		t.Fatalf("get recent failed: %v", err)
+	}
+	recentResp.Body.Close()
+
+	// 7. Share Link
+	shareResp, err := http.Get(ts.URL + "/api/files/share?account_id=acc_hub&path=/important.doc")
+	if err != nil || shareResp.StatusCode != http.StatusOK {
+		t.Fatalf("get share link failed: %v", err)
+	}
+	var shareResult map[string]string
+	_ = json.NewDecoder(shareResp.Body).Decode(&shareResult)
+	shareResp.Body.Close()
+	if shareResult["share_url"] == "" {
+		t.Fatalf("expected non-empty share_url, got %v", shareResult)
+	}
+}
+
+

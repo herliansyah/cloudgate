@@ -1643,3 +1643,14 @@ func (r *RcloneAdapter) megaPut(ctx context.Context, token string, filePath stri
 func (r *RcloneAdapter) megaDelete(ctx context.Context, token string, filePath string) error { return r.memDelete(filePath) }
 func (r *RcloneAdapter) megaMove(ctx context.Context, token string, src, dst string) error { return r.memMove(src, dst) }
 func (r *RcloneAdapter) megaMkdir(ctx context.Context, token string, dirPath string) error { return r.memMkdir(dirPath) }
+
+func (r *RcloneAdapter) TestConnection(ctx context.Context) error {
+	_, err := r.About(ctx)
+	return err
+}
+
+func (r *RcloneAdapter) GetShareLink(ctx context.Context, filePath string) (string, error) {
+	return fmt.Sprintf("/api/files/download?path=%s&account_id=%s", url.QueryEscape(filePath), url.QueryEscape(r.accountID)), nil
+}
+
+
