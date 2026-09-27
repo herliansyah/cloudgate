@@ -12,7 +12,10 @@
 
 ## Key Features
 
-1. **Multi-Account Aggregator**: Connect multiple personal and work cloud accounts across providers (Google Drive, OneDrive, Dropbox, Box, Mega, Filen, pCloud, Nextcloud/WebDAV, S3, Koofr, Yandex Disk).
+1. **Multi-Account Aggregator**: Connect multiple personal, team, and server accounts across 16 supported providers and protocols:
+   - **Cloud Drives**: Google Drive, Microsoft OneDrive, Dropbox, Box, pCloud, Yandex Disk, Koofr
+   - **Privacy & Encrypted Clouds**: MEGA, Filen, Proton Drive, PikPak
+   - **Object Storage & Server Protocols**: Amazon S3, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba)
 2. **Capacity-Aware StoragePool**: Combine multiple storage accounts into a unified virtual pool where incoming writes are automatically distributed using capacity-aware round-robin without splitting intact files.
 3. **Async Background Task Queue & Folder Transfers**: Persistent 2-worker FIFO queue in SQLite for long-running file transfers and recursive directory trees with restart recovery and cancellation.
 4. **Direct Remote Ingest (URL Download to Cloud)**: Zero-disk streaming pipeline fetching web resources (HTTP/HTTPS) directly into any cloud drive with strict SSRF network protection.
@@ -23,12 +26,27 @@
 9. **Encrypted Vault & GitHub Sync**: Secure account configurations and credentials with PBKDF2 + AES-256-GCM encryption, with optional synchronization to private GitHub repositories.
 10. **Single-Instance Mutex & Port Hunting**: Automatically acquires an OS lock file (`~/.config/cloudgate/cloudgate.lock`) to prevent duplicate processes, and scans available ports starting at `5210` (`5210..5300`) listening on `0.0.0.0` for local and LAN access.
 11. **Self-Updating**: Built-in GitHub Releases updater checks for official releases and verifies SHA-256 checksums.
+12. **Bilingual UI & Documentation**: Seamless instant toggle between English and Bahasa Indonesia with persisted preferences and synchronized bilingual documentation.
+
+<!-- Web UI Preview Placeholder (e.g. docs/assets/cloudgate-preview.png) -->
 
 ---
 
 ## Quick Start
 
-### Build from Source
+### 1. Download Pre-compiled Binary (Recommended)
+
+Download the latest static binary for your operating system and architecture from [GitHub Releases](https://github.com/herliansyah/cloudgate/releases):
+
+```bash
+# Example for Linux (make executable and run)
+chmod +x cloudgate
+./cloudgate serve
+```
+
+### 2. Or Build from Source
+
+Requirements: Go 1.22+
 
 ```bash
 # Clone the repository
@@ -39,7 +57,7 @@ cd cloudgate
 go build -o bin/cloudgate cmd/cloudgate/main.go
 ```
 
-### Run Server
+### 3. Run Server
 
 ```bash
 # Start gateway server (defaults to 0.0.0.0:5210)
@@ -52,6 +70,27 @@ go build -o bin/cloudgate cmd/cloudgate/main.go
 Access the Web UI in your browser:
 - Local: `http://localhost:5210` (or `http://127.0.0.1:5210`)
 - LAN / Other Devices: `http://<your-lan-ip>:5210`
+
+> [!IMPORTANT]
+> **First-Run GatewayAuth Security (MasterPassword)**:
+> Cloudgate enforces a mandatory administrative `MasterPassword` on first launch. For security, initializing the password via the Web UI is strictly restricted to loopback (`localhost` / `127.0.0.1`).
+> If deploying on a headless server or remote VPS, configure your password via the CLI first before accessing the Web UI remotely:
+> ```bash
+> ./bin/cloudgate auth setup "your-secure-master-password"
+> ```
+
+---
+
+## Connecting Cloud Providers
+
+Cloudgate connects to providers via two authentication methods:
+
+1. **Direct Credential & Server Protocol Providers** (Instant Setup):
+   - **Supported**: MEGA, Filen, Proton Drive, PikPak, Amazon S3, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba).
+   - **How to connect**: In the Web UI, click **"+ Add Account"**, select the provider, and enter your login credentials, API key, or server address directly. No external developer registration is required.
+2. **OAuth Delegated Providers** (App Consent):
+   - **Supported**: Google Drive, Microsoft OneDrive, Dropbox, Box.
+   - **How to connect**: Requires standard OAuth Client ID & Secret credentials. Follow the step-by-step walkthrough below for Google Drive as a reference.
 
 ---
 
@@ -121,7 +160,7 @@ cloudgate help             Show command help
 │   └── vault/             # PBKDF2 + AES-256-GCM encrypted vault
 ├── web/                   # Embedded SPA frontend (Google Drive dark-mode UI)
 ├── docs/
-│   ├── adr/               # Architectural Decision Records (0001 - 0023)
+│   ├── adr/               # Architectural Decision Records (0001 - 0024)
 │   └── agents/            # Domain conventions and agent triage specifications
 ├── CONTEXT.md             # Canonical ubiquitous language and domain glossary
 └── AGENTS.md              # Agent behavioral rules and skill map

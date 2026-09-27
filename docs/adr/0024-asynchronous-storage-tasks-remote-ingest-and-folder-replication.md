@@ -1,4 +1,4 @@
-# 0023. Asynchronous Storage Tasks, Remote Ingest, and Folder Replication
+# 0024. Asynchronous Storage Tasks, Remote Ingest, and Folder Replication
 
 Date: 2026-09-27
 

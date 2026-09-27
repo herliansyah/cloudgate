@@ -12,7 +12,10 @@
 
 ## Fitur Utama
 
-1. **Agregator Multi-Akun**: Hubungkan beberapa akun penyimpanan cloud pribadi dan kerja lintas penyedia (Google Drive, OneDrive, Dropbox, Box, Mega, Filen, pCloud, Nextcloud/WebDAV, S3, Koofr, Yandex Disk).
+1. **Agregator Multi-Akun**: Hubungkan beberapa akun pribadi, kerja, maupun server lintas 16 penyedia dan protokol penyimpanan:
+   - **Cloud Drive**: Google Drive, Microsoft OneDrive, Dropbox, Box, pCloud, Yandex Disk, Koofr
+   - **Cloud Privasi & Terenkripsi**: MEGA, Filen, Proton Drive, PikPak
+   - **Object Storage & Protokol Server**: Amazon S3, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba)
 2. **StoragePool Sadar Kapasitas**: Gabungkan beberapa akun penyimpanan menjadi satu pool virtual terpadu di mana penulisan data didistribusikan secara otomatis menggunakan round-robin sadar kapasitas tanpa memecah keutuhan file fisik.
 3. **Antrean Task Latar Belakang & Transfer Folder**: Eksekusi antrean FIFO 2-worker persisten di SQLite untuk transfer berkas besar dan pemindahan folder rekursif dengan ketahanan terhadap restart server.
 4. **Unduh Langsung dari URL (Remote Ingest)**: Pipeline streaming tanpa disk untuk mengunduh sumber daya web (HTTP/HTTPS) langsung ke penyimpanan cloud mana pun dengan proteksi ketat anti-SSRF.
@@ -25,11 +28,25 @@
 11. **Pembaruan Mandiri (Self-Updating)**: Pemeriksa rilis resmi GitHub Releases terintegrasi untuk verifikasi checksum SHA-256 dan pembaruan otomatis.
 12. **Dukungan Dwibahasa (Dual Language)**: Antarmuka Web UI mendukung pergantian instan antara Bahasa Indonesia dan English, dengan persistensi preferensi lokal.
 
+<!-- Placeholder Screenshot Web UI (misal: docs/assets/cloudgate-preview.png) -->
+
 ---
 
 ## Memulai Cepat
 
-### Kompilasi dari Sumber (Source Code)
+### 1. Unduh Binary Siap Pakai (Direkomendasikan)
+
+Unduh binary mandiri siap pakai terbaru untuk sistem operasi dan arsitektur Anda di [GitHub Releases](https://github.com/herliansyah/cloudgate/releases):
+
+```bash
+# Contoh untuk Linux (berikan izin eksekusi dan jalankan)
+chmod +x cloudgate
+./cloudgate serve
+```
+
+### 2. Atau Kompilasi dari Sumber (Source Code)
+
+Kebutuhan: Go 1.22+
 
 ```bash
 # Klon repositori
@@ -40,7 +57,7 @@ cd cloudgate
 go build -o bin/cloudgate cmd/cloudgate/main.go
 ```
 
-### Jalankan Server
+### 3. Jalankan Server
 
 ```bash
 # Menjalankan gateway server (default di 0.0.0.0:5210)
@@ -53,6 +70,27 @@ go build -o bin/cloudgate cmd/cloudgate/main.go
 Buka antarmuka Web UI di browser Anda:
 - Akses Lokal: `http://localhost:5210` (atau `http://127.0.0.1:5210`)
 - LAN / Perangkat Lain: `http://<ip-lan-anda>:5210`
+
+> [!IMPORTANT]
+> **Keamanan Akses Awal GatewayAuth (MasterPassword)**:
+> Cloudgate mewajibkan pembuatan `MasterPassword` saat pertama kali dijalankan. Demi keamanan, inisialisasi password melalui Web UI dibatasi secara ketat hanya untuk loopback (`localhost` / `127.0.0.1`).
+> Jika dijalankan di server headless atau VPS remote, konfigurasikan password administratif Anda terlebih dahulu melalui CLI sebelum mengakses Web UI dari jaringan luar:
+> ```bash
+> ./bin/cloudgate auth setup "master-password-anda"
+> ```
+
+---
+
+## Menghubungkan Penyedia Cloud
+
+Cloudgate menghubungkan akun cloud melalui dua metode autentikasi:
+
+1. **Penyedia Kredensial Langsung & Protokol Server** (Instan):
+   - **Didukung**: MEGA, Filen, Proton Drive, PikPak, Amazon S3, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba).
+   - **Cara Hubungkan**: Pada antarmuka Web UI, klik **"+ Tambah Akun"** / **"+ Add Account"**, pilih penyedia, lalu masukkan email/kata sandi, kunci API, atau alamat server Anda secara langsung. Tidak memerlukan pendaftaran aplikasi developer eksternal.
+2. **Penyedia Delegasi OAuth** (Persetujuan Izin Akun):
+   - **Didukung**: Google Drive, Microsoft OneDrive, Dropbox, Box.
+   - **Cara Hubungkan**: Memerlukan OAuth Client ID & Client Secret untuk verifikasi izin browser. Ikuti panduan langkah demi langkah untuk Google Drive di bawah ini sebagai referensi.
 
 ---
 
@@ -122,7 +160,7 @@ cloudgate help             Tampilkan bantuan perintah CLI
 │   └── vault/             # Enkripsi vault PBKDF2 + AES-256-GCM
 ├── web/                   # Frontend SPA tersemat (Material Design 3 mode gelap)
 ├── docs/
-│   ├── adr/               # Catatan Keputusan Arsitektur (ADR 0001 - 0023)
+│   ├── adr/               # Catatan Keputusan Arsitektur (ADR 0001 - 0024)
 │   └── agents/            # Konvensi domain dan spesifikasi triage agent
 ├── CONTEXT.md             # Kosakata kanonikal dan glosarium domain (English)
 ├── CONTEXT.id.md          # Kosakata kanonikal dan glosarium domain (Bahasa Indonesia)
