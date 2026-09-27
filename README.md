@@ -1,18 +1,31 @@
-# Cloudgate
+<div align="center">
+
+# ☁️ Cloudgate
+
+### Lightweight Unified Cloud Storage Gateway & Multi-Account Aggregator
+
+[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/badge/Release-v0.1.0-blue.svg)](https://github.com/herliansyah/cloudgate/releases)
+[![Pure-Go](https://img.shields.io/badge/Pure--Go-Zero--CGO-success.svg)](#architecture--codebase-layout)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](#testing)
+
+**A single static Go binary with an embedded Google Drive-inspired dark-mode Web UI, REST API, and CLI.**
+
+[Key Features](#key-features) • [Supported Providers](#supported-providers) • [Quick Start](#quick-start) • [Architecture](#architecture--codebase-layout) • [Author](#author--maintainer) • [License](#license)
 
 [English](README.md) | [Bahasa Indonesia](README.id.md)
 
-**Cloudgate** is a lightweight, unified cloud storage gateway and multi-account aggregator compiled into a single static Go binary with an embedded Google Drive-inspired dark-mode Web UI and command-line interface.
-
-- **Author**: Herliansyah
-- **Repository**: [https://github.com/herliansyah/cloudgate](https://github.com/herliansyah/cloudgate)
-- **License**: MIT
+</div>
 
 ---
 
 ## Key Features
 
-1. **Multi-Account Aggregator**: Connect multiple personal and work cloud accounts across providers (Google Drive, OneDrive, Dropbox, Box, Mega, Filen, pCloud, Nextcloud/WebDAV, S3, Koofr, Yandex Disk).
+1. **Multi-Account Aggregator**: Connect multiple personal, team, and server accounts across 16 supported providers and protocols:
+   - **Cloud Drives**: Google Drive, Microsoft OneDrive, Dropbox, Box, pCloud, Yandex Disk, Koofr
+   - **Privacy & Encrypted Clouds**: MEGA, Filen, Proton Drive, PikPak
+   - **Object Storage & Server Protocols**: Amazon S3, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba)
 2. **Capacity-Aware StoragePool**: Combine multiple storage accounts into a unified virtual pool where incoming writes are automatically distributed using capacity-aware round-robin without splitting intact files.
 3. **Async Background Task Queue & Folder Transfers**: Persistent 2-worker FIFO queue in SQLite for long-running file transfers and recursive directory trees with restart recovery and cancellation.
 4. **Direct Remote Ingest (URL Download to Cloud)**: Zero-disk streaming pipeline fetching web resources (HTTP/HTTPS) directly into any cloud drive with strict SSRF network protection.
@@ -23,12 +36,52 @@
 9. **Encrypted Vault & GitHub Sync**: Secure account configurations and credentials with PBKDF2 + AES-256-GCM encryption, with optional synchronization to private GitHub repositories.
 10. **Single-Instance Mutex & Port Hunting**: Automatically acquires an OS lock file (`~/.config/cloudgate/cloudgate.lock`) to prevent duplicate processes, and scans available ports starting at `5210` (`5210..5300`) listening on `0.0.0.0` for local and LAN access.
 11. **Self-Updating**: Built-in GitHub Releases updater checks for official releases and verifies SHA-256 checksums.
+12. **Bilingual UI & Documentation**: Seamless instant toggle between English and Bahasa Indonesia with persisted preferences and synchronized bilingual documentation.
+
+---
+
+## Supported Providers
+
+Cloudgate connects to **16 storage providers and protocols** through an embedded rclone engine without requiring external daemon bridges:
+
+| Provider | Category | Auth Method | Zero-Disk Streaming | Setup Friction |
+| :--- | :--- | :--- | :---: | :--- |
+| **Google Drive** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Client ID / Secret ([Guide](#google-drive-integration-guide)) |
+| **Microsoft OneDrive** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **Dropbox** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **Box** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **pCloud** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **Yandex Disk** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **Koofr** | Cloud Drive | Direct Credentials | Yes (`io.Pipe`) | User & Password |
+| **MEGA** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email & Password |
+| **Filen** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email, Password & 2FA |
+| **Proton Drive** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Username, Password & 2FA |
+| **PikPak** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email & Password |
+| **Amazon S3** | Object Storage | Access Keys | Yes (`io.Pipe`) | Key, Secret, Endpoint, Bucket |
+| **Backblaze B2** | Object Storage | Access Keys | Yes (`io.Pipe`) | Key ID, App Key, Bucket |
+| **Nextcloud / WebDAV** | Protocol / Cloud | Direct Credentials | Yes (`io.Pipe`) | URL, Username, Password |
+| **SFTP** | Server Protocol | SSH Credentials | Yes (`io.Pipe`) | Host, Port, User, Password / Key |
+| **SMB (Samba / Windows)** | Server Protocol | Network Share | Yes (`io.Pipe`) | Host, Share, User, Password |
+
+<!-- Web UI Preview Placeholder (e.g. docs/assets/cloudgate-preview.png) -->
 
 ---
 
 ## Quick Start
 
-### Build from Source
+### 1. Download Pre-compiled Binary (Recommended)
+
+Download the latest static binary for your operating system and architecture from [GitHub Releases](https://github.com/herliansyah/cloudgate/releases):
+
+```bash
+# Example for Linux (make executable and run)
+chmod +x cloudgate
+./cloudgate serve
+```
+
+### 2. Or Build from Source
+
+Requirements: Go 1.22+
 
 ```bash
 # Clone the repository
@@ -39,7 +92,7 @@ cd cloudgate
 go build -o bin/cloudgate cmd/cloudgate/main.go
 ```
 
-### Run Server
+### 3. Run Server
 
 ```bash
 # Start gateway server (defaults to 0.0.0.0:5210)
@@ -52,6 +105,27 @@ go build -o bin/cloudgate cmd/cloudgate/main.go
 Access the Web UI in your browser:
 - Local: `http://localhost:5210` (or `http://127.0.0.1:5210`)
 - LAN / Other Devices: `http://<your-lan-ip>:5210`
+
+> [!IMPORTANT]
+> **First-Run GatewayAuth Security (MasterPassword)**:
+> Cloudgate enforces a mandatory administrative `MasterPassword` on first launch. For security, initializing the password via the Web UI is strictly restricted to loopback (`localhost` / `127.0.0.1`).
+> If deploying on a headless server or remote VPS, configure your password via the CLI first before accessing the Web UI remotely:
+> ```bash
+> ./bin/cloudgate auth setup "your-secure-master-password"
+> ```
+
+---
+
+## Connecting Cloud Providers
+
+Cloudgate connects to providers via two authentication methods:
+
+1. **Direct Credential & Server Protocol Providers** (Instant Setup):
+   - **Supported**: MEGA, Filen, Proton Drive, PikPak, Amazon S3, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba).
+   - **How to connect**: In the Web UI, click **"+ Add Account"**, select the provider, and enter your login credentials, API key, or server address directly. No external developer registration is required.
+2. **OAuth Delegated Providers** (App Consent):
+   - **Supported**: Google Drive, Microsoft OneDrive, Dropbox, Box.
+   - **How to connect**: Requires standard OAuth Client ID & Secret credentials. Follow the step-by-step walkthrough below for Google Drive as a reference.
 
 ---
 
@@ -121,7 +195,7 @@ cloudgate help             Show command help
 │   └── vault/             # PBKDF2 + AES-256-GCM encrypted vault
 ├── web/                   # Embedded SPA frontend (Google Drive dark-mode UI)
 ├── docs/
-│   ├── adr/               # Architectural Decision Records (0001 - 0023)
+│   ├── adr/               # Architectural Decision Records (0001 - 0024)
 │   └── agents/            # Domain conventions and agent triage specifications
 ├── CONTEXT.md             # Canonical ubiquitous language and domain glossary
 └── AGENTS.md              # Agent behavioral rules and skill map
@@ -136,3 +210,21 @@ Run the full automated test suite:
 ```bash
 go test -v ./pkg/...
 ```
+
+---
+
+## Author & Maintainer
+
+Created with ❤️ by **Herliansyah**
+- **GitHub**: [@herliansyah](https://github.com/herliansyah)
+- **Repository**: [https://github.com/herliansyah/cloudgate](https://github.com/herliansyah/cloudgate)
+
+Contributions, feature suggestions, and bug reports are warmly welcome!
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+Copyright &copy; 2026 Herliansyah.
+
