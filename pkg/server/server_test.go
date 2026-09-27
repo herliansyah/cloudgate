@@ -503,6 +503,121 @@ func TestAccountPrincipalAndDefaultNaming(t *testing.T) {
 		t.Errorf("expected email 'user@filen.io', got '%s'", filenAcc.Email)
 	}
 
+	// 5. Backblaze B2 with key_id & application_key and bucket
+	b2Payload := map[string]any{
+		"provider":        "b2",
+		"key_id":          "mock_b2_key_id",
+		"application_key": "mock_b2_app_key",
+		"bucket":          "my-backup-bucket",
+	}
+	b2Bytes, _ := json.Marshal(b2Payload)
+	resp, err = http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(b2Bytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create b2 account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var b2Acc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&b2Acc)
+	resp.Body.Close()
+
+	if b2Acc.Name != "Backblaze B2 (my-backup-bucket)" {
+		t.Errorf("expected name 'Backblaze B2 (my-backup-bucket)', got '%s'", b2Acc.Name)
+	}
+	if b2Acc.Email != "my-backup-bucket" {
+		t.Errorf("expected principal/email 'my-backup-bucket', got '%s'", b2Acc.Email)
+	}
+
+	// 6. PikPak with user & pass
+	pikpakPayload := map[string]any{
+		"provider": "pikpak",
+		"user":     "user@pikpak.me",
+		"pass":     "mock_password",
+	}
+	pikpakBytes, _ := json.Marshal(pikpakPayload)
+	resp, err = http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(pikpakBytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create pikpak account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var pikpakAcc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&pikpakAcc)
+	resp.Body.Close()
+
+	if pikpakAcc.Name != "PikPak (user@pikpak.me)" {
+		t.Errorf("expected name 'PikPak (user@pikpak.me)', got '%s'", pikpakAcc.Name)
+	}
+	if pikpakAcc.Email != "user@pikpak.me" {
+		t.Errorf("expected principal/email 'user@pikpak.me', got '%s'", pikpakAcc.Email)
+	}
+
+	// 7. SFTP with host, user, port, and pass
+	sftpPayload := map[string]any{
+		"provider": "sftp",
+		"host":     "mock.sftp.server",
+		"port":     "2222",
+		"user":     "sshadmin",
+		"pass":     "mock_password",
+	}
+	sftpBytes, _ := json.Marshal(sftpPayload)
+	resp, err = http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(sftpBytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create sftp account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var sftpAcc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&sftpAcc)
+	resp.Body.Close()
+
+	if sftpAcc.Name != "SFTP / SSH (sshadmin@mock.sftp.server:2222)" {
+		t.Errorf("expected name 'SFTP / SSH (sshadmin@mock.sftp.server:2222)', got '%s'", sftpAcc.Name)
+	}
+	if sftpAcc.Email != "sshadmin@mock.sftp.server:2222" {
+		t.Errorf("expected principal/email 'sshadmin@mock.sftp.server:2222', got '%s'", sftpAcc.Email)
+	}
+
+	// 8. SMB with host, share, user, and pass
+	smbPayload := map[string]any{
+		"provider": "smb",
+		"host":     "mock.smb.server",
+		"share":    "backups",
+		"user":     "smbadmin",
+		"pass":     "mock_password",
+	}
+	smbBytes, _ := json.Marshal(smbPayload)
+	resp, err = http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(smbBytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create smb account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var smbAcc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&smbAcc)
+	resp.Body.Close()
+
+	if smbAcc.Name != "SMB / Samba (smbadmin@mock.smb.server/backups)" {
+		t.Errorf("expected name 'SMB / Samba (smbadmin@mock.smb.server/backups)', got '%s'", smbAcc.Name)
+	}
+	if smbAcc.Email != "smbadmin@mock.smb.server/backups" {
+		t.Errorf("expected principal/email 'smbadmin@mock.smb.server/backups', got '%s'", smbAcc.Email)
+	}
+
+	// 9. Proton Drive with username and password
+	protonPayload := map[string]any{
+		"provider": "protondrive",
+		"username": "user@proton.me",
+		"password": "mock_password",
+	}
+	protonBytes, _ := json.Marshal(protonPayload)
+	resp, err = http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(protonBytes))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create protondrive account failed: %v, status: %d", err, resp.StatusCode)
+	}
+	var protonAcc db.RemoteAccount
+	_ = json.NewDecoder(resp.Body).Decode(&protonAcc)
+	resp.Body.Close()
+
+	if protonAcc.Name != "Proton Drive (user@proton.me)" {
+		t.Errorf("expected name 'Proton Drive (user@proton.me)', got '%s'", protonAcc.Name)
+	}
+	if protonAcc.Email != "user@proton.me" {
+		t.Errorf("expected principal/email 'user@proton.me', got '%s'", protonAcc.Email)
+	}
+
 	// 4. Test auto-reconcile upgrading generic fallback names on sync
 	// Seed an account with generic name and empty email
 	genericAcc := db.RemoteAccount{

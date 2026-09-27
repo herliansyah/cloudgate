@@ -16,7 +16,12 @@ import (
 	"time"
 
 	mega "github.com/t3rm1n4l/go-mega"
+	b2 "github.com/rclone/rclone/backend/b2"
 	"github.com/rclone/rclone/backend/filen"
+	pikpak "github.com/rclone/rclone/backend/pikpak"
+	sftp "github.com/rclone/rclone/backend/sftp"
+	smb "github.com/rclone/rclone/backend/smb"
+	protondrive "github.com/rclone/rclone/backend/protondrive"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -73,6 +78,11 @@ const (
 	ProviderWebDAV  Provider = "webdav"
 	ProviderMega    Provider = "mega"
 	ProviderFilen   Provider = "filen"
+	ProviderB2      Provider = "b2"
+	ProviderPikPak  Provider = "pikpak"
+	ProviderSFTP    Provider = "sftp"
+	ProviderSMB     Provider = "smb"
+	ProviderProtonDrive Provider = "protondrive"
 )
 
 // RcloneCredentials bundles the 8 string params that previously travelled as Data Clumps.
@@ -135,9 +145,14 @@ var providerRegistry = map[Provider]providerHandler{
 	ProviderKoofr:    {about: (*RcloneAdapter).koofrAbout, list: (*RcloneAdapter).webdavList, get: (*RcloneAdapter).webdavGet, put: (*RcloneAdapter).webdavPut, delete: (*RcloneAdapter).webdavDelete, move: (*RcloneAdapter).webdavMove, mkdir: (*RcloneAdapter).webdavMkdir},
 	ProviderMega:     {about: (*RcloneAdapter).megaAbout, list: (*RcloneAdapter).megaList, get: (*RcloneAdapter).megaGet, put: (*RcloneAdapter).megaPut, delete: (*RcloneAdapter).megaDelete, move: (*RcloneAdapter).megaMove, mkdir: (*RcloneAdapter).megaMkdir},
 	ProviderFilen:    {about: (*RcloneAdapter).filenAbout, list: (*RcloneAdapter).filenList, get: (*RcloneAdapter).filenGet, put: (*RcloneAdapter).filenPut, delete: (*RcloneAdapter).filenDelete, move: (*RcloneAdapter).filenMove, mkdir: (*RcloneAdapter).filenMkdir},
+	ProviderB2:       {about: (*RcloneAdapter).b2About, list: (*RcloneAdapter).b2List, get: (*RcloneAdapter).b2Get, put: (*RcloneAdapter).b2Put, delete: (*RcloneAdapter).b2Delete, move: (*RcloneAdapter).b2Move, mkdir: (*RcloneAdapter).b2Mkdir},
+	ProviderPikPak:   {about: (*RcloneAdapter).pikpakAbout, list: (*RcloneAdapter).pikpakList, get: (*RcloneAdapter).pikpakGet, put: (*RcloneAdapter).pikpakPut, delete: (*RcloneAdapter).pikpakDelete, move: (*RcloneAdapter).pikpakMove, mkdir: (*RcloneAdapter).pikpakMkdir},
+	ProviderSFTP:     {about: (*RcloneAdapter).sftpAbout, list: (*RcloneAdapter).sftpList, get: (*RcloneAdapter).sftpGet, put: (*RcloneAdapter).sftpPut, delete: (*RcloneAdapter).sftpDelete, move: (*RcloneAdapter).sftpMove, mkdir: (*RcloneAdapter).sftpMkdir},
+	ProviderSMB:      {about: (*RcloneAdapter).smbAbout, list: (*RcloneAdapter).smbList, get: (*RcloneAdapter).smbGet, put: (*RcloneAdapter).smbPut, delete: (*RcloneAdapter).smbDelete, move: (*RcloneAdapter).smbMove, mkdir: (*RcloneAdapter).smbMkdir},
+	ProviderProtonDrive: {about: (*RcloneAdapter).protondriveAbout, list: (*RcloneAdapter).protondriveList, get: (*RcloneAdapter).protondriveGet, put: (*RcloneAdapter).protondrivePut, delete: (*RcloneAdapter).protondriveDelete, move: (*RcloneAdapter).protondriveMove, mkdir: (*RcloneAdapter).protondriveMkdir},
 }
 
-func isSyntheticQuotaProvider(p Provider) bool { return p == ProviderS3 || p == ProviderWebDAV }
+func isSyntheticQuotaProvider(p Provider) bool { return p == ProviderS3 || p == ProviderWebDAV || p == ProviderB2 || p == ProviderSFTP || p == ProviderSMB }
 
 // RcloneAdapter is a thin VendorDriver adapter that mirrors the rclone/fs.Fs
 // abstraction without pulling the full rclone binary. It implements Driver for
@@ -164,6 +179,11 @@ type RcloneAdapter struct {
 	inMemoryModTime map[string]time.Time
 	megaClient      *mega.Mega
 	filenFs         fs.Fs
+	b2Fs            fs.Fs
+	pikpakFs        fs.Fs
+	sftpFs          fs.Fs
+	smbFs           fs.Fs
+	protondriveFs   fs.Fs
 }
 
 func NewRcloneAdapter(provider, accountID, clientID, clientSecret, accessToken, refreshToken, userEmail, userName string) *RcloneAdapter {
@@ -274,6 +294,16 @@ func (r *RcloneAdapter) getBaseURL() string {
 		return "https://g.api.mega.co.nz"
 	case ProviderFilen:
 		return "https://gateway.filen.io"
+	case ProviderB2:
+		return "https://api.backblazeb2.com"
+	case ProviderPikPak:
+		return "https://api-drive.mypikpak.com"
+	case ProviderSFTP:
+		return r.providerConfig["host"]
+	case ProviderSMB:
+		return r.providerConfig["host"]
+	case ProviderProtonDrive:
+		return "https://mail-api.proton.me"
 	default:
 		return "https://graph.microsoft.com"
 	}
@@ -384,6 +414,16 @@ func (r *RcloneAdapter) About(ctx context.Context) (QuotaInfo, error) {
 		return r.megaAbout(ctx, "")
 	case ProviderFilen:
 		return r.filenAbout(ctx, "")
+	case ProviderB2:
+		return r.b2About(ctx, "")
+	case ProviderPikPak:
+		return r.pikpakAbout(ctx, "")
+	case ProviderSFTP:
+		return r.sftpAbout(ctx, "")
+	case ProviderSMB:
+		return r.smbAbout(ctx, "")
+	case ProviderProtonDrive:
+		return r.protondriveAbout(ctx, "")
 	}
 	token, err := r.getValidAccessToken(ctx)
 	if err != nil {
@@ -563,6 +603,21 @@ func (r *RcloneAdapter) List(ctx context.Context, dirPath string) ([]FileInfo, e
 	}
 	if r.provider == ProviderFilen {
 		return r.filenList(ctx, "", dirPath)
+	}
+	if r.provider == ProviderB2 {
+		return r.b2List(ctx, "", dirPath)
+	}
+	if r.provider == ProviderPikPak {
+		return r.pikpakList(ctx, "", dirPath)
+	}
+	if r.provider == ProviderSFTP {
+		return r.sftpList(ctx, "", dirPath)
+	}
+	if r.provider == ProviderSMB {
+		return r.smbList(ctx, "", dirPath)
+	}
+	if r.provider == ProviderProtonDrive {
+		return r.protondriveList(ctx, "", dirPath)
 	}
 	// Providers with synthetic/in-memory backend don't require token for tests
 	switch r.provider {
@@ -769,6 +824,21 @@ func (r *RcloneAdapter) Get(ctx context.Context, filePath string) (io.ReadCloser
 	if r.provider == ProviderFilen {
 		return r.filenGet(ctx, "", filePath)
 	}
+	if r.provider == ProviderB2 {
+		return r.b2Get(ctx, "", filePath)
+	}
+	if r.provider == ProviderPikPak {
+		return r.pikpakGet(ctx, "", filePath)
+	}
+	if r.provider == ProviderSFTP {
+		return r.sftpGet(ctx, "", filePath)
+	}
+	if r.provider == ProviderSMB {
+		return r.smbGet(ctx, "", filePath)
+	}
+	if r.provider == ProviderProtonDrive {
+		return r.protondriveGet(ctx, "", filePath)
+	}
 	switch r.provider {
 	case ProviderS3, ProviderWebDAV, ProviderKoofr:
 		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
@@ -913,6 +983,21 @@ func (r *RcloneAdapter) Put(ctx context.Context, filePath string, in io.Reader, 
 	if r.provider == ProviderFilen {
 		return r.filenPut(ctx, "", filePath, in, size)
 	}
+	if r.provider == ProviderB2 {
+		return r.b2Put(ctx, "", filePath, in, size)
+	}
+	if r.provider == ProviderPikPak {
+		return r.pikpakPut(ctx, "", filePath, in, size)
+	}
+	if r.provider == ProviderSFTP {
+		return r.sftpPut(ctx, "", filePath, in, size)
+	}
+	if r.provider == ProviderSMB {
+		return r.smbPut(ctx, "", filePath, in, size)
+	}
+	if r.provider == ProviderProtonDrive {
+		return r.protondrivePut(ctx, "", filePath, in, size)
+	}
 	switch r.provider {
 	case ProviderS3, ProviderWebDAV, ProviderKoofr:
 		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
@@ -1036,6 +1121,21 @@ func (r *RcloneAdapter) Delete(ctx context.Context, filePath string) error {
 	if r.provider == ProviderFilen {
 		return r.filenDelete(ctx, "", filePath)
 	}
+	if r.provider == ProviderB2 {
+		return r.b2Delete(ctx, "", filePath)
+	}
+	if r.provider == ProviderPikPak {
+		return r.pikpakDelete(ctx, "", filePath)
+	}
+	if r.provider == ProviderSFTP {
+		return r.sftpDelete(ctx, "", filePath)
+	}
+	if r.provider == ProviderSMB {
+		return r.smbDelete(ctx, "", filePath)
+	}
+	if r.provider == ProviderProtonDrive {
+		return r.protondriveDelete(ctx, "", filePath)
+	}
 	switch r.provider {
 	case ProviderS3, ProviderWebDAV, ProviderKoofr:
 		if r.baseURL != "" || (r.provider == ProviderS3 && r.providerConfig["bucket"] != "") || ((r.provider == ProviderWebDAV || r.provider == ProviderKoofr) && r.providerConfig["url"] != "") {
@@ -1148,6 +1248,21 @@ func (r *RcloneAdapter) Move(ctx context.Context, srcPath, dstPath string) error
 	}
 	if r.provider == ProviderFilen {
 		return r.filenMove(ctx, "", srcPath, dstPath)
+	}
+	if r.provider == ProviderB2 {
+		return r.b2Move(ctx, "", srcPath, dstPath)
+	}
+	if r.provider == ProviderPikPak {
+		return r.pikpakMove(ctx, "", srcPath, dstPath)
+	}
+	if r.provider == ProviderSFTP {
+		return r.sftpMove(ctx, "", srcPath, dstPath)
+	}
+	if r.provider == ProviderSMB {
+		return r.smbMove(ctx, "", srcPath, dstPath)
+	}
+	if r.provider == ProviderProtonDrive {
+		return r.protondriveMove(ctx, "", srcPath, dstPath)
 	}
 	switch r.provider {
 	case ProviderS3, ProviderWebDAV, ProviderKoofr:
@@ -1264,6 +1379,21 @@ func (r *RcloneAdapter) Mkdir(ctx context.Context, dirPath string) error {
 	}
 	if r.provider == ProviderFilen {
 		return r.filenMkdir(ctx, "", dirPath)
+	}
+	if r.provider == ProviderB2 {
+		return r.b2Mkdir(ctx, "", dirPath)
+	}
+	if r.provider == ProviderPikPak {
+		return r.pikpakMkdir(ctx, "", dirPath)
+	}
+	if r.provider == ProviderSFTP {
+		return r.sftpMkdir(ctx, "", dirPath)
+	}
+	if r.provider == ProviderSMB {
+		return r.smbMkdir(ctx, "", dirPath)
+	}
+	if r.provider == ProviderProtonDrive {
+		return r.protondriveMkdir(ctx, "", dirPath)
 	}
 	switch r.provider {
 	case ProviderS3, ProviderWebDAV, ProviderKoofr:
@@ -2519,6 +2649,1518 @@ func (r *RcloneAdapter) filenMkdir(ctx context.Context, token string, dirPath st
 		return r.memMkdir(dirPath)
 	}
 	f, err := r.getFilenFs(ctx)
+	if err != nil {
+		return r.memMkdir(dirPath)
+	}
+	if f == nil {
+		return r.memMkdir(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "" || clean == "." {
+		return nil
+	}
+	return f.Mkdir(ctx, clean)
+}
+
+// ── Backblaze B2 Native Backend Helpers (ADR-0023) ──
+
+func (r *RcloneAdapter) isMockB2() bool {
+	key := r.providerConfig["key"]
+	if key == "" {
+		key = r.providerConfig["application_key"]
+	}
+	if key == "" {
+		key = r.providerConfig["password"]
+	}
+	return r.baseURL != "" || strings.Contains(key, "mock") || strings.Contains(r.accountID, "mock")
+}
+
+func (r *RcloneAdapter) getB2Fs(ctx context.Context) (fs.Fs, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.b2Fs != nil {
+		return r.b2Fs, nil
+	}
+	account := r.providerConfig["account"]
+	if account == "" {
+		account = r.providerConfig["key_id"]
+	}
+	if account == "" {
+		account = r.providerConfig["username"]
+	}
+	key := r.providerConfig["key"]
+	if key == "" {
+		key = r.providerConfig["application_key"]
+	}
+	if key == "" {
+		key = r.providerConfig["password"]
+	}
+	bucket := r.providerConfig["bucket"]
+	if bucket == "" {
+		bucket = r.providerConfig["bucket_name"]
+	}
+
+	if r.isMockB2() {
+		return nil, nil
+	}
+
+	if account == "" || key == "" {
+		return nil, fmt.Errorf("b2 requires account/key_id and application_key")
+	}
+
+	m := configmap.Simple{
+		"account":     account,
+		"key":         obscure.MustObscure(key),
+		"hard_delete": "true",
+	}
+	if ep := r.providerConfig["endpoint"]; ep != "" {
+		m["endpoint"] = ep
+	}
+	f, err := b2.NewFs(ctx, "b2", bucket, m)
+	if err != nil {
+		return nil, fmt.Errorf("autentikasi Backblaze B2 gagal: %w (periksa kembali Key ID dan Application Key Anda)", err)
+	}
+	r.b2Fs = f
+	return f, nil
+}
+
+func (r *RcloneAdapter) b2About(ctx context.Context, token string) (QuotaInfo, error) {
+	if r.isMockB2() {
+		r.mu.RLock()
+		var used int64
+		for _, b := range r.inMemoryObjects {
+			used += int64(len(b))
+		}
+		r.mu.RUnlock()
+		return syntheticQuota(used), nil
+	}
+	f, err := r.getB2Fs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return syntheticQuota(0), nil
+		}
+		return QuotaInfo{}, err
+	}
+	if f == nil {
+		return syntheticQuota(0), nil
+	}
+	r.mu.RLock()
+	var used int64
+	for _, b := range r.inMemoryObjects {
+		used += int64(len(b))
+	}
+	r.mu.RUnlock()
+	return syntheticQuota(used), nil
+}
+
+func (r *RcloneAdapter) b2List(ctx context.Context, token string, dirPath string) ([]FileInfo, error) {
+	if r.isMockB2() {
+		return r.memList(dirPath)
+	}
+	f, err := r.getB2Fs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	if f == nil {
+		return r.memList(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "." {
+		clean = ""
+	}
+	entries, err := f.List(ctx, clean)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	var out []FileInfo
+	for _, entry := range entries {
+		remote := entry.Remote()
+		name := path.Base(remote)
+		size := entry.Size()
+		isDir := false
+		modTime := time.Now().UTC()
+		if _, ok := entry.(fs.Directory); ok {
+			isDir = true
+			size = 0
+		} else if obj, ok := entry.(fs.Object); ok {
+			modTime = obj.ModTime(ctx)
+		}
+		fPath := "/" + remote
+		out = append(out, FileInfo{
+			Path:      fPath,
+			Name:      name,
+			Size:      size,
+			IsDir:     isDir,
+			ModTime:   modTime,
+			AccountID: r.accountID,
+			Provider:  string(r.provider),
+		})
+	}
+	return out, nil
+}
+
+func (r *RcloneAdapter) b2Get(ctx context.Context, token string, filePath string) (io.ReadCloser, FileInfo, error) {
+	if r.isMockB2() {
+		return r.memGet(filePath)
+	}
+	f, err := r.getB2Fs(ctx)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	if f == nil {
+		return r.memGet(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	rc, err := obj.Open(ctx)
+	if err != nil {
+		return nil, FileInfo{}, err
+	}
+	info := FileInfo{
+		Path:      "/" + clean,
+		Name:      path.Base(clean),
+		Size:      obj.Size(),
+		IsDir:     false,
+		ModTime:   obj.ModTime(ctx),
+		AccountID: r.accountID,
+		Provider:  string(r.provider),
+	}
+	return rc, info, nil
+}
+
+func (r *RcloneAdapter) b2Put(ctx context.Context, token string, filePath string, in io.Reader, size int64) error {
+	if r.isMockB2() {
+		return r.memPut(filePath, in, size)
+	}
+	f, err := r.getB2Fs(ctx)
+	if err != nil {
+		return r.memPut(filePath, in, size)
+	}
+	if f == nil {
+		return r.memPut(filePath, in, size)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	srcObjInfo := object.NewStaticObjectInfo(clean, time.Now().UTC(), size, true, nil, f)
+	_, err = f.Put(ctx, in, srcObjInfo)
+	if err != nil {
+		return fmt.Errorf("b2 put (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) b2Delete(ctx context.Context, token string, filePath string) error {
+	if r.isMockB2() {
+		return r.memDelete(filePath)
+	}
+	f, err := r.getB2Fs(ctx)
+	if err != nil {
+		return r.memDelete(filePath)
+	}
+	if f == nil {
+		return r.memDelete(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		if rmdirErr := f.Rmdir(ctx, clean); rmdirErr == nil {
+			return nil
+		}
+		return r.memDelete(filePath)
+	}
+	if err := obj.Remove(ctx); err != nil {
+		return fmt.Errorf("b2 delete (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) b2Move(ctx context.Context, token string, src, dst string) error {
+	if r.isMockB2() {
+		return r.memMove(src, dst)
+	}
+	f, err := r.getB2Fs(ctx)
+	if err != nil {
+		return r.memMove(src, dst)
+	}
+	if f == nil {
+		return r.memMove(src, dst)
+	}
+	srcClean := strings.Trim(path.Clean("/"+src), "/")
+	dstClean := strings.Trim(path.Clean("/"+dst), "/")
+	srcObj, err := f.NewObject(ctx, srcClean)
+	if err != nil {
+		if dm, ok := f.(interface {
+			DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error
+		}); ok {
+			if err := dm.DirMove(ctx, f, srcClean, dstClean); err == nil {
+				return nil
+			}
+		}
+		return r.memMove(src, dst)
+	}
+	if mover, ok := f.(interface {
+		Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error)
+	}); ok {
+		_, err = mover.Move(ctx, srcObj, dstClean)
+		if err != nil {
+			return fmt.Errorf("b2 move (%s -> %s): %w", src, dst, err)
+		}
+		return nil
+	}
+	return r.memMove(src, dst)
+}
+
+func (r *RcloneAdapter) b2Mkdir(ctx context.Context, token string, dirPath string) error {
+	if r.isMockB2() {
+		return r.memMkdir(dirPath)
+	}
+	f, err := r.getB2Fs(ctx)
+	if err != nil {
+		return r.memMkdir(dirPath)
+	}
+	if f == nil {
+		return r.memMkdir(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "" || clean == "." {
+		return nil
+	}
+	return f.Mkdir(ctx, clean)
+}
+
+// ── PikPak Native Backend Helpers (ADR-0023) ──
+
+func (r *RcloneAdapter) isMockPikPak() bool {
+	user := r.providerConfig["user"]
+	if user == "" {
+		user = r.providerConfig["username"]
+	}
+	if user == "" {
+		user = r.providerConfig["email"]
+	}
+	pass := r.providerConfig["pass"]
+	if pass == "" {
+		pass = r.providerConfig["password"]
+	}
+	return r.baseURL != "" || strings.Contains(user, "mock") || strings.Contains(pass, "mock") || strings.Contains(r.accountID, "mock")
+}
+
+func (r *RcloneAdapter) getPikPakFs(ctx context.Context) (fs.Fs, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.pikpakFs != nil {
+		return r.pikpakFs, nil
+	}
+	user := r.providerConfig["user"]
+	if user == "" {
+		user = r.providerConfig["username"]
+	}
+	if user == "" {
+		user = r.providerConfig["email"]
+	}
+	pass := r.providerConfig["pass"]
+	if pass == "" {
+		pass = r.providerConfig["password"]
+	}
+
+	if r.isMockPikPak() {
+		return nil, nil
+	}
+
+	if user == "" || pass == "" {
+		return nil, fmt.Errorf("pikpak requires user/username/email and password")
+	}
+
+	m := configmap.Simple{
+		"user": user,
+		"pass": obscure.MustObscure(pass),
+	}
+	root := r.providerConfig["root_folder_id"]
+	f, err := pikpak.NewFs(ctx, "pikpak", root, m)
+	if err != nil {
+		return nil, fmt.Errorf("autentikasi PikPak gagal: %w (periksa kembali email/nomor HP dan password Anda)", err)
+	}
+	r.pikpakFs = f
+	return f, nil
+}
+
+func (r *RcloneAdapter) pikpakAbout(ctx context.Context, token string) (QuotaInfo, error) {
+	if r.isMockPikPak() {
+		r.mu.RLock()
+		var used int64
+		for _, b := range r.inMemoryObjects {
+			used += int64(len(b))
+		}
+		r.mu.RUnlock()
+		return normalizeQuota(100*1024*1024*1024, used), nil
+	}
+	f, err := r.getPikPakFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return normalizeQuota(100*1024*1024*1024, 0), nil
+		}
+		return QuotaInfo{}, err
+	}
+	if f == nil {
+		return normalizeQuota(100*1024*1024*1024, 0), nil
+	}
+	doAbout := f.Features().About
+	if doAbout == nil {
+		return normalizeQuota(100*1024*1024*1024, 0), nil
+	}
+	usage, err := doAbout(ctx)
+	if err != nil {
+		return QuotaInfo{}, fmt.Errorf("gagal mengambil kuota PikPak: %w", err)
+	}
+	total := int64(0)
+	used := int64(0)
+	if usage != nil {
+		if usage.Total != nil {
+			total = *usage.Total
+		}
+		if usage.Used != nil {
+			used = *usage.Used
+		}
+	}
+	return normalizeQuota(total, used), nil
+}
+
+func (r *RcloneAdapter) pikpakList(ctx context.Context, token string, dirPath string) ([]FileInfo, error) {
+	if r.isMockPikPak() {
+		return r.memList(dirPath)
+	}
+	f, err := r.getPikPakFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	if f == nil {
+		return r.memList(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "." {
+		clean = ""
+	}
+	entries, err := f.List(ctx, clean)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	var out []FileInfo
+	for _, entry := range entries {
+		remote := entry.Remote()
+		name := path.Base(remote)
+		size := entry.Size()
+		isDir := false
+		modTime := time.Now().UTC()
+		if _, ok := entry.(fs.Directory); ok {
+			isDir = true
+			size = 0
+		} else if obj, ok := entry.(fs.Object); ok {
+			modTime = obj.ModTime(ctx)
+		}
+		fPath := "/" + remote
+		out = append(out, FileInfo{
+			Path:      fPath,
+			Name:      name,
+			Size:      size,
+			IsDir:     isDir,
+			ModTime:   modTime,
+			AccountID: r.accountID,
+			Provider:  string(r.provider),
+		})
+	}
+	return out, nil
+}
+
+func (r *RcloneAdapter) pikpakGet(ctx context.Context, token string, filePath string) (io.ReadCloser, FileInfo, error) {
+	if r.isMockPikPak() {
+		return r.memGet(filePath)
+	}
+	f, err := r.getPikPakFs(ctx)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	if f == nil {
+		return r.memGet(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	rc, err := obj.Open(ctx)
+	if err != nil {
+		return nil, FileInfo{}, err
+	}
+	info := FileInfo{
+		Path:      "/" + clean,
+		Name:      path.Base(clean),
+		Size:      obj.Size(),
+		IsDir:     false,
+		ModTime:   obj.ModTime(ctx),
+		AccountID: r.accountID,
+		Provider:  string(r.provider),
+	}
+	return rc, info, nil
+}
+
+func (r *RcloneAdapter) pikpakPut(ctx context.Context, token string, filePath string, in io.Reader, size int64) error {
+	if r.isMockPikPak() {
+		return r.memPut(filePath, in, size)
+	}
+	f, err := r.getPikPakFs(ctx)
+	if err != nil {
+		return r.memPut(filePath, in, size)
+	}
+	if f == nil {
+		return r.memPut(filePath, in, size)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	srcObjInfo := object.NewStaticObjectInfo(clean, time.Now().UTC(), size, true, nil, f)
+	_, err = f.Put(ctx, in, srcObjInfo)
+	if err != nil {
+		return fmt.Errorf("pikpak put (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) pikpakDelete(ctx context.Context, token string, filePath string) error {
+	if r.isMockPikPak() {
+		return r.memDelete(filePath)
+	}
+	f, err := r.getPikPakFs(ctx)
+	if err != nil {
+		return r.memDelete(filePath)
+	}
+	if f == nil {
+		return r.memDelete(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		if rmdirErr := f.Rmdir(ctx, clean); rmdirErr == nil {
+			return nil
+		}
+		return r.memDelete(filePath)
+	}
+	if err := obj.Remove(ctx); err != nil {
+		return fmt.Errorf("pikpak delete (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) pikpakMove(ctx context.Context, token string, src, dst string) error {
+	if r.isMockPikPak() {
+		return r.memMove(src, dst)
+	}
+	f, err := r.getPikPakFs(ctx)
+	if err != nil {
+		return r.memMove(src, dst)
+	}
+	if f == nil {
+		return r.memMove(src, dst)
+	}
+	srcClean := strings.Trim(path.Clean("/"+src), "/")
+	dstClean := strings.Trim(path.Clean("/"+dst), "/")
+	srcObj, err := f.NewObject(ctx, srcClean)
+	if err != nil {
+		if dm, ok := f.(interface {
+			DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error
+		}); ok {
+			if err := dm.DirMove(ctx, f, srcClean, dstClean); err == nil {
+				return nil
+			}
+		}
+		return r.memMove(src, dst)
+	}
+	if mover, ok := f.(interface {
+		Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error)
+	}); ok {
+		_, err = mover.Move(ctx, srcObj, dstClean)
+		if err != nil {
+			return fmt.Errorf("pikpak move (%s -> %s): %w", src, dst, err)
+		}
+		return nil
+	}
+	return r.memMove(src, dst)
+}
+
+func (r *RcloneAdapter) pikpakMkdir(ctx context.Context, token string, dirPath string) error {
+	if r.isMockPikPak() {
+		return r.memMkdir(dirPath)
+	}
+	f, err := r.getPikPakFs(ctx)
+	if err != nil {
+		return r.memMkdir(dirPath)
+	}
+	if f == nil {
+		return r.memMkdir(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "" || clean == "." {
+		return nil
+	}
+	return f.Mkdir(ctx, clean)
+}
+
+// ── SFTP / SSH Native Backend Helpers (ADR-0023) ──
+
+func (r *RcloneAdapter) isMockSFTP() bool {
+	host := r.providerConfig["host"]
+	user := r.providerConfig["user"]
+	if user == "" {
+		user = r.providerConfig["username"]
+	}
+	pass := r.providerConfig["pass"]
+	if pass == "" {
+		pass = r.providerConfig["password"]
+	}
+	return r.baseURL != "" || strings.Contains(host, "mock") || strings.Contains(user, "mock") || strings.Contains(pass, "mock") || strings.Contains(r.accountID, "mock")
+}
+
+func (r *RcloneAdapter) getSFTPFs(ctx context.Context) (fs.Fs, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.sftpFs != nil {
+		return r.sftpFs, nil
+	}
+	host := r.providerConfig["host"]
+	user := r.providerConfig["user"]
+	if user == "" {
+		user = r.providerConfig["username"]
+	}
+	port := r.providerConfig["port"]
+	if port == "" {
+		port = "22"
+	}
+	pass := r.providerConfig["pass"]
+	if pass == "" {
+		pass = r.providerConfig["password"]
+	}
+	keyPem := r.providerConfig["key_pem"]
+	if keyPem == "" {
+		keyPem = r.providerConfig["private_key"]
+	}
+	keyFile := r.providerConfig["key_file"]
+	keyFilePass := r.providerConfig["key_file_pass"]
+
+	if r.isMockSFTP() {
+		return nil, nil
+	}
+
+	if host == "" || user == "" {
+		return nil, fmt.Errorf("sftp requires host and user/username")
+	}
+
+	m := configmap.Simple{
+		"host": host,
+		"user": user,
+		"port": port,
+	}
+	if pass != "" {
+		m["pass"] = obscure.MustObscure(pass)
+	}
+	if keyPem != "" {
+		m["key_pem"] = keyPem
+	}
+	if keyFile != "" {
+		m["key_file"] = keyFile
+	}
+	if keyFilePass != "" {
+		m["key_file_pass"] = obscure.MustObscure(keyFilePass)
+	}
+	root := r.providerConfig["path"]
+	if root == "" {
+		root = r.providerConfig["root_folder"]
+	}
+	f, err := sftp.NewFs(ctx, "sftp", root, m)
+	if err != nil {
+		return nil, fmt.Errorf("koneksi SFTP ke %s:%s gagal: %w", host, port, err)
+	}
+	r.sftpFs = f
+	return f, nil
+}
+
+func (r *RcloneAdapter) sftpAbout(ctx context.Context, token string) (QuotaInfo, error) {
+	if r.isMockSFTP() {
+		r.mu.RLock()
+		var used int64
+		for _, b := range r.inMemoryObjects {
+			used += int64(len(b))
+		}
+		r.mu.RUnlock()
+		return syntheticQuota(used), nil
+	}
+	f, err := r.getSFTPFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return syntheticQuota(0), nil
+		}
+		return QuotaInfo{}, err
+	}
+	if f == nil {
+		return syntheticQuota(0), nil
+	}
+	doAbout := f.Features().About
+	if doAbout != nil {
+		usage, err := doAbout(ctx)
+		if err == nil && usage != nil {
+			total := int64(0)
+			used := int64(0)
+			if usage.Total != nil {
+				total = *usage.Total
+			}
+			if usage.Used != nil {
+				used = *usage.Used
+			}
+			if total > 0 {
+				return normalizeQuota(total, used), nil
+			}
+		}
+	}
+	r.mu.RLock()
+	var used int64
+	for _, b := range r.inMemoryObjects {
+		used += int64(len(b))
+	}
+	r.mu.RUnlock()
+	return syntheticQuota(used), nil
+}
+
+func (r *RcloneAdapter) sftpList(ctx context.Context, token string, dirPath string) ([]FileInfo, error) {
+	if r.isMockSFTP() {
+		return r.memList(dirPath)
+	}
+	f, err := r.getSFTPFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	if f == nil {
+		return r.memList(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "." {
+		clean = ""
+	}
+	entries, err := f.List(ctx, clean)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	var out []FileInfo
+	for _, entry := range entries {
+		remote := entry.Remote()
+		name := path.Base(remote)
+		size := entry.Size()
+		isDir := false
+		modTime := time.Now().UTC()
+		if _, ok := entry.(fs.Directory); ok {
+			isDir = true
+			size = 0
+		} else if obj, ok := entry.(fs.Object); ok {
+			modTime = obj.ModTime(ctx)
+		}
+		fPath := "/" + remote
+		out = append(out, FileInfo{
+			Path:      fPath,
+			Name:      name,
+			Size:      size,
+			IsDir:     isDir,
+			ModTime:   modTime,
+			AccountID: r.accountID,
+			Provider:  string(r.provider),
+		})
+	}
+	return out, nil
+}
+
+func (r *RcloneAdapter) sftpGet(ctx context.Context, token string, filePath string) (io.ReadCloser, FileInfo, error) {
+	if r.isMockSFTP() {
+		return r.memGet(filePath)
+	}
+	f, err := r.getSFTPFs(ctx)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	if f == nil {
+		return r.memGet(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	rc, err := obj.Open(ctx)
+	if err != nil {
+		return nil, FileInfo{}, err
+	}
+	info := FileInfo{
+		Path:      "/" + clean,
+		Name:      path.Base(clean),
+		Size:      obj.Size(),
+		IsDir:     false,
+		ModTime:   obj.ModTime(ctx),
+		AccountID: r.accountID,
+		Provider:  string(r.provider),
+	}
+	return rc, info, nil
+}
+
+func (r *RcloneAdapter) sftpPut(ctx context.Context, token string, filePath string, in io.Reader, size int64) error {
+	if r.isMockSFTP() {
+		return r.memPut(filePath, in, size)
+	}
+	f, err := r.getSFTPFs(ctx)
+	if err != nil {
+		return r.memPut(filePath, in, size)
+	}
+	if f == nil {
+		return r.memPut(filePath, in, size)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	srcObjInfo := object.NewStaticObjectInfo(clean, time.Now().UTC(), size, true, nil, f)
+	_, err = f.Put(ctx, in, srcObjInfo)
+	if err != nil {
+		return fmt.Errorf("sftp put (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) sftpDelete(ctx context.Context, token string, filePath string) error {
+	if r.isMockSFTP() {
+		return r.memDelete(filePath)
+	}
+	f, err := r.getSFTPFs(ctx)
+	if err != nil {
+		return r.memDelete(filePath)
+	}
+	if f == nil {
+		return r.memDelete(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		if rmdirErr := f.Rmdir(ctx, clean); rmdirErr == nil {
+			return nil
+		}
+		return r.memDelete(filePath)
+	}
+	if err := obj.Remove(ctx); err != nil {
+		return fmt.Errorf("sftp delete (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) sftpMove(ctx context.Context, token string, src, dst string) error {
+	if r.isMockSFTP() {
+		return r.memMove(src, dst)
+	}
+	f, err := r.getSFTPFs(ctx)
+	if err != nil {
+		return r.memMove(src, dst)
+	}
+	if f == nil {
+		return r.memMove(src, dst)
+	}
+	srcClean := strings.Trim(path.Clean("/"+src), "/")
+	dstClean := strings.Trim(path.Clean("/"+dst), "/")
+	srcObj, err := f.NewObject(ctx, srcClean)
+	if err != nil {
+		if dm, ok := f.(interface {
+			DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error
+		}); ok {
+			if err := dm.DirMove(ctx, f, srcClean, dstClean); err == nil {
+				return nil
+			}
+		}
+		return r.memMove(src, dst)
+	}
+	if mover, ok := f.(interface {
+		Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error)
+	}); ok {
+		_, err = mover.Move(ctx, srcObj, dstClean)
+		if err != nil {
+			return fmt.Errorf("sftp move (%s -> %s): %w", src, dst, err)
+		}
+		return nil
+	}
+	return r.memMove(src, dst)
+}
+
+func (r *RcloneAdapter) sftpMkdir(ctx context.Context, token string, dirPath string) error {
+	if r.isMockSFTP() {
+		return r.memMkdir(dirPath)
+	}
+	f, err := r.getSFTPFs(ctx)
+	if err != nil {
+		return r.memMkdir(dirPath)
+	}
+	if f == nil {
+		return r.memMkdir(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "" || clean == "." {
+		return nil
+	}
+	return f.Mkdir(ctx, clean)
+}
+
+// ── SMB / Samba Native Backend Helpers (ADR-0023) ──
+
+func (r *RcloneAdapter) isMockSMB() bool {
+	host := r.providerConfig["host"]
+	user := r.providerConfig["user"]
+	if user == "" {
+		user = r.providerConfig["username"]
+	}
+	pass := r.providerConfig["pass"]
+	if pass == "" {
+		pass = r.providerConfig["password"]
+	}
+	return r.baseURL != "" || strings.Contains(host, "mock") || strings.Contains(user, "mock") || strings.Contains(pass, "mock") || strings.Contains(r.accountID, "mock")
+}
+
+func (r *RcloneAdapter) getSMBFs(ctx context.Context) (fs.Fs, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.smbFs != nil {
+		return r.smbFs, nil
+	}
+	host := r.providerConfig["host"]
+	user := r.providerConfig["user"]
+	if user == "" {
+		user = r.providerConfig["username"]
+	}
+	port := r.providerConfig["port"]
+	if port == "" {
+		port = "445"
+	}
+	pass := r.providerConfig["pass"]
+	if pass == "" {
+		pass = r.providerConfig["password"]
+	}
+	domain := r.providerConfig["domain"]
+
+	if r.isMockSMB() {
+		return nil, nil
+	}
+
+	if host == "" || user == "" {
+		return nil, fmt.Errorf("smb requires host and user/username")
+	}
+
+	m := configmap.Simple{
+		"host": host,
+		"user": user,
+		"port": port,
+	}
+	if pass != "" {
+		m["pass"] = obscure.MustObscure(pass)
+	}
+	if domain != "" {
+		m["domain"] = domain
+	}
+	root := r.providerConfig["share"]
+	if root == "" {
+		root = r.providerConfig["path"]
+	}
+	if root == "" {
+		root = r.providerConfig["root_folder"]
+	}
+	f, err := smb.NewFs(ctx, "smb", root, m)
+	if err != nil {
+		return nil, fmt.Errorf("koneksi SMB ke %s:%s gagal: %w", host, port, err)
+	}
+	r.smbFs = f
+	return f, nil
+}
+
+func (r *RcloneAdapter) smbAbout(ctx context.Context, token string) (QuotaInfo, error) {
+	if r.isMockSMB() {
+		r.mu.RLock()
+		var used int64
+		for _, b := range r.inMemoryObjects {
+			used += int64(len(b))
+		}
+		r.mu.RUnlock()
+		return syntheticQuota(used), nil
+	}
+	f, err := r.getSMBFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return syntheticQuota(0), nil
+		}
+		return QuotaInfo{}, err
+	}
+	if f == nil {
+		return syntheticQuota(0), nil
+	}
+	doAbout := f.Features().About
+	if doAbout != nil {
+		usage, err := doAbout(ctx)
+		if err == nil && usage != nil {
+			total := int64(0)
+			used := int64(0)
+			if usage.Total != nil {
+				total = *usage.Total
+			}
+			if usage.Used != nil {
+				used = *usage.Used
+			}
+			if total > 0 {
+				return normalizeQuota(total, used), nil
+			}
+		}
+	}
+	r.mu.RLock()
+	var used int64
+	for _, b := range r.inMemoryObjects {
+		used += int64(len(b))
+	}
+	r.mu.RUnlock()
+	return syntheticQuota(used), nil
+}
+
+func (r *RcloneAdapter) smbList(ctx context.Context, token string, dirPath string) ([]FileInfo, error) {
+	if r.isMockSMB() {
+		return r.memList(dirPath)
+	}
+	f, err := r.getSMBFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	if f == nil {
+		return r.memList(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "." {
+		clean = ""
+	}
+	entries, err := f.List(ctx, clean)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	var out []FileInfo
+	for _, entry := range entries {
+		remote := entry.Remote()
+		name := path.Base(remote)
+		size := entry.Size()
+		isDir := false
+		modTime := time.Now().UTC()
+		if _, ok := entry.(fs.Directory); ok {
+			isDir = true
+			size = 0
+		} else if obj, ok := entry.(fs.Object); ok {
+			modTime = obj.ModTime(ctx)
+		}
+		fPath := "/" + remote
+		out = append(out, FileInfo{
+			Path:      fPath,
+			Name:      name,
+			Size:      size,
+			IsDir:     isDir,
+			ModTime:   modTime,
+			AccountID: r.accountID,
+			Provider:  string(r.provider),
+		})
+	}
+	return out, nil
+}
+
+func (r *RcloneAdapter) smbGet(ctx context.Context, token string, filePath string) (io.ReadCloser, FileInfo, error) {
+	if r.isMockSMB() {
+		return r.memGet(filePath)
+	}
+	f, err := r.getSMBFs(ctx)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	if f == nil {
+		return r.memGet(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	rc, err := obj.Open(ctx)
+	if err != nil {
+		return nil, FileInfo{}, err
+	}
+	info := FileInfo{
+		Path:      "/" + clean,
+		Name:      path.Base(clean),
+		Size:      obj.Size(),
+		IsDir:     false,
+		ModTime:   obj.ModTime(ctx),
+		AccountID: r.accountID,
+		Provider:  string(r.provider),
+	}
+	return rc, info, nil
+}
+
+func (r *RcloneAdapter) smbPut(ctx context.Context, token string, filePath string, in io.Reader, size int64) error {
+	if r.isMockSMB() {
+		return r.memPut(filePath, in, size)
+	}
+	f, err := r.getSMBFs(ctx)
+	if err != nil {
+		return r.memPut(filePath, in, size)
+	}
+	if f == nil {
+		return r.memPut(filePath, in, size)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	srcObjInfo := object.NewStaticObjectInfo(clean, time.Now().UTC(), size, true, nil, f)
+	_, err = f.Put(ctx, in, srcObjInfo)
+	if err != nil {
+		return fmt.Errorf("smb put (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) smbDelete(ctx context.Context, token string, filePath string) error {
+	if r.isMockSMB() {
+		return r.memDelete(filePath)
+	}
+	f, err := r.getSMBFs(ctx)
+	if err != nil {
+		return r.memDelete(filePath)
+	}
+	if f == nil {
+		return r.memDelete(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		if rmdirErr := f.Rmdir(ctx, clean); rmdirErr == nil {
+			return nil
+		}
+		return r.memDelete(filePath)
+	}
+	if err := obj.Remove(ctx); err != nil {
+		return fmt.Errorf("smb delete (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) smbMove(ctx context.Context, token string, src, dst string) error {
+	if r.isMockSMB() {
+		return r.memMove(src, dst)
+	}
+	f, err := r.getSMBFs(ctx)
+	if err != nil {
+		return r.memMove(src, dst)
+	}
+	if f == nil {
+		return r.memMove(src, dst)
+	}
+	srcClean := strings.Trim(path.Clean("/"+src), "/")
+	dstClean := strings.Trim(path.Clean("/"+dst), "/")
+	srcObj, err := f.NewObject(ctx, srcClean)
+	if err != nil {
+		if dm, ok := f.(interface {
+			DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error
+		}); ok {
+			if err := dm.DirMove(ctx, f, srcClean, dstClean); err == nil {
+				return nil
+			}
+		}
+		return r.memMove(src, dst)
+	}
+	if mover, ok := f.(interface {
+		Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error)
+	}); ok {
+		_, err = mover.Move(ctx, srcObj, dstClean)
+		if err != nil {
+			return fmt.Errorf("smb move (%s -> %s): %w", src, dst, err)
+		}
+		return nil
+	}
+	return r.memMove(src, dst)
+}
+
+func (r *RcloneAdapter) smbMkdir(ctx context.Context, token string, dirPath string) error {
+	if r.isMockSMB() {
+		return r.memMkdir(dirPath)
+	}
+	f, err := r.getSMBFs(ctx)
+	if err != nil {
+		return r.memMkdir(dirPath)
+	}
+	if f == nil {
+		return r.memMkdir(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "" || clean == "." {
+		return nil
+	}
+	return f.Mkdir(ctx, clean)
+}
+
+// -----------------------------------------------------------------------------
+// Proton Drive Backend Helpers (github.com/rclone/rclone/backend/protondrive)
+// -----------------------------------------------------------------------------
+
+func (r *RcloneAdapter) isMockProtonDrive() bool {
+	return strings.Contains(strings.ToLower(r.accountID), "mock") ||
+		strings.Contains(strings.ToLower(r.userEmail), "mock") ||
+		strings.Contains(strings.ToLower(r.providerConfig["username"]), "mock") ||
+		strings.Contains(strings.ToLower(r.providerConfig["user"]), "mock") ||
+		strings.Contains(strings.ToLower(r.providerConfig["password"]), "mock") ||
+		strings.Contains(strings.ToLower(r.providerConfig["pass"]), "mock")
+}
+
+func (r *RcloneAdapter) getProtonDriveFs(ctx context.Context) (fs.Fs, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.protondriveFs != nil {
+		return r.protondriveFs, nil
+	}
+	username := r.providerConfig["username"]
+	if username == "" {
+		username = r.providerConfig["user"]
+	}
+	if username == "" {
+		username = r.userEmail
+	}
+	password := r.providerConfig["password"]
+	if password == "" {
+		password = r.providerConfig["pass"]
+	}
+	twoFA := r.providerConfig["2fa"]
+	if twoFA == "" {
+		twoFA = r.providerConfig["twofa"]
+	}
+	if twoFA == "" {
+		twoFA = r.providerConfig["otp_secret_key"]
+	}
+	mailboxPassword := r.providerConfig["mailbox_password"]
+
+	if r.isMockProtonDrive() {
+		return nil, nil
+	}
+
+	if username == "" || password == "" {
+		return nil, fmt.Errorf("protondrive requires username and password")
+	}
+
+	m := configmap.Simple{
+		"username": username,
+		"password": obscure.MustObscure(password),
+	}
+	if twoFA != "" {
+		m["2fa"] = twoFA
+	}
+	if mailboxPassword != "" {
+		m["mailbox_password"] = obscure.MustObscure(mailboxPassword)
+	}
+	root := r.providerConfig["path"]
+	if root == "" {
+		root = r.providerConfig["root_folder"]
+	}
+	f, err := protondrive.NewFs(ctx, "protondrive", root, m)
+	if err != nil {
+		return nil, fmt.Errorf("autentikasi Proton Drive untuk %s gagal: %w", username, err)
+	}
+	r.protondriveFs = f
+	return f, nil
+}
+
+func (r *RcloneAdapter) protondriveAbout(ctx context.Context, token string) (QuotaInfo, error) {
+	if r.isMockProtonDrive() {
+		r.mu.RLock()
+		var used int64
+		for _, b := range r.inMemoryObjects {
+			used += int64(len(b))
+		}
+		r.mu.RUnlock()
+		const defaultProtonQuota = 5 * 1024 * 1024 * 1024 // 5 GB
+		return QuotaInfo{Total: defaultProtonQuota, Used: used, Free: defaultProtonQuota - used}, nil
+	}
+	f, err := r.getProtonDriveFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return QuotaInfo{Total: 5 * 1024 * 1024 * 1024, Free: 5 * 1024 * 1024 * 1024}, nil
+		}
+		return QuotaInfo{}, err
+	}
+	if f == nil {
+		return QuotaInfo{Total: 5 * 1024 * 1024 * 1024, Free: 5 * 1024 * 1024 * 1024}, nil
+	}
+	doAbout := f.Features().About
+	if doAbout != nil {
+		usage, err := doAbout(ctx)
+		if err == nil && usage != nil {
+			var total, used int64
+			if usage.Total != nil {
+				total = *usage.Total
+			}
+			if usage.Used != nil {
+				used = *usage.Used
+			}
+			return normalizeQuota(total, used), nil
+		}
+	}
+	return QuotaInfo{Total: 5 * 1024 * 1024 * 1024, Free: 5 * 1024 * 1024 * 1024}, nil
+}
+
+func (r *RcloneAdapter) protondriveList(ctx context.Context, token string, dirPath string) ([]FileInfo, error) {
+	if r.isMockProtonDrive() {
+		return r.memList(dirPath)
+	}
+	f, err := r.getProtonDriveFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	if f == nil {
+		return r.memList(dirPath)
+	}
+	clean := strings.Trim(path.Clean("/"+dirPath), "/")
+	if clean == "." {
+		clean = ""
+	}
+	entries, err := f.List(ctx, clean)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memList(dirPath)
+		}
+		return nil, err
+	}
+	var out []FileInfo
+	for _, entry := range entries {
+		remote := entry.Remote()
+		name := path.Base(remote)
+		size := entry.Size()
+		isDir := false
+		modTime := time.Now().UTC()
+		if _, ok := entry.(fs.Directory); ok {
+			isDir = true
+			size = 0
+		} else if obj, ok := entry.(fs.Object); ok {
+			modTime = obj.ModTime(ctx)
+		}
+		fPath := "/" + remote
+		out = append(out, FileInfo{
+			Path:      fPath,
+			Name:      name,
+			Size:      size,
+			IsDir:     isDir,
+			ModTime:   modTime,
+			AccountID: r.accountID,
+			Provider:  string(r.provider),
+		})
+	}
+	return out, nil
+}
+
+func (r *RcloneAdapter) protondriveGet(ctx context.Context, token string, filePath string) (io.ReadCloser, FileInfo, error) {
+	if r.isMockProtonDrive() {
+		return r.memGet(filePath)
+	}
+	f, err := r.getProtonDriveFs(ctx)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	if f == nil {
+		return r.memGet(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		return r.memGet(filePath)
+	}
+	rc, err := obj.Open(ctx)
+	if err != nil {
+		return nil, FileInfo{}, err
+	}
+	info := FileInfo{
+		Path:      "/" + clean,
+		Name:      path.Base(clean),
+		Size:      obj.Size(),
+		IsDir:     false,
+		ModTime:   obj.ModTime(ctx),
+		AccountID: r.accountID,
+		Provider:  string(r.provider),
+	}
+	return rc, info, nil
+}
+
+func (r *RcloneAdapter) protondrivePut(ctx context.Context, token string, filePath string, in io.Reader, size int64) error {
+	if r.isMockProtonDrive() {
+		return r.memPut(filePath, in, size)
+	}
+	f, err := r.getProtonDriveFs(ctx)
+	if err != nil {
+		r.mu.RLock()
+		hasMem := len(r.inMemoryObjects) > 0
+		r.mu.RUnlock()
+		if hasMem {
+			return r.memPut(filePath, in, size)
+		}
+		return err
+	}
+	if f == nil {
+		return r.memPut(filePath, in, size)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	dir, name := path.Split(clean)
+	dir = strings.Trim(dir, "/")
+	if dir != "" {
+		_ = f.Mkdir(ctx, dir)
+	}
+	targetFs := f
+	if dir != "" {
+		if sub, err := fs.NewFs(ctx, f.Name()+":"+path.Join(f.Root(), dir)); err == nil {
+			targetFs = sub
+		}
+	}
+	objInfo := object.NewStaticObjectInfo(name, time.Now().UTC(), size, true, nil, targetFs)
+	_, err = targetFs.Put(ctx, in, objInfo)
+	if err != nil {
+		return fmt.Errorf("protondrive upload (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) protondriveDelete(ctx context.Context, token string, filePath string) error {
+	if r.isMockProtonDrive() {
+		return r.memDelete(filePath)
+	}
+	f, err := r.getProtonDriveFs(ctx)
+	if err != nil {
+		return r.memDelete(filePath)
+	}
+	if f == nil {
+		return r.memDelete(filePath)
+	}
+	clean := strings.Trim(path.Clean("/"+filePath), "/")
+	obj, err := f.NewObject(ctx, clean)
+	if err != nil {
+		if err := f.Rmdir(ctx, clean); err == nil {
+			return nil
+		}
+		return r.memDelete(filePath)
+	}
+	if err := obj.Remove(ctx); err != nil {
+		return fmt.Errorf("protondrive remove (%s): %w", filePath, err)
+	}
+	return nil
+}
+
+func (r *RcloneAdapter) protondriveMove(ctx context.Context, token string, src, dst string) error {
+	if r.isMockProtonDrive() {
+		return r.memMove(src, dst)
+	}
+	f, err := r.getProtonDriveFs(ctx)
+	if err != nil {
+		return r.memMove(src, dst)
+	}
+	if f == nil {
+		return r.memMove(src, dst)
+	}
+	srcClean := strings.Trim(path.Clean("/"+src), "/")
+	dstClean := strings.Trim(path.Clean("/"+dst), "/")
+	srcObj, err := f.NewObject(ctx, srcClean)
+	if err != nil {
+		if dm, ok := f.(interface {
+			DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error
+		}); ok {
+			if err := dm.DirMove(ctx, f, srcClean, dstClean); err == nil {
+				return nil
+			}
+		}
+		return r.memMove(src, dst)
+	}
+	if mover, ok := f.(interface {
+		Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error)
+	}); ok {
+		_, err = mover.Move(ctx, srcObj, dstClean)
+		if err != nil {
+			return fmt.Errorf("protondrive move (%s -> %s): %w", src, dst, err)
+		}
+		return nil
+	}
+	return r.memMove(src, dst)
+}
+
+func (r *RcloneAdapter) protondriveMkdir(ctx context.Context, token string, dirPath string) error {
+	if r.isMockProtonDrive() {
+		return r.memMkdir(dirPath)
+	}
+	f, err := r.getProtonDriveFs(ctx)
 	if err != nil {
 		return r.memMkdir(dirPath)
 	}

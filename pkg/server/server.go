@@ -360,6 +360,16 @@ func providerDisplayName(provider string) string {
 		return "MEGA"
 	case "filen":
 		return "Filen"
+	case "b2":
+		return "Backblaze B2"
+	case "pikpak":
+		return "PikPak"
+	case "sftp":
+		return "SFTP / SSH"
+	case "smb":
+		return "SMB / Samba"
+	case "protondrive":
+		return "Proton Drive"
 	default:
 		return strings.ToUpper(provider)
 	}
@@ -443,12 +453,66 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 		} else if extra["username"] != "" {
 			principal = extra["username"]
 		}
-	case "mega", "filen":
+	case "mega", "filen", "pikpak":
 		if extra["email"] != "" {
 			principal = extra["email"]
+		} else if extra["user"] != "" {
+			principal = extra["user"]
 		} else {
 			principal = extra["username"]
 		}
+	case "b2":
+		if extra["bucket"] != "" {
+			principal = extra["bucket"]
+		} else if extra["account"] != "" {
+			principal = extra["account"]
+		} else if extra["key_id"] != "" {
+			principal = extra["key_id"]
+		} else {
+			principal = extra["username"]
+		}
+	case "sftp":
+		host := extra["host"]
+		user := extra["user"]
+		if user == "" {
+			user = extra["username"]
+		}
+		port := extra["port"]
+		if port == "" {
+			port = "22"
+		}
+		if user != "" && host != "" {
+			principal = fmt.Sprintf("%s@%s:%s", user, host, port)
+		} else if host != "" {
+			principal = host
+		} else {
+			principal = user
+		}
+	case "smb":
+		host := extra["host"]
+		share := extra["share"]
+		user := extra["user"]
+		if user == "" {
+			user = extra["username"]
+		}
+		if user != "" && host != "" && share != "" {
+			principal = fmt.Sprintf("%s@%s/%s", user, host, share)
+		} else if host != "" && share != "" {
+			principal = fmt.Sprintf("%s/%s", host, share)
+		} else if host != "" {
+			principal = host
+		} else {
+			principal = user
+		}
+	case "protondrive":
+		user := extra["username"]
+		if user == "" {
+			user = extra["user"]
+		}
+		if user == "" {
+			user = extra["email"]
+		}
+		principal = user
 	}
 	email := principal
 	if userEmail := getStr("email"); userEmail != "" {
@@ -491,9 +555,34 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "filen requires email, password, and api_key")
 			return
 		}
+	case "b2":
+		if len(extra) > 0 && ((extra["account"] == "" && extra["key_id"] == "" && extra["username"] == "") || (extra["key"] == "" && extra["application_key"] == "" && extra["password"] == "")) {
+			writeError(w, http.StatusBadRequest, "b2 requires account/key_id and application_key")
+			return
+		}
+	case "pikpak":
+		if len(extra) > 0 && ((extra["username"] == "" && extra["email"] == "" && extra["user"] == "") || (extra["password"] == "" && extra["pass"] == "")) {
+			writeError(w, http.StatusBadRequest, "pikpak requires username/email and password")
+			return
+		}
+	case "sftp":
+		if len(extra) > 0 && (extra["host"] == "" || (extra["user"] == "" && extra["username"] == "")) {
+			writeError(w, http.StatusBadRequest, "sftp requires host and user/username")
+			return
+		}
+	case "smb":
+		if len(extra) > 0 && (extra["host"] == "" || (extra["user"] == "" && extra["username"] == "")) {
+			writeError(w, http.StatusBadRequest, "smb requires host and user/username")
+			return
+		}
+	case "protondrive":
+		if len(extra) > 0 && ((extra["username"] == "" && extra["user"] == "" && extra["email"] == "") || (extra["password"] == "" && extra["pass"] == "")) {
+			writeError(w, http.StatusBadRequest, "protondrive requires username and password")
+			return
+		}
 	}
-	// For S3/WebDAV/Mega synthetic quota
-	if (provider == "s3" || provider == "webdav" || provider == "mega" || provider == "koofr" || provider == "filen") && quotaTotal == 0 {
+	// For S3/WebDAV/Mega/B2/PikPak/SFTP/SMB/ProtonDrive synthetic quota
+	if (provider == "s3" || provider == "webdav" || provider == "mega" || provider == "koofr" || provider == "filen" || provider == "b2" || provider == "pikpak" || provider == "sftp" || provider == "smb" || provider == "protondrive") && quotaTotal == 0 {
 		quotaTotal = 1 << 40 // 1TB synthetic default before About()
 	}
 	acc := db.RemoteAccount{
@@ -520,7 +609,7 @@ func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
 		}
 		var drv storage.Driver
 		switch provider {
-		case "s3", "webdav", "mega", "koofr", "box", "pcloud", "yandex", "onedrive", "dropbox", "filen":
+		case "s3", "webdav", "mega", "koofr", "box", "pcloud", "yandex", "onedrive", "dropbox", "filen", "b2", "pikpak", "sftp", "smb", "protondrive":
 			// Use RcloneAdapter for all non-gdrive providers (covers manual s3/webdav/mega and any future)
 			drv = storage.NewRcloneAdapterWithExtra(provider, acc.ID, extra["client_id"], extra["client_secret"], extra["access_token"], extra["refresh_token"], "", name, extra)
 		default:

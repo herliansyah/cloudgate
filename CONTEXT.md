@@ -11,11 +11,11 @@ A configured and authenticated connection to a specific cloud storage provider w
 _Avoid_: Drive connection, cloud user, session
 
 **AccountPrincipal**:
-The canonical external user or resource identity associated with a RemoteAccount (e.g., an authenticated email address for OAuth/Mega/Filen services, `username@host` for WebDAV, or `bucket_name` for S3).
+The canonical external user or resource identity associated with a RemoteAccount (e.g., an authenticated email address for OAuth/Mega/Filen/Proton/PikPak services, `username@host[:port]` for WebDAV/SFTP, `username@host/share` for SMB, or `bucket_name`/`key_id` for S3/B2).
 _Avoid_: User ID, internal provider key, account number
 
 **Provider**:
-A supported third-party cloud storage service (e.g., Google Drive, OneDrive, Dropbox, S3, Mega, Filen).
+A supported third-party cloud storage service or storage protocol (e.g., Google Drive, OneDrive, Dropbox, S3, Mega, Filen, Backblaze B2, PikPak, SFTP, SMB, Proton Drive).
 _Avoid_: Vendor, cloud host
 
 **StoragePool**:
@@ -71,7 +71,7 @@ The protocol handshake granting Cloudgate access tokens and refresh tokens from 
 _Avoid_: Login session, API handshake
 
 **DirectCredentialAuth**:
-A high-friction authentication flow where Cloudgate manages raw user credentials (such as username/email, master password, and/or zero-knowledge client encryption API keys) to negotiate sessions directly with providers lacking standard delegated OAuth (notably MEGA and Filen), carrying operational risks of third-party fraud lockout, IP flagging, or client encryption key management.
+A high-friction authentication flow where Cloudgate manages raw user credentials (such as username/email, master password, API keys, or server credentials) to negotiate sessions directly with providers lacking standard delegated OAuth (notably MEGA, Filen, Backblaze B2, PikPak, SFTP, SMB, and Proton Drive), carrying operational risks of third-party fraud lockout, IP flagging, or host network reachability.
 _Avoid_: Password login, basic auth, direct connection
 
 **VendorDriver**:
