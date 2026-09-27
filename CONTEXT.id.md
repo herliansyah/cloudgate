@@ -141,3 +141,11 @@ _Hindari_: Offline download, web fetcher, torrent task
 **TaskDrawer**:
 Viewport mengambang interaktif yang tertambat pada antarmuka web yang menyajikan telemetri waktu nyata, metrik progres, dan kendali siklus hidup untuk StorageTask aktif maupun riwayat sebelumnya.
 _Hindari_: Download bar, progress popup, task modal
+
+**ReleaseLifecycle**:
+Protokol sekuensial ketat yang mengatur sinkronisasi versi pada berkas konfigurasi, finalisasi changelog dari entri yang belum dirilis, pembuatan tag git, hingga distribusi artefak rilis.
+_Hindari_: Build process, deployment, release flow
+
+**Changelog**:
+Dokumen kronologis terkurasi yang dapat dibaca manusia (`CHANGELOG.md`) untuk mencatat pembaruan dan perubahan penting lintas rilis sesuai spesifikasi Keep a Changelog.
+_Hindari_: Git log, commit history, release notes dump

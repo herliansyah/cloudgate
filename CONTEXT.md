@@ -141,3 +141,11 @@ _Avoid_: Offline download, web fetcher, torrent task
 **TaskDrawer**:
 An interactive floating viewport docked in the web interface that provides real-time telemetry, progress metrics, and lifecycle controls for active and past StorageTasks.
 _Avoid_: Download bar, progress popup, task modal
+
+**ReleaseLifecycle**:
+The strict sequential protocol governing version synchronization in configuration files, changelog finalization from unreleased entries, git tag creation, and artifact distribution.
+_Avoid_: Build process, deployment, release flow
+
+**Changelog**:
+A curated, human-readable chronological document (`CHANGELOG.md`) that records notable modifications across releases following the Keep a Changelog specification.
+_Avoid_: Git log, commit history, release notes dump
