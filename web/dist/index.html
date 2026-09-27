@@ -2109,6 +2109,11 @@
         <option value="s3">S3 / S3-Compatible (MinIO, R2, Wasabi)</option>
         <option value="koofr">Koofr (WebDAV / App Password)</option>
         <option value="filen">Filen (Zero-Knowledge E2EE)</option>
+        <option value="b2">Backblaze B2 (Key ID & Application Key)</option>
+        <option value="pikpak">PikPak (Email & Password)</option>
+        <option value="sftp">SFTP / SSH (Host, User, Key / Password)</option>
+        <option value="smb">SMB / Samba (Windows Network Share)</option>
+        <option value="protondrive">Proton Drive (Zero-Knowledge E2EE)</option>
         <option value="yandex">Yandex Disk (OAuth2)</option>
       </select>
 
@@ -2208,6 +2213,57 @@
           <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Email Akun Filen <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="filenUser" placeholder="user@example.com"></div>
           <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Master Password Filen <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="filenPass" placeholder="••••••••"></div>
           <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Master API Key Filen <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><textarea class="form-control" id="filenApiKey" rows="3" placeholder="Tempel API key hasil ekspor di sini..." style="font-family:monospace;font-size:0.75rem;resize:vertical;"></textarea></div>
+        </div>
+
+        <div id="b2ExtraFields" style="display:none;flex-direction:column;gap:12px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div id="b2GuideBox"></div>
+          <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Konfigurasi Kredensial Backblaze B2:</div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Key ID / Account ID <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="b2KeyId" placeholder="00xxxxxxxxxxxxxxxxxx"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Application Key <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="b2AppKey" placeholder="K00xxxxxxxxxxxxxxxxxxxxxxx"></div>
+          <div class="form-group"><label>Bucket Name (Opsional, kosongkan untuk akses semua bucket)</label><input type="text" class="form-control" id="b2Bucket" placeholder="my-backup-bucket"></div>
+          <div class="form-group"><label>Endpoint (Opsional, kosongkan jika default)</label><input type="text" class="form-control" id="b2Endpoint" placeholder="https://api.backblazeb2.com"></div>
+        </div>
+
+        <div id="pikpakExtraFields" style="display:none;flex-direction:column;gap:12px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div id="pikpakGuideBox"></div>
+          <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Konfigurasi Akun PikPak:</div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Email atau Nomor HP <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="pikpakUser" placeholder="user@example.com atau +628123456789"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Password Akun <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="pikpakPass" placeholder="••••••••"></div>
+        </div>
+
+        <div id="sftpExtraFields" style="display:none;flex-direction:column;gap:12px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div id="sftpGuideBox"></div>
+          <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Konfigurasi Server SFTP / SSH:</div>
+          <div style="display:grid;grid-template-columns:3fr 1fr;gap:10px;">
+            <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Host / IP Server <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="sftpHost" placeholder="sftp.example.com atau 192.168.1.100"></div>
+            <div class="form-group"><label>Port</label><input type="number" class="form-control" id="sftpPort" value="22" placeholder="22"></div>
+          </div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Username SSH <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="sftpUser" placeholder="root / ubuntu / debian"></div>
+          <div class="form-group"><label>Password SSH (Kosongkan jika menggunakan Private Key)</label><input type="password" class="form-control" id="sftpPass" placeholder="••••••••"></div>
+          <div class="form-group"><label>Private Key SSH (Opsional, PEM / OpenSSH Format)</label><textarea class="form-control" id="sftpKeyPem" rows="3" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..." style="font-family:monospace;font-size:0.75rem;resize:vertical;"></textarea></div>
+          <div class="form-group"><label>Root Path (Opsional, kosongkan untuk root / home)</label><input type="text" class="form-control" id="sftpPath" placeholder="/data atau /var/www"></div>
+        </div>
+
+        <div id="smbExtraFields" style="display:none;flex-direction:column;gap:12px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div id="smbGuideBox"></div>
+          <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Konfigurasi Server SMB / Samba Share:</div>
+          <div style="display:grid;grid-template-columns:3fr 1fr;gap:10px;">
+            <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Host / IP Server <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="smbHost" placeholder="192.168.1.50 atau nas.local"></div>
+            <div class="form-group"><label>Port</label><input type="number" class="form-control" id="smbPort" value="445" placeholder="445"></div>
+          </div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Nama Share <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="smbShare" placeholder="shared_docs atau backups"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Username <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="smbUser" placeholder="administrator atau nama user"></div>
+          <div class="form-group"><label>Password</label><input type="password" class="form-control" id="smbPass" placeholder="••••••••"></div>
+          <div class="form-group"><label>Domain / Workgroup (Opsional, default: WORKGROUP)</label><input type="text" class="form-control" id="smbDomain" placeholder="WORKGROUP"></div>
+        </div>
+
+        <div id="protondriveExtraFields" style="display:none;flex-direction:column;gap:12px;background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+          <div id="protondriveGuideBox"></div>
+          <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface);font-weight:700;">Konfigurasi Akun Proton Drive:</div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Username / Email Proton <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="text" class="form-control" id="protondriveUser" placeholder="user@proton.me atau username"></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:4px;">Password Akun Proton <span style="color:var(--md-sys-color-error);font-weight:700;">*</span></label><input type="password" class="form-control" id="protondrivePass" placeholder="••••••••"></div>
+          <div class="form-group"><label>Kode 2FA / TOTP (Opsional, jika 2FA aktif)</label><input type="text" class="form-control" id="protondrive2FA" placeholder="6-digit kode OTP atau OTP Secret Key"></div>
+          <div class="form-group"><label>Mailbox Password (Opsional, hanya jika mode 2-password aktif)</label><input type="password" class="form-control" id="protondriveMailboxPass" placeholder="••••••••"></div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -3218,6 +3274,21 @@
       if (p === 'filen') {
         return `<svg id="filen-logo" viewBox="0 0 2133.89 2133.89" width="${size}" height="${size}"><path fill="#2764eb" fill-rule="evenodd" d="M1066.95,0C477.73,0,0,477.73,0,1066.95s477.73,1066.95,1066.95,1066.95,1066.95-477.73,1066.95-1066.95S1656.21,0,1066.95,0ZM498.58,329.87h665.24c22.95-36.62,63.76-60.98,110.34-60.98,71.84,0,130.25,58.16,130.25,130.25s-58.42,130.04-130.25,130.04c-47.31,0-88.76-25.26-111.49-63.03H426.74v1272.58c0,1.41,0,2.31-.21,3.72,65.6,62.14,140,114.74,221.15,155.77v-553.07c0-1.15.21-2.09.21-3.25s.21-2.09.47-3.25.47-2.09.68-3.25c.21-1.15.47-2.09.68-3.25.21-1.15.68-2.09.94-3.25s.68-2.09,1.15-3.25.94-2.09,1.15-3.03c.47-1.15.94-2.09,1.41-3.03s1.15-1.84,1.41-3.03c.47-1.15,1.15-1.84,1.62-2.78.68-.94,1.15-1.84,1.62-2.78.68-.94,1.41-1.62,1.84-2.78.68-.94,1.41-1.62,1.84-2.56.68-.94,1.41-1.62,2.09-2.56s1.41-1.62,2.09-2.31,1.41-1.41,2.31-2.31c.94-.68,1.62-1.41,2.56-2.09s1.62-1.41,2.56-2.09,1.62-1.41,2.56-1.84c.94-.68,1.84-1.41,2.78-1.62.94-.68,1.84-1.15,2.78-1.62,1.15-.47,1.84-1.15,3.03-1.41s1.84-.94,3.03-1.41c1.15-.47,2.09-.94,3.03-1.41,1.15-.47,2.09-.68,3.25-1.15s2.09-.68,3.25-.94,2.09-.68,3.25-.94c1.15-.21,2.09-.47,3.25-.68s2.09-.47,3.25-.47,2.09-.21,3.25-.47c1.15,0,2.09-.21,3.25-.21h229.95c22.95-36.62,63.76-60.98,110.34-60.98,71.84,0,130.25,58.16,130.25,130.25s-58.16,130.25-130.25,130.25c-47.31,0-88.76-25.26-111.49-63.03h-159.23v528.02c0,3.03-.21,6.03-.68,9.06,89.96,28.29,185.42,43.8,284.18,43.8,88.55,0,174.31-12.26,255.42-35.47v-705.12c-36.41-22.95-60.51-63.5-60.51-109.87,0-71.84,58.16-130.25,130.25-130.25s130.25,58.16,130.25,130.25c0,47.52-25.51,89.23-63.76,111.96v652.3c62.61-28.97,121.45-64.91,175.72-106.62v-659.95c0-1.15.21-2.09.21-3.25s.21-2.09.47-3.25c.21-1.15.47-2.09.68-3.25s.47-2.09.68-3.25.68-2.09.94-3.25c.47-1.15.68-2.09,1.15-3.25s.68-2.09,1.15-3.25.94-2.09,1.41-3.03,1.15-1.84,1.41-3.03c.47-1.15,1.15-1.84,1.62-2.78s1.15-1.84,1.62-2.78c.68-.94,1.41-1.84,1.84-2.78s1.41-1.62,1.84-2.56c.68-.94,1.41-1.62,2.09-2.56s1.41-1.62,2.31-2.31,1.41-1.41,2.31-2.31c.94-.68,1.62-1.41,2.56-2.09s1.62-1.41,2.56-2.09c.94-.68,1.62-1.41,2.78-1.84.94-.68,1.84-1.41,2.78-1.62.94-.47,1.84-1.15,2.78-1.62.94-.68,1.84-1.15,3.03-1.41,1.15-.47,1.84-.94,3.03-1.41s2.09-.94,3.03-1.41c1.15-.47,2.09-.94,3.25-1.15,1.15-.47,2.09-.68,3.25-.94s2.09-.47,3.25-.94c1.15-.21,2.09-.47,3.25-.68,1.15-.21,2.09-.21,3.25-.47s2.09-.21,3.25-.21,2.09-.21,3.25-.21h296.7v-12.99c0-232.94-85.55-445.97-227.18-609.18v292.99c0,1.15-.21,2.09-.21,3.46s-.21,2.09-.47,3.25c-.21,1.15-.47,2.09-.68,3.25s-.47,2.09-.68,3.25-.68,2.09-.94,3.25c-.47,1.15-.68,2.09-1.15,3.25s-.94,2.09-1.41,3.25c-.47,1.15-.94,2.09-1.41,3.03-.47,1.15-1.15,1.84-1.41,3.03s-1.15,1.84-1.62,3.03c-.68,1.15-1.15,1.84-1.62,2.78-.68.94-1.41,1.84-1.84,2.78-.68.94-1.41,1.62-2.09,2.56s-1.41,1.62-2.09,2.56-1.41,1.62-2.31,2.31-1.62,1.41-2.31,2.31c-.94.94-1.62,1.41-2.56,2.09s-1.62,1.41-2.56,2.09-1.62,1.41-2.78,1.84c-.94.68-1.84,1.41-2.78,1.62-1.15.68-1.84,1.15-3.03,1.62s-1.84,1.15-3.03,1.41c-1.15.47-2.09.94-3.03,1.41-1.15.47-2.09.94-3.25,1.41s-2.09.68-3.25,1.15-2.09.68-3.25.94-2.09.47-3.25.68c-1.15.21-2.09.47-3.25.68-1.15.21-2.09.21-3.46.47s-2.09.21-3.46.21h-922.21v138.37c38.03,22.73,63.29,64.19,63.29,111.71,0,71.84-58.16,130.25-130.25,130.25s-129.83-58.42-129.83-130.51c0-46.37,24.1-87.14,60.51-110.08v-211.41c0-1.15.21-2.09.21-3.25s.21-2.09.47-3.25.47-2.09.68-3.25.47-2.09.68-3.25.68-2.09.94-3.25.68-2.09,1.15-3.25.94-2.09,1.15-3.03c.47-1.15.94-2.09,1.41-3.03s1.15-1.84,1.41-3.03c.47-1.15,1.15-1.84,1.62-3.03.68-1.15,1.15-1.84,1.62-2.78.68-.94,1.41-1.84,1.84-2.78.68-.94,1.41-1.62,1.84-2.56.68-.94,1.41-1.62,2.09-2.56s1.41-1.62,2.09-2.31l2.31-2.31c.94-.94,1.62-1.41,2.56-2.09s1.62-1.41,2.56-2.09,1.62-1.41,2.56-1.84c.94-.68,1.84-1.41,2.78-1.62.94-.68,1.84-1.15,2.78-1.62,1.15-.47,1.84-1.15,3.03-1.41s1.84-.94,3.03-1.41,2.09-.94,3.03-1.41c1.15-.47,2.09-.94,3.25-1.15s2.09-.68,3.25-.94,2.09-.68,3.25-.94,2.09-.47,3.25-.68c1.15-.21,2.09-.47,3.25-.47s2.09-.21,3.25-.21,2.09-.21,3.25-.21h920.71v-342.52c0-2.09,0-4.19.21-6.24-157.18-121.92-353.97-194.01-567.9-194.01s-411.45,72.31-568.58,193.8h-.13ZM136.07,1066.95c0-189.83,56.79-366.49,154.36-513.45v1027.08c-97.61-147.18-154.36-323.84-154.36-513.67h0v.04ZM1985.82,1216h-215.55v460.33c111.02-127.48,187.52-285.59,215.55-460.33Z"/></svg>`;
       }
+      if (p === 'b2') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#e21e29"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>`;
+      }
+      if (p === 'pikpak') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><circle cx="12" cy="12" r="11" fill="#1877f2"/><path d="M7 8.5C7 7.67 7.67 7 8.5 7h4.25c2.07 0 3.75 1.68 3.75 3.75s-1.68 3.75-3.75 3.75H10v3H7V8.5zm3 1.5v3h2.75c1.24 0 2.25-1.01 2.25-2.25S14.01 10 12.75 10H10z" fill="#ffffff"/></svg>`;
+      }
+      if (p === 'sftp') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><circle cx="12" cy="12" r="11" fill="#7c3aed"/><path d="M7 8l4 4-4 4M13 16h4" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+      }
+      if (p === 'smb') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><circle cx="12" cy="12" r="11" fill="#0ea5e9"/><path d="M4 6h16v10H4z" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 20h8M12 16v4" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
+      }
+      if (p === 'protondrive' || p === 'proton') {
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><circle cx="12" cy="12" r="11" fill="#6d4aff"/><path d="M12 6.5a4.5 4.5 0 0 0-4.5 4.5c0 1.25.5 2.38 1.32 3.19A4.47 4.47 0 0 0 12 15.5a4.5 4.5 0 0 0 4.5-4.5A4.5 4.5 0 0 0 12 6.5zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z" fill="#ffffff"/><path d="M7.5 14.5v3h9v-3" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+      }
       if (p === 'pcloud') {
         return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#1ab7ea"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>`;
       }
@@ -3261,6 +3332,11 @@
       { id: 'webdav', name: 'WebDAV / Nextcloud', badge: 'WebDAV Protocol' },
       { id: 'mega', name: 'Mega', badge: 'Direct Auth' },
       { id: 'filen', name: 'Filen', badge: 'Zero-Knowledge' },
+      { id: 'b2', name: 'Backblaze B2', badge: 'Object Storage' },
+      { id: 'pikpak', name: 'PikPak', badge: 'Cloud Drive' },
+      { id: 'sftp', name: 'SFTP / SSH', badge: 'SSH Protocol' },
+      { id: 'smb', name: 'SMB / Samba', badge: 'Network Share' },
+      { id: 'protondrive', name: 'Proton Drive', badge: 'Zero-Knowledge' },
       { id: 'pcloud', name: 'pCloud', badge: 'OAuth 2.0 Direct' },
       { id: 'koofr', name: 'Koofr', badge: 'App Password' },
       { id: 'yandex', name: 'Yandex Disk', badge: 'OAuth 2.0 Direct' }
@@ -3270,6 +3346,11 @@
       gdrive: '#2684fc',
       onedrive: '#0078d4',
       dropbox: '#0061ff',
+      b2: '#e21e29',
+      pikpak: '#1877f2',
+      sftp: '#7c3aed',
+      smb: '#0ea5e9',
+      protondrive: '#6d4aff',
       box: '#0061d5',
       s3: '#e05243',
       mega: '#d9272e',
@@ -4243,6 +4324,87 @@
         testPayload.email = userVal;
         testPayload.password = passVal;
         testPayload.api_key = apiKeyVal;
+      } else if (provider === 'b2') {
+        const keyId = (document.getElementById('b2KeyId').value || '').trim();
+        const appKey = (document.getElementById('b2AppKey').value || '').trim();
+        if (!keyId || !appKey) {
+          showToast('Wajib mengisi Key ID dan Application Key Backblaze B2!', 'error');
+          return;
+        }
+        testPayload.key_id = keyId;
+        testPayload.application_key = appKey;
+        testPayload.account = keyId;
+        testPayload.key = appKey;
+        const bucketVal = (document.getElementById('b2Bucket').value || '').trim();
+        if (bucketVal) testPayload.bucket = bucketVal;
+        const epVal = (document.getElementById('b2Endpoint').value || '').trim();
+        if (epVal) testPayload.endpoint = epVal;
+      } else if (provider === 'pikpak') {
+        const user = (document.getElementById('pikpakUser').value || '').trim();
+        const pass = (document.getElementById('pikpakPass').value || '').trim();
+        if (!user || !pass) {
+          showToast('Wajib mengisi Email / Nomor HP dan Password PikPak!', 'error');
+          return;
+        }
+        testPayload.user = user;
+        testPayload.username = user;
+        testPayload.email = user;
+        testPayload.pass = pass;
+        testPayload.password = pass;
+      } else if (provider === 'sftp') {
+        const host = (document.getElementById('sftpHost').value || '').trim();
+        const user = (document.getElementById('sftpUser').value || '').trim();
+        const pass = (document.getElementById('sftpPass').value || '').trim();
+        const keyPem = (document.getElementById('sftpKeyPem').value || '').trim();
+        if (!host || !user) {
+          showToast('Wajib mengisi Host dan Username SFTP / SSH!', 'error');
+          return;
+        }
+        if (!pass && !keyPem) {
+          showToast('Wajib mengisi Password atau Private Key untuk autentikasi SSH!', 'error');
+          return;
+        }
+        testPayload.host = host;
+        testPayload.user = user;
+        testPayload.username = user;
+        testPayload.port = (document.getElementById('sftpPort').value || '22').trim();
+        if (pass) { testPayload.pass = pass; testPayload.password = pass; }
+        if (keyPem) { testPayload.key_pem = keyPem; testPayload.private_key = keyPem; }
+        const pVal = (document.getElementById('sftpPath').value || '').trim();
+        if (pVal) testPayload.path = pVal;
+      } else if (provider === 'smb') {
+        const host = (document.getElementById('smbHost').value || '').trim();
+        const user = (document.getElementById('smbUser').value || '').trim();
+        const pass = (document.getElementById('smbPass').value || '').trim();
+        if (!host || !user) {
+          showToast('Wajib mengisi Host / IP dan Username SMB / Samba!', 'error');
+          return;
+        }
+        testPayload.host = host;
+        testPayload.user = user;
+        testPayload.username = user;
+        testPayload.port = (document.getElementById('smbPort').value || '445').trim();
+        if (pass) { testPayload.pass = pass; testPayload.password = pass; }
+        const shareVal = (document.getElementById('smbShare').value || '').trim();
+        if (shareVal) testPayload.share = shareVal;
+        const domVal = (document.getElementById('smbDomain').value || '').trim();
+        if (domVal) testPayload.domain = domVal;
+      } else if (provider === 'protondrive') {
+        const user = (document.getElementById('protondriveUser').value || '').trim();
+        const pass = (document.getElementById('protondrivePass').value || '').trim();
+        if (!user || !pass) {
+          showToast('Wajib mengisi Username / Email dan Password Proton Drive!', 'error');
+          return;
+        }
+        testPayload.user = user;
+        testPayload.username = user;
+        testPayload.email = user;
+        testPayload.pass = pass;
+        testPayload.password = pass;
+        const twoFA = (document.getElementById('protondrive2FA').value || '').trim();
+        if (twoFA) { testPayload['2fa'] = twoFA; testPayload.twofa = twoFA; }
+        const mbPass = (document.getElementById('protondriveMailboxPass').value || '').trim();
+        if (mbPass) testPayload.mailbox_password = mbPass;
       }
 
       showOnboardingStep(3);
@@ -4297,6 +4459,16 @@
               guideText += '1. Periksa URL WebDAV, pastikan diawali <code>https://</code> dan diakhiri slash <code>/</code>.<br>2. Jika Nextcloud Anda mengaktifkan 2FA, Anda WAJIB membuat <em>App Password</em> di menu Security Nextcloud (bukan password login biasa).';
             } else if (provider === 's3') {
               guideText += '1. Periksa apakah nama Bucket sudah dibuat di dashboard S3.<br>2. Verifikasi Access Key ID dan Secret Access Key Anda.<br>3. Jika menggunakan custom endpoint (R2/Wasabi), pastikan format URL benar.';
+            } else if (provider === 'b2') {
+              guideText += '1. Pastikan <strong>Key ID</strong> dan <strong>Application Key</strong> disalin utuh dari dashboard Backblaze.<br>2. Periksa izin Application Key, pastikan memiliki akses <em>Read and Write</em>.<br>3. Jika memasukkan nama Bucket, pastikan bucket tersebut sudah dibuat di akun Backblaze B2 Anda.';
+            } else if (provider === 'pikpak') {
+              guideText += '1. Pastikan <strong>Email / No. HP</strong> dan <strong>Password</strong> PikPak sudah benar.<br>2. Jika login dengan nomor HP, sertakan kode negara (contoh: <code>+62812xxxx</code>).<br>3. Pastikan akun tidak terkunci atau memerlukan verifikasi captcha di aplikasi resmi PikPak.';
+            } else if (provider === 'sftp') {
+              guideText += '1. Pastikan <strong>Host / IP</strong> dan <strong>Port</strong> (default: 22) dapat dijangkau dan firewall mengizinkan koneksi SSH.<br>2. Verifikasi <strong>Username</strong> dan <strong>Password</strong> atau <strong>Private Key</strong>.<br>3. Pastikan format Private Key adalah OpenSSH atau PEM standar.';
+            } else if (provider === 'smb') {
+              guideText += '1. Pastikan <strong>Host / IP</strong> dan <strong>Port</strong> (default: 445) dapat dijangkau dan firewall tidak memblokir port SMB.<br>2. Verifikasi <strong>Username</strong>, <strong>Password</strong>, dan <strong>Domain/Workgroup</strong> (jika ada).<br>3. Pastikan nama <strong>Share Name</strong> valid dan user memiliki izin akses read/write.';
+            } else if (provider === 'protondrive') {
+              guideText += '1. Pastikan <strong>Username / Email</strong> dan <strong>Password</strong> akun Proton sudah benar.<br>2. Jika akun Anda menggunakan <strong>2FA (Two-Factor Authentication)</strong>, masukkan kode 6-digit TOTP atau OTP Secret Key.<br>3. Jika akun menggunakan <em>two-password mode</em> (password login & mailbox berbeda), masukkan juga <strong>Mailbox Password</strong>.<br>4. Pastikan akun tidak dibatasi atau memerlukan verifikasi interaktif di web resmi Proton.';
             } else {
               guideText += 'Periksa kembali parameter konfigurasi yang Anda masukkan di halaman sebelumnya.';
             }
@@ -6042,6 +6214,91 @@
           </div>
         `
       },
+      b2: {
+        name: 'Backblaze B2',
+        type: 'b2',
+        defaultQuota: 10,
+        namePlaceholder: 'e.g. Backblaze B2 Backup',
+        b2GuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Kredensial Backblaze B2:
+            </div>
+            1. Buka dashboard <a href="https://secure.backblaze.com/app_keys.htm" target="_blank" style="color:var(--md-sys-color-primary);font-weight:700;text-decoration:underline;">Backblaze App Keys</a>.<br>
+            2. Klik <strong>Add a New Application Key</strong>, beri nama, dan pilih izin (Read and Write).<br>
+            3. Salin <strong>keyID</strong> ke kolom Key ID dan <strong>applicationKey</strong> ke kolom Application Key.<br>
+            4. <em>(Opsional)</em> Jika Anda membatasi key ke satu bucket tertentu, masukkan nama bucket di kolom Bucket Name.
+          </div>
+        `
+      },
+      pikpak: {
+        name: 'PikPak',
+        type: 'pikpak',
+        defaultQuota: 100,
+        namePlaceholder: 'e.g. PikPak Cloud Drive',
+        pikpakGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Autentikasi PikPak:
+            </div>
+            1. Masukkan <strong>Email</strong> atau <strong>Nomor HP</strong> (dengan kode negara, misal: <code>+62...</code>) yang terdaftar di PikPak.<br>
+            2. Masukkan <strong>Password</strong> akun PikPak Anda.<br>
+            3. Kredensial disimpan secara terenkripsi AES-256-GCM langsung di Cloudgate.
+          </div>
+        `
+      },
+      sftp: {
+        name: 'SFTP / SSH',
+        type: 'sftp',
+        defaultQuota: 50,
+        namePlaceholder: 'e.g. Server VPS / NAS Pribadi',
+        sftpGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Koneksi SFTP / SSH:
+            </div>
+            1. Masukkan <strong>Host / IP</strong> dan <strong>Port SSH</strong> (default: 22).<br>
+            2. Masukkan <strong>Username</strong> login server Linux / BSD / NAS Anda.<br>
+            3. Pilih metode autentikasi: isi <strong>Password SSH</strong> atau tempel <strong>Private Key</strong> (OpenSSH / PEM).<br>
+            4. <em>(Opsional)</em> Tentukan <strong>Root Path</strong> untuk membatasi folder kerja gateway.
+          </div>
+        `
+      },
+      smb: {
+        name: 'SMB / Samba',
+        type: 'smb',
+        defaultQuota: 100,
+        namePlaceholder: 'e.g. NAS Kantor / Server Windows Share',
+        smbGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Koneksi SMB / Samba (Windows Share):
+            </div>
+            1. Masukkan <strong>Host / IP</strong> server SMB/NAS Anda dan <strong>Port</strong> (default: 445).<br>
+            2. Masukkan <strong>Nama Share</strong> (nama folder share di server, contoh: <code>share</code> atau <code>data</code>).<br>
+            3. Masukkan <strong>Username</strong> dan <strong>Password</strong> akun Windows / Samba.<br>
+            4. <em>(Opsional)</em> Isi <strong>Domain / Workgroup</strong> jika server berada di lingkungan Active Directory atau domain khusus.
+          </div>
+        `
+      },
+      protondrive: {
+        name: 'Proton Drive',
+        type: 'protondrive',
+        defaultQuota: 5,
+        namePlaceholder: 'e.g. Proton Drive Saya',
+        protondriveGuideHtml: `
+          <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);background-color:var(--md-sys-color-surface-container-high);padding:12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline-variant);margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>📘</span> Panduan Autentikasi Proton Drive (Zero-Knowledge):
+            </div>
+            1. Masukkan <strong>Username</strong> atau <strong>Email Proton</strong> Anda (misal: <code>user@proton.me</code>).<br>
+            2. Masukkan <strong>Password</strong> akun Proton.<br>
+            3. <em>(Opsional)</em> Jika 2FA aktif, masukkan kode 6-digit TOTP atau OTP Secret Key.<br>
+            4. <em>(Opsional)</em> Jika akun menggunakan mode 2 password, masukkan Mailbox Password Anda.<br>
+            5. Kredensial disimpan secara terenkripsi AES-256-GCM langsung di Cloudgate.
+          </div>
+        `
+      },
       s3: {
         name: 'S3 / S3-Compatible',
         type: 's3',
@@ -6129,6 +6386,16 @@
       const megaGuideBox = document.getElementById('megaGuideBox');
       const filenExtra = document.getElementById('filenExtraFields');
       const filenGuideBox = document.getElementById('filenGuideBox');
+      const b2Extra = document.getElementById('b2ExtraFields');
+      const b2GuideBox = document.getElementById('b2GuideBox');
+      const pikpakExtra = document.getElementById('pikpakExtraFields');
+      const pikpakGuideBox = document.getElementById('pikpakGuideBox');
+      const sftpExtra = document.getElementById('sftpExtraFields');
+      const sftpGuideBox = document.getElementById('sftpGuideBox');
+      const smbExtra = document.getElementById('smbExtraFields');
+      const smbGuideBox = document.getElementById('smbGuideBox');
+      const protondriveExtra = document.getElementById('protondriveExtraFields');
+      const protondriveGuideBox = document.getElementById('protondriveGuideBox');
       const nameInput = document.getElementById('newAccountName');
       const quotaInput = document.getElementById('newAccountQuota');
       const clientIdInput = document.getElementById('newAccountClientID');
@@ -6147,6 +6414,11 @@
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'none';
         if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
 
         btnOAuthText.innerText = `Masuk dengan Akun ${meta.name}`;
         if (clientIdInput) clientIdInput.placeholder = meta.clientIdPlaceholder || 'OAuth Client ID';
@@ -6170,6 +6442,11 @@
         webdavExtra.style.display = 'flex';
         megaExtra.style.display = 'none';
         if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
 
         if (webdavGuideBox) {
           webdavGuideBox.innerHTML = meta.webdavGuideHtml || '';
@@ -6188,6 +6465,11 @@
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'none';
         if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
         if (s3GuideBox) {
           s3GuideBox.innerHTML = meta.s3GuideHtml || '';
         }
@@ -6197,6 +6479,11 @@
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'flex';
         if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
         if (megaGuideBox) {
           megaGuideBox.innerHTML = meta.megaGuideHtml || '';
         }
@@ -6206,8 +6493,83 @@
         webdavExtra.style.display = 'none';
         megaExtra.style.display = 'none';
         if (filenExtra) filenExtra.style.display = 'flex';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
         if (filenGuideBox) {
           filenGuideBox.innerHTML = meta.filenGuideHtml || '';
+        }
+      } else if (meta.type === 'b2') {
+        oauthSection.style.display = 'none';
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'flex';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
+        if (b2GuideBox) {
+          b2GuideBox.innerHTML = meta.b2GuideHtml || '';
+        }
+      } else if (meta.type === 'pikpak') {
+        oauthSection.style.display = 'none';
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'flex';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
+        if (pikpakGuideBox) {
+          pikpakGuideBox.innerHTML = meta.pikpakGuideHtml || '';
+        }
+      } else if (meta.type === 'sftp') {
+        oauthSection.style.display = 'none';
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'flex';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
+        if (sftpGuideBox) {
+          sftpGuideBox.innerHTML = meta.sftpGuideHtml || '';
+        }
+      } else if (meta.type === 'smb') {
+        oauthSection.style.display = 'none';
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'flex';
+        if (protondriveExtra) protondriveExtra.style.display = 'none';
+        if (smbGuideBox) {
+          smbGuideBox.innerHTML = meta.smbGuideHtml || '';
+        }
+      } else if (meta.type === 'protondrive') {
+        oauthSection.style.display = 'none';
+        s3Extra.style.display = 'none';
+        webdavExtra.style.display = 'none';
+        megaExtra.style.display = 'none';
+        if (filenExtra) filenExtra.style.display = 'none';
+        if (b2Extra) b2Extra.style.display = 'none';
+        if (pikpakExtra) pikpakExtra.style.display = 'none';
+        if (sftpExtra) sftpExtra.style.display = 'none';
+        if (smbExtra) smbExtra.style.display = 'none';
+        if (protondriveExtra) protondriveExtra.style.display = 'flex';
+        if (protondriveGuideBox) {
+          protondriveGuideBox.innerHTML = meta.protondriveGuideHtml || '';
         }
       }
     }
@@ -6286,6 +6648,56 @@
         payload.email = document.getElementById('filenUser').value.trim();
         payload.password = document.getElementById('filenPass').value.trim();
         payload.api_key = document.getElementById('filenApiKey').value.trim();
+      } else if (provider === 'b2') {
+        payload.key_id = document.getElementById('b2KeyId').value.trim();
+        payload.application_key = document.getElementById('b2AppKey').value.trim();
+        payload.account = payload.key_id;
+        payload.key = payload.application_key;
+        const b2Bucket = document.getElementById('b2Bucket').value.trim();
+        if (b2Bucket) payload.bucket = b2Bucket;
+        const b2Endpoint = document.getElementById('b2Endpoint').value.trim();
+        if (b2Endpoint) payload.endpoint = b2Endpoint;
+        payload.email = payload.bucket || payload.key_id;
+      } else if (provider === 'pikpak') {
+        payload.user = document.getElementById('pikpakUser').value.trim();
+        payload.username = payload.user;
+        payload.password = document.getElementById('pikpakPass').value.trim();
+        payload.pass = payload.password;
+        payload.email = payload.user;
+      } else if (provider === 'sftp') {
+        payload.host = document.getElementById('sftpHost').value.trim();
+        payload.port = document.getElementById('sftpPort').value.trim() || '22';
+        payload.user = document.getElementById('sftpUser').value.trim();
+        payload.username = payload.user;
+        const sftpPass = document.getElementById('sftpPass').value.trim();
+        if (sftpPass) { payload.pass = sftpPass; payload.password = sftpPass; }
+        const sftpKey = document.getElementById('sftpKeyPem').value.trim();
+        if (sftpKey) { payload.key_pem = sftpKey; payload.private_key = sftpKey; }
+        const sftpPath = document.getElementById('sftpPath').value.trim();
+        if (sftpPath) payload.path = sftpPath;
+        payload.email = `${payload.user}@${payload.host}:${payload.port}`;
+      } else if (provider === 'smb') {
+        payload.host = document.getElementById('smbHost').value.trim();
+        payload.port = document.getElementById('smbPort').value.trim() || '445';
+        payload.user = document.getElementById('smbUser').value.trim();
+        payload.username = payload.user;
+        const smbPass = document.getElementById('smbPass').value.trim();
+        if (smbPass) { payload.pass = smbPass; payload.password = smbPass; }
+        const smbShare = document.getElementById('smbShare').value.trim();
+        if (smbShare) payload.share = smbShare;
+        const smbDomain = document.getElementById('smbDomain').value.trim();
+        if (smbDomain) payload.domain = smbDomain;
+        payload.email = `${payload.user}@${payload.host}${smbShare ? '/' + smbShare : ''}`;
+      } else if (provider === 'protondrive') {
+        payload.username = document.getElementById('protondriveUser').value.trim();
+        payload.user = payload.username;
+        payload.password = document.getElementById('protondrivePass').value.trim();
+        payload.pass = payload.password;
+        const twoFA = document.getElementById('protondrive2FA').value.trim();
+        if (twoFA) { payload['2fa'] = twoFA; payload.twofa = twoFA; }
+        const mbPass = document.getElementById('protondriveMailboxPass').value.trim();
+        if (mbPass) payload.mailbox_password = mbPass;
+        payload.email = payload.username;
       }
       payload.name = rawName || (payload.email ? `${meta.name} (${payload.email})` : `${meta.name} Account`);
       const name = payload.name;

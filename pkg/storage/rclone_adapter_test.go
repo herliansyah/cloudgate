@@ -342,4 +342,277 @@ func TestRcloneAdapter_Filen_Basic(t *testing.T) {
 	}
 }
 
+func TestRcloneAdapter_B2_Basic(t *testing.T) {
+	creds := `{"account":"mock_key_id","key":"mock_app_key","bucket":"cloudgate-test"}`
+	drv, err := storage.NewRcloneDriver("b2", "acc_b2_test", creds)
+	if err != nil {
+		t.Fatalf("failed to create b2 driver: %v", err)
+	}
+	if drv.Provider() != "b2" {
+		t.Errorf("expected b2, got %s", drv.Provider())
+	}
+	ctx := context.Background()
+	drv.SetBaseURL("http://127.0.0.1:9999")
+
+	quota, err := drv.About(ctx)
+	if err != nil {
+		t.Fatalf("about failed: %v", err)
+	}
+	if quota.Total <= 0 {
+		t.Errorf("expected positive total quota, got %d", quota.Total)
+	}
+
+	if err := drv.Put(ctx, "/b2_doc.txt", bytes.NewReader([]byte("b2data")), 6); err != nil {
+		t.Fatalf("put failed: %v", err)
+	}
+	files, err := drv.List(ctx, "/")
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatalf("expected at least 1 file, got 0")
+	}
+	rc, info, err := drv.Get(ctx, "/b2_doc.txt")
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	defer rc.Close()
+	data, _ := io.ReadAll(rc)
+	if string(data) != "b2data" || info.Name != "b2_doc.txt" {
+		t.Errorf("unexpected content: %s", string(data))
+	}
+
+	if err := drv.Move(ctx, "/b2_doc.txt", "/b2_moved.txt"); err != nil {
+		t.Fatalf("move failed: %v", err)
+	}
+	if err := drv.Mkdir(ctx, "/b2_folder"); err != nil {
+		t.Fatalf("mkdir failed: %v", err)
+	}
+	if err := drv.Delete(ctx, "/b2_moved.txt"); err != nil {
+		t.Fatalf("delete failed: %v", err)
+	}
+	if err := drv.TestConnection(ctx); err != nil {
+		t.Fatalf("test connection failed: %v", err)
+	}
+}
+
+func TestRcloneAdapter_PikPak_Basic(t *testing.T) {
+	creds := `{"user":"mock_pikpak_user@example.com","pass":"mock_pikpak_password"}`
+	drv, err := storage.NewRcloneDriver("pikpak", "acc_pikpak_test", creds)
+	if err != nil {
+		t.Fatalf("failed to create pikpak driver: %v", err)
+	}
+	if drv.Provider() != "pikpak" {
+		t.Errorf("expected pikpak, got %s", drv.Provider())
+	}
+	ctx := context.Background()
+	drv.SetBaseURL("http://127.0.0.1:9999")
+
+	quota, err := drv.About(ctx)
+	if err != nil {
+		t.Fatalf("about failed: %v", err)
+	}
+	if quota.Total <= 0 {
+		t.Errorf("expected positive total quota, got %d", quota.Total)
+	}
+
+	if err := drv.Put(ctx, "/pikpak_doc.txt", bytes.NewReader([]byte("pikpakdata")), 10); err != nil {
+		t.Fatalf("put failed: %v", err)
+	}
+	files, err := drv.List(ctx, "/")
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatalf("expected at least 1 file, got 0")
+	}
+	rc, info, err := drv.Get(ctx, "/pikpak_doc.txt")
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	defer rc.Close()
+	data, _ := io.ReadAll(rc)
+	if string(data) != "pikpakdata" || info.Name != "pikpak_doc.txt" {
+		t.Errorf("unexpected content: %s", string(data))
+	}
+
+	if err := drv.Move(ctx, "/pikpak_doc.txt", "/pikpak_moved.txt"); err != nil {
+		t.Fatalf("move failed: %v", err)
+	}
+	if err := drv.Mkdir(ctx, "/pikpak_folder"); err != nil {
+		t.Fatalf("mkdir failed: %v", err)
+	}
+	if err := drv.Delete(ctx, "/pikpak_moved.txt"); err != nil {
+		t.Fatalf("delete failed: %v", err)
+	}
+	if err := drv.TestConnection(ctx); err != nil {
+		t.Fatalf("test connection failed: %v", err)
+	}
+}
+
+func TestRcloneAdapter_SFTP_Basic(t *testing.T) {
+	creds := `{"host":"mock.sftp.local","port":"22","user":"mock_ssh_user","pass":"mock_ssh_pass"}`
+	drv, err := storage.NewRcloneDriver("sftp", "acc_sftp_test", creds)
+	if err != nil {
+		t.Fatalf("failed to create sftp driver: %v", err)
+	}
+	if drv.Provider() != "sftp" {
+		t.Errorf("expected sftp, got %s", drv.Provider())
+	}
+	ctx := context.Background()
+	drv.SetBaseURL("http://127.0.0.1:9999")
+
+	quota, err := drv.About(ctx)
+	if err != nil {
+		t.Fatalf("about failed: %v", err)
+	}
+	if quota.Total <= 0 {
+		t.Errorf("expected positive total quota, got %d", quota.Total)
+	}
+
+	if err := drv.Put(ctx, "/sftp_doc.txt", bytes.NewReader([]byte("sftpdata")), 8); err != nil {
+		t.Fatalf("put failed: %v", err)
+	}
+	files, err := drv.List(ctx, "/")
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatalf("expected at least 1 file, got 0")
+	}
+	rc, info, err := drv.Get(ctx, "/sftp_doc.txt")
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	defer rc.Close()
+	data, _ := io.ReadAll(rc)
+	if string(data) != "sftpdata" || info.Name != "sftp_doc.txt" {
+		t.Errorf("unexpected content: %s", string(data))
+	}
+
+	if err := drv.Move(ctx, "/sftp_doc.txt", "/sftp_moved.txt"); err != nil {
+		t.Fatalf("move failed: %v", err)
+	}
+	if err := drv.Mkdir(ctx, "/sftp_folder"); err != nil {
+		t.Fatalf("mkdir failed: %v", err)
+	}
+	if err := drv.Delete(ctx, "/sftp_moved.txt"); err != nil {
+		t.Fatalf("delete failed: %v", err)
+	}
+	if err := drv.TestConnection(ctx); err != nil {
+		t.Fatalf("test connection failed: %v", err)
+	}
+}
+
+func TestRcloneAdapter_SMB_Basic(t *testing.T) {
+	creds := `{"host":"mock.smb.local","port":"445","share":"mockshare","user":"mock_smb_user","pass":"mock_smb_pass"}`
+	drv, err := storage.NewRcloneDriver("smb", "acc_smb_test", creds)
+	if err != nil {
+		t.Fatalf("failed to create smb driver: %v", err)
+	}
+	if drv.Provider() != "smb" {
+		t.Errorf("expected smb, got %s", drv.Provider())
+	}
+	ctx := context.Background()
+	drv.SetBaseURL("http://127.0.0.1:9999")
+
+	quota, err := drv.About(ctx)
+	if err != nil {
+		t.Fatalf("about failed: %v", err)
+	}
+	if quota.Total <= 0 {
+		t.Errorf("expected positive total quota, got %d", quota.Total)
+	}
+
+	if err := drv.Put(ctx, "/smb_doc.txt", bytes.NewReader([]byte("smbdata")), 7); err != nil {
+		t.Fatalf("put failed: %v", err)
+	}
+	files, err := drv.List(ctx, "/")
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatalf("expected at least 1 file, got 0")
+	}
+	rc, info, err := drv.Get(ctx, "/smb_doc.txt")
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	defer rc.Close()
+	data, _ := io.ReadAll(rc)
+	if string(data) != "smbdata" || info.Name != "smb_doc.txt" {
+		t.Errorf("unexpected content: %s", string(data))
+	}
+
+	if err := drv.Move(ctx, "/smb_doc.txt", "/smb_moved.txt"); err != nil {
+		t.Fatalf("move failed: %v", err)
+	}
+	if err := drv.Mkdir(ctx, "/smb_folder"); err != nil {
+		t.Fatalf("mkdir failed: %v", err)
+	}
+	if err := drv.Delete(ctx, "/smb_moved.txt"); err != nil {
+		t.Fatalf("delete failed: %v", err)
+	}
+	if err := drv.TestConnection(ctx); err != nil {
+		t.Fatalf("test connection failed: %v", err)
+	}
+}
+
+func TestRcloneAdapter_ProtonDrive_Basic(t *testing.T) {
+	creds := `{"username":"mock_proton_user@proton.me","password":"mock_proton_password"}`
+	drv, err := storage.NewRcloneDriver("protondrive", "acc_proton_test", creds)
+	if err != nil {
+		t.Fatalf("failed to create protondrive driver: %v", err)
+	}
+	if drv.Provider() != "protondrive" {
+		t.Errorf("expected protondrive, got %s", drv.Provider())
+	}
+	ctx := context.Background()
+	drv.SetBaseURL("http://127.0.0.1:9999")
+
+	quota, err := drv.About(ctx)
+	if err != nil {
+		t.Fatalf("about failed: %v", err)
+	}
+	if quota.Total <= 0 {
+		t.Errorf("expected positive total quota, got %d", quota.Total)
+	}
+
+	if err := drv.Put(ctx, "/proton_doc.txt", bytes.NewReader([]byte("protondata")), 10); err != nil {
+		t.Fatalf("put failed: %v", err)
+	}
+	files, err := drv.List(ctx, "/")
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatalf("expected at least 1 file, got 0")
+	}
+	rc, info, err := drv.Get(ctx, "/proton_doc.txt")
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	defer rc.Close()
+	data, _ := io.ReadAll(rc)
+	if string(data) != "protondata" || info.Name != "proton_doc.txt" {
+		t.Errorf("unexpected content: %s", string(data))
+	}
+
+	if err := drv.Move(ctx, "/proton_doc.txt", "/proton_moved.txt"); err != nil {
+		t.Fatalf("move failed: %v", err)
+	}
+	if err := drv.Mkdir(ctx, "/proton_folder"); err != nil {
+		t.Fatalf("mkdir failed: %v", err)
+	}
+	if err := drv.Delete(ctx, "/proton_moved.txt"); err != nil {
+		t.Fatalf("delete failed: %v", err)
+	}
+	if err := drv.TestConnection(ctx); err != nil {
+		t.Fatalf("test connection failed: %v", err)
+	}
+}
+
+
+
+
 

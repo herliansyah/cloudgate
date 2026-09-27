@@ -11,11 +11,11 @@ Koneksi terkonfigurasi dan terautentikasi ke penyedia penyimpanan cloud tertentu
 _Hindari_: Drive connection, cloud user, session
 
 **AccountPrincipal**:
-Identitas eksternal kanonikal pengguna atau sumber daya target yang terkait dengan RemoteAccount (misalnya alamat email terotentikasi untuk layanan OAuth/Mega/Filen, `username@host` untuk WebDAV, atau `bucket_name` untuk S3).
+Identitas eksternal kanonikal pengguna atau sumber daya target yang terkait dengan RemoteAccount (misalnya alamat email terotentikasi untuk layanan OAuth/Mega/Filen/Proton/PikPak, `username@host[:port]` untuk WebDAV/SFTP, `username@host/share` untuk SMB, atau `bucket_name`/`key_id` untuk S3/B2).
 _Hindari_: ID pengguna, kunci internal penyedia, nomor akun
 
 **Provider**:
-Layanan penyimpanan cloud pihak ketiga yang didukung (misalnya: Google Drive, OneDrive, Dropbox, S3, Mega, Filen).
+Layanan penyimpanan cloud pihak ketiga atau protokol penyimpanan yang didukung (misalnya: Google Drive, OneDrive, Dropbox, S3, Mega, Filen, Backblaze B2, PikPak, SFTP, SMB, Proton Drive).
 _Hindari_: Vendor, cloud host
 
 **StoragePool**:
@@ -71,7 +71,7 @@ Jabat tangan protokol yang memberikan Cloudgate access token dan refresh token d
 _Hindari_: Login session, API handshake
 
 **DirectCredentialAuth**:
-Alur autentikasi berfriksi tinggi di mana Cloudgate mengelola kredensial mentah pengguna (seperti username/email, kata sandi utama, dan/atau API key enkripsi client-side zero-knowledge) untuk menegosiasikan sesi langsung dengan penyedia yang tidak memiliki delegasi OAuth standar (khususnya MEGA dan Filen), dengan risiko operasional pemblokiran fraud pihak ketiga, penandaan IP, atau manajemen kunci enkripsi client.
+Alur autentikasi di mana Cloudgate mengelola kredensial langsung pengguna (seperti username/email, kata sandi, API key, atau kredensial server host) untuk menegosiasikan sesi langsung dengan penyedia yang tidak memiliki delegasi OAuth standar (khususnya MEGA, Filen, Backblaze B2, PikPak, SFTP, SMB, dan Proton Drive), dengan risiko operasional pemblokiran fraud pihak ketiga, penandaan IP, atau keterjangkauan jaringan server host.
 _Hindari_: Password login, basic auth, direct connection
 
 **VendorDriver**:
