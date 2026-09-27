@@ -1,12 +1,22 @@
-# Cloudgate
+<div align="center">
+
+# ☁️ Cloudgate
+
+### Lightweight Unified Cloud Storage Gateway & Multi-Account Aggregator
+
+[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/badge/Release-v0.1.0-blue.svg)](https://github.com/herliansyah/cloudgate/releases)
+[![Pure-Go](https://img.shields.io/badge/Pure--Go-Zero--CGO-success.svg)](#architecture--codebase-layout)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](#testing)
+
+**A single static Go binary with an embedded Google Drive-inspired dark-mode Web UI, REST API, and CLI.**
+
+[Key Features](#key-features) • [Supported Providers](#supported-providers) • [Quick Start](#quick-start) • [Architecture](#architecture--codebase-layout) • [Author](#author--maintainer) • [License](#license)
 
 [English](README.md) | [Bahasa Indonesia](README.id.md)
 
-**Cloudgate** is a lightweight, unified cloud storage gateway and multi-account aggregator compiled into a single static Go binary with an embedded Google Drive-inspired dark-mode Web UI and command-line interface.
-
-- **Author**: Herliansyah
-- **Repository**: [https://github.com/herliansyah/cloudgate](https://github.com/herliansyah/cloudgate)
-- **License**: MIT
+</div>
 
 ---
 
@@ -27,6 +37,31 @@
 10. **Single-Instance Mutex & Port Hunting**: Automatically acquires an OS lock file (`~/.config/cloudgate/cloudgate.lock`) to prevent duplicate processes, and scans available ports starting at `5210` (`5210..5300`) listening on `0.0.0.0` for local and LAN access.
 11. **Self-Updating**: Built-in GitHub Releases updater checks for official releases and verifies SHA-256 checksums.
 12. **Bilingual UI & Documentation**: Seamless instant toggle between English and Bahasa Indonesia with persisted preferences and synchronized bilingual documentation.
+
+---
+
+## Supported Providers
+
+Cloudgate connects to **16 storage providers and protocols** through an embedded rclone engine without requiring external daemon bridges:
+
+| Provider | Category | Auth Method | Zero-Disk Streaming | Setup Friction |
+| :--- | :--- | :--- | :---: | :--- |
+| **Google Drive** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Client ID / Secret ([Guide](#google-drive-integration-guide)) |
+| **Microsoft OneDrive** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **Dropbox** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **Box** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **pCloud** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **Yandex Disk** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
+| **Koofr** | Cloud Drive | Direct Credentials | Yes (`io.Pipe`) | User & Password |
+| **MEGA** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email & Password |
+| **Filen** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email, Password & 2FA |
+| **Proton Drive** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Username, Password & 2FA |
+| **PikPak** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email & Password |
+| **Amazon S3** | Object Storage | Access Keys | Yes (`io.Pipe`) | Key, Secret, Endpoint, Bucket |
+| **Backblaze B2** | Object Storage | Access Keys | Yes (`io.Pipe`) | Key ID, App Key, Bucket |
+| **Nextcloud / WebDAV** | Protocol / Cloud | Direct Credentials | Yes (`io.Pipe`) | URL, Username, Password |
+| **SFTP** | Server Protocol | SSH Credentials | Yes (`io.Pipe`) | Host, Port, User, Password / Key |
+| **SMB (Samba / Windows)** | Server Protocol | Network Share | Yes (`io.Pipe`) | Host, Share, User, Password |
 
 <!-- Web UI Preview Placeholder (e.g. docs/assets/cloudgate-preview.png) -->
 
@@ -175,3 +210,21 @@ Run the full automated test suite:
 ```bash
 go test -v ./pkg/...
 ```
+
+---
+
+## Author & Maintainer
+
+Created with ❤️ by **Herliansyah**
+- **GitHub**: [@herliansyah](https://github.com/herliansyah)
+- **Repository**: [https://github.com/herliansyah/cloudgate](https://github.com/herliansyah/cloudgate)
+
+Contributions, feature suggestions, and bug reports are warmly welcome!
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+Copyright &copy; 2026 Herliansyah.
+

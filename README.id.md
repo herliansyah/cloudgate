@@ -1,12 +1,22 @@
-# Cloudgate
+<div align="center">
+
+# ☁️ Cloudgate
+
+### Gateway Penyimpanan Cloud Terpadu & Agregator Multi-Akun
+
+[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![Lisensi: MIT](https://img.shields.io/badge/Lisensi-MIT-yellow.svg)](LICENSE)
+[![Rilis](https://img.shields.io/badge/Rilis-v0.1.0-blue.svg)](https://github.com/herliansyah/cloudgate/releases)
+[![Pure-Go](https://img.shields.io/badge/Pure--Go-Zero--CGO-success.svg)](#arsitektur--struktur-direktori)
+[![Status Pengujian](https://img.shields.io/badge/Pengujian-Lolos-brightgreen.svg)](#pengujian-testing)
+
+**Satu binary Go statis mandiri dengan Web UI mode gelap bergaya Google Drive, REST API, dan antarmuka CLI.**
+
+[Fitur Utama](#fitur-utama) • [Penyedia Didukung](#penyedia-yang-didukung) • [Memulai Cepat](#memulai-cepat) • [Arsitektur](#arsitektur--struktur-direktori) • [Penulis](#penulis--pemelihara) • [Lisensi](#lisensi)
 
 [English](README.md) | [Bahasa Indonesia](README.id.md)
 
-**Cloudgate** adalah gateway penyimpanan cloud terpadu dan agregator multi-akun yang ringan, dikompilasi menjadi satu binary Go statis mandiri dengan Web UI mode gelap bergaya Google Drive serta antarmuka baris perintah (CLI).
-
-- **Penulis**: Herliansyah
-- **Repositori**: [https://github.com/herliansyah/cloudgate](https://github.com/herliansyah/cloudgate)
-- **Lisensi**: MIT
+</div>
 
 ---
 
@@ -27,6 +37,31 @@
 10. **Mutex Single-Instance & Pencarian Port**: Secara otomatis mengunci file mutex OS (`~/.config/cloudgate/cloudgate.lock`) untuk mencegah duplikasi proses, dan memindai port yang tersedia mulai dari `5210` (`5210..5300`) mendengarkan pada `0.0.0.0` untuk akses lokal dan LAN.
 11. **Pembaruan Mandiri (Self-Updating)**: Pemeriksa rilis resmi GitHub Releases terintegrasi untuk verifikasi checksum SHA-256 dan pembaruan otomatis.
 12. **Dukungan Dwibahasa (Dual Language)**: Antarmuka Web UI mendukung pergantian instan antara Bahasa Indonesia dan English, dengan persistensi preferensi lokal.
+
+---
+
+## Penyedia yang Didukung
+
+Cloudgate menghubungkan **16 penyedia penyimpanan cloud dan protokol server** melalui mesin rclone tersemat tanpa memerlukan dependensi binary daemon eksternal:
+
+| Penyedia | Kategori | Metode Autentikasi | Streaming Zero-Disk | Kompleksitas Setup |
+| :--- | :--- | :--- | :---: | :--- |
+| **Google Drive** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Client ID / Secret ([Panduan](#panduan-integrasi-google-drive)) |
+| **Microsoft OneDrive** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
+| **Dropbox** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
+| **Box** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
+| **pCloud** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
+| **Yandex Disk** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
+| **Koofr** | Cloud Drive | Kredensial Langsung | Ya (`io.Pipe`) | Username & Password |
+| **MEGA** | Cloud Privasi | Kredensial Langsung | Ya (`io.Pipe`) | Email & Password |
+| **Filen** | Cloud Privasi | Kredensial Langsung | Ya (`io.Pipe`) | Email, Password & 2FA |
+| **Proton Drive** | Cloud Privasi | Kredensial Langsung | Ya (`io.Pipe`) | Username, Password & 2FA |
+| **PikPak** | Cloud Privasi | Kredensial Langsung | Ya (`io.Pipe`) | Email & Password |
+| **Amazon S3** | Object Storage | Kunci Akses | Ya (`io.Pipe`) | Key, Secret, Endpoint, Bucket |
+| **Backblaze B2** | Object Storage | Kunci Akses | Ya (`io.Pipe`) | Key ID, App Key, Bucket |
+| **Nextcloud / WebDAV** | Protokol / Cloud | Kredensial Langsung | Ya (`io.Pipe`) | URL, Username, Password |
+| **SFTP** | Protokol Server | Kredensial SSH | Ya (`io.Pipe`) | Host, Port, User, Password / Key |
+| **SMB (Samba / Windows)** | Protokol Server | Berbagi Jaringan | Ya (`io.Pipe`) | Host, Share, User, Password |
 
 <!-- Placeholder Screenshot Web UI (misal: docs/assets/cloudgate-preview.png) -->
 
@@ -176,3 +211,21 @@ Jalankan rangkaian pengujian otomatis lengkap:
 ```bash
 go test -v ./pkg/...
 ```
+
+---
+
+## Penulis & Pemelihara
+
+Dibuat dengan ❤️ oleh **Herliansyah**
+- **GitHub**: [@herliansyah](https://github.com/herliansyah)
+- **Repositori**: [https://github.com/herliansyah/cloudgate](https://github.com/herliansyah/cloudgate)
+
+Kontribusi, saran fitur, dan laporan *bug* sangat kami nantikan!
+
+---
+
+## Lisensi
+
+Proyek ini merupakan perangkat lunak sumber terbuka yang dilisensikan di bawah [Lisensi MIT](LICENSE).
+Hak Cipta &copy; 2026 Herliansyah.
+
