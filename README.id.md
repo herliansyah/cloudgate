@@ -12,15 +12,18 @@
 
 ## Fitur Utama
 
-1. **Agregator Multi-Akun**: Hubungkan beberapa akun penyimpanan cloud pribadi dan kerja lintas penyedia (Google Drive, OneDrive, Dropbox, Box, Mega, pCloud, Nextcloud/WebDAV, S3, Koofr, Yandex Disk).
+1. **Agregator Multi-Akun**: Hubungkan beberapa akun penyimpanan cloud pribadi dan kerja lintas penyedia (Google Drive, OneDrive, Dropbox, Box, Mega, Filen, pCloud, Nextcloud/WebDAV, S3, Koofr, Yandex Disk).
 2. **StoragePool Sadar Kapasitas**: Gabungkan beberapa akun penyimpanan menjadi satu pool virtual terpadu di mana penulisan data didistribusikan secara otomatis menggunakan round-robin sadar kapasitas tanpa memecah keutuhan file fisik.
-3. **Transfer Streaming Tanpa Disk (Zero-Disk)**: Jalankan operasi salin dan pindah file lintas akun langsung melalui streaming in-memory `io.Pipe` tanpa jejak penyimpanan disk sementara di host dan dengan verifikasi semantik pindah yang aman.
-4. **RemoteTrash Terisolasi**: Hapus file secara lunak (soft-delete) ke direktori remote terisolasi (`/.cloudgate_trash/`) dengan katalog SQLite lokal yang memetakan path asli untuk pemulihan satu klik yang deterministik.
-5. **Arsitektur SQLite Lokal**: Ditenagai SQLite pure-Go (`modernc.org/sqlite`) untuk kompilasi statis tanpa dependensi CGO, dilengkapi indeks pencarian teks lengkap FTS5 dan log audit rolling 100 entri yang atomik.
-6. **EncryptedVault & Sinkronisasi GitHub**: Amankan konfigurasi akun dan kredensial dengan enkripsi PBKDF2 + AES-256-GCM, dengan opsi sinkronisasi ke repositori GitHub privat.
-7. **Mutex Single-Instance & Pencarian Port**: Secara otomatis mengunci file mutex OS (`~/.config/cloudgate/cloudgate.lock`) untuk mencegah duplikasi proses, dan memindai port yang tersedia mulai dari `5210` (`5210..5300`) mendengarkan pada `0.0.0.0` untuk akses lokal dan LAN.
-8. **Pembaruan Mandiri (Self-Updating)**: Pemeriksa rilis resmi GitHub Releases terintegrasi untuk verifikasi checksum SHA-256 dan pembaruan otomatis.
-9. **Dukungan Dwibahasa (Dual Language)**: Antarmuka Web UI mendukung pergantian instan antara Bahasa Indonesia dan English, dengan persistensi preferensi lokal.
+3. **Antrean Task Latar Belakang & Transfer Folder**: Eksekusi antrean FIFO 2-worker persisten di SQLite untuk transfer berkas besar dan pemindahan folder rekursif dengan ketahanan terhadap restart server.
+4. **Unduh Langsung dari URL (Remote Ingest)**: Pipeline streaming tanpa disk untuk mengunduh sumber daya web (HTTP/HTTPS) langsung ke penyimpanan cloud mana pun dengan proteksi ketat anti-SSRF.
+5. **Replikasi & Sinkronisasi Folder**: Sinkronisasi folder lintas akun dengan mode aditif maupun mirror (berkas yatim dipindahkan ke `RemoteTrash` terisolasi).
+6. **Transfer Streaming Tanpa Disk (Zero-Disk)**: Jalankan operasi salin dan pindah file lintas akun langsung melalui streaming in-memory `io.Pipe` tanpa jejak penyimpanan disk sementara di host dan dengan verifikasi semantik pindah yang aman.
+7. **RemoteTrash Terisolasi**: Hapus file secara lunak (soft-delete) ke direktori remote terisolasi (`/.cloudgate_trash/`) dengan katalog SQLite lokal yang memetakan path asli untuk pemulihan satu klik yang deterministik.
+8. **Arsitektur SQLite Lokal**: Ditenagai SQLite pure-Go (`modernc.org/sqlite`) untuk kompilasi statis tanpa dependensi CGO, dilengkapi indeks pencarian teks lengkap FTS5, rolling window 100 task selesai, dan log audit rolling 100 entri yang atomik.
+9. **EncryptedVault & Sinkronisasi GitHub**: Amankan konfigurasi akun dan kredensial dengan enkripsi PBKDF2 + AES-256-GCM, dengan opsi sinkronisasi ke repositori GitHub privat.
+10. **Mutex Single-Instance & Pencarian Port**: Secara otomatis mengunci file mutex OS (`~/.config/cloudgate/cloudgate.lock`) untuk mencegah duplikasi proses, dan memindai port yang tersedia mulai dari `5210` (`5210..5300`) mendengarkan pada `0.0.0.0` untuk akses lokal dan LAN.
+11. **Pembaruan Mandiri (Self-Updating)**: Pemeriksa rilis resmi GitHub Releases terintegrasi untuk verifikasi checksum SHA-256 dan pembaruan otomatis.
+12. **Dukungan Dwibahasa (Dual Language)**: Antarmuka Web UI mendukung pergantian instan antara Bahasa Indonesia dan English, dengan persistensi preferensi lokal.
 
 ---
 
@@ -119,7 +122,7 @@ cloudgate help             Tampilkan bantuan perintah CLI
 │   └── vault/             # Enkripsi vault PBKDF2 + AES-256-GCM
 ├── web/                   # Frontend SPA tersemat (Material Design 3 mode gelap)
 ├── docs/
-│   ├── adr/               # Catatan Keputusan Arsitektur (ADR 0001 - 0021)
+│   ├── adr/               # Catatan Keputusan Arsitektur (ADR 0001 - 0023)
 │   └── agents/            # Konvensi domain dan spesifikasi triage agent
 ├── CONTEXT.md             # Kosakata kanonikal dan glosarium domain (English)
 ├── CONTEXT.id.md          # Kosakata kanonikal dan glosarium domain (Bahasa Indonesia)

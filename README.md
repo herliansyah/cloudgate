@@ -12,14 +12,17 @@
 
 ## Key Features
 
-1. **Multi-Account Aggregator**: Connect multiple personal and work cloud accounts across providers (Google Drive, OneDrive, Dropbox, Box, Mega, pCloud, Nextcloud/WebDAV, S3, Koofr, Yandex Disk).
+1. **Multi-Account Aggregator**: Connect multiple personal and work cloud accounts across providers (Google Drive, OneDrive, Dropbox, Box, Mega, Filen, pCloud, Nextcloud/WebDAV, S3, Koofr, Yandex Disk).
 2. **Capacity-Aware StoragePool**: Combine multiple storage accounts into a unified virtual pool where incoming writes are automatically distributed using capacity-aware round-robin without splitting intact files.
-3. **Zero-Disk Streaming Transfers**: Perform direct cross-account file copy and move operations via in-memory `io.Pipe` streaming with zero temporary host disk footprint and verified safe-move semantics.
-4. **Isolated Remote Trash**: Soft-delete files into an isolated remote directory (`/.cloudgate_trash/`) with a local SQLite catalog mapping original paths for deterministic one-click restoration.
-5. **Local SQLite Architecture**: Powered by pure-Go SQLite (`modernc.org/sqlite`) for zero-CGO static compilation, featuring an FTS5 full-text search index and an atomic 100-event rolling audit log.
-6. **Encrypted Vault & GitHub Sync**: Secure account configurations and credentials with PBKDF2 + AES-256-GCM encryption, with optional synchronization to private GitHub repositories.
-7. **Single-Instance Mutex & Port Hunting**: Automatically acquires an OS lock file (`~/.config/cloudgate/cloudgate.lock`) to prevent duplicate processes, and scans available ports starting at `5210` (`5210..5300`) listening on `0.0.0.0` for local and LAN access.
-8. **Self-Updating**: Built-in GitHub Releases updater checks for official releases and verifies SHA-256 checksums.
+3. **Async Background Task Queue & Folder Transfers**: Persistent 2-worker FIFO queue in SQLite for long-running file transfers and recursive directory trees with restart recovery and cancellation.
+4. **Direct Remote Ingest (URL Download to Cloud)**: Zero-disk streaming pipeline fetching web resources (HTTP/HTTPS) directly into any cloud drive with strict SSRF network protection.
+5. **Folder Replication & Sync**: Cross-account directory synchronization with additive and mirror modes (orphans soft-deleted into isolated `RemoteTrash`).
+6. **Zero-Disk Streaming Transfers**: Perform direct cross-account file copy and move operations via in-memory `io.Pipe` streaming with zero temporary host disk footprint and verified safe-move semantics.
+7. **Isolated Remote Trash**: Soft-delete files into an isolated remote directory (`/.cloudgate_trash/`) with a local SQLite catalog mapping original paths for deterministic one-click restoration.
+8. **Local SQLite Architecture**: Powered by pure-Go SQLite (`modernc.org/sqlite`) for zero-CGO static compilation, featuring an FTS5 full-text search index, bounded 100-record task rolling window, and an atomic 100-event rolling audit log.
+9. **Encrypted Vault & GitHub Sync**: Secure account configurations and credentials with PBKDF2 + AES-256-GCM encryption, with optional synchronization to private GitHub repositories.
+10. **Single-Instance Mutex & Port Hunting**: Automatically acquires an OS lock file (`~/.config/cloudgate/cloudgate.lock`) to prevent duplicate processes, and scans available ports starting at `5210` (`5210..5300`) listening on `0.0.0.0` for local and LAN access.
+11. **Self-Updating**: Built-in GitHub Releases updater checks for official releases and verifies SHA-256 checksums.
 
 ---
 
@@ -118,7 +121,7 @@ cloudgate help             Show command help
 │   └── vault/             # PBKDF2 + AES-256-GCM encrypted vault
 ├── web/                   # Embedded SPA frontend (Google Drive dark-mode UI)
 ├── docs/
-│   ├── adr/               # Architectural Decision Records (0001 - 0021)
+│   ├── adr/               # Architectural Decision Records (0001 - 0023)
 │   └── agents/            # Domain conventions and agent triage specifications
 ├── CONTEXT.md             # Canonical ubiquitous language and domain glossary
 └── AGENTS.md              # Agent behavioral rules and skill map

@@ -56,6 +56,26 @@ type AuditEvent struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+type StorageTask struct {
+	ID              string    `json:"id"`
+	Type            string    `json:"type"` // "transfer", "replicate", "ingest"
+	SourceAccountID string    `json:"source_account_id"`
+	SourcePath      string    `json:"source_path"`
+	TargetAccountID string    `json:"target_account_id"`
+	TargetPath      string    `json:"target_path"`
+	IsDir           bool      `json:"is_dir"`
+	IsMove          bool      `json:"is_move"`
+	Mirror          bool      `json:"mirror"`
+	Status          string    `json:"status"` // "pending", "running", "completed", "failed", "cancelled", "interrupted"
+	ProgressBytes   int64     `json:"progress_bytes"`
+	TotalBytes      int64     `json:"total_bytes"`
+	ItemsProcessed  int       `json:"items_processed"`
+	TotalItems      int       `json:"total_items"`
+	ErrorMessage    string    `json:"error_message"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
 type DB struct {
 	conn *sql.DB
 }
@@ -154,6 +174,39 @@ func (d *DB) migrate() error {
 		created_at DATETIME NOT NULL,
 		expires_at DATETIME NOT NULL
 	);
+
+	CREATE TABLE IF NOT EXISTS storage_tasks (
+		id TEXT PRIMARY KEY,
+		type TEXT NOT NULL,
+		source_account_id TEXT NOT NULL DEFAULT '',
+		source_path TEXT NOT NULL DEFAULT '',
+		target_account_id TEXT NOT NULL DEFAULT '',
+		target_path TEXT NOT NULL DEFAULT '',
+		is_dir INTEGER NOT NULL DEFAULT 0,
+		is_move INTEGER NOT NULL DEFAULT 0,
+		mirror INTEGER NOT NULL DEFAULT 0,
+		status TEXT NOT NULL,
+		progress_bytes INTEGER NOT NULL DEFAULT 0,
+		total_bytes INTEGER NOT NULL DEFAULT 0,
+		items_processed INTEGER NOT NULL DEFAULT 0,
+		total_items INTEGER NOT NULL DEFAULT 0,
+		error_message TEXT NOT NULL DEFAULT '',
+		created_at DATETIME NOT NULL,
+		updated_at DATETIME NOT NULL
+	);
+
+	CREATE TRIGGER IF NOT EXISTS limit_storage_tasks
+	AFTER UPDATE OF status ON storage_tasks
+	WHEN NEW.status IN ('completed', 'failed', 'cancelled', 'interrupted')
+	BEGIN
+		DELETE FROM storage_tasks
+		WHERE status IN ('completed', 'failed', 'cancelled', 'interrupted')
+		AND id NOT IN (
+			SELECT id FROM storage_tasks
+			WHERE status IN ('completed', 'failed', 'cancelled', 'interrupted')
+			ORDER BY updated_at DESC LIMIT 100
+		);
+	END;
 	`
 	if _, err := d.conn.Exec(schema); err != nil {
 		return err
@@ -486,4 +539,219 @@ func (d *DB) PurgeExpiredGatewaySessions() error {
 	_, err := d.conn.Exec(`DELETE FROM gateway_sessions WHERE expires_at < ?`, time.Now().UTC())
 	return err
 }
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// CreateTask inserts a new storage background task.
+func (d *DB) CreateTask(t *StorageTask) error {
+	now := time.Now().UTC()
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = now
+	}
+	t.UpdatedAt = now
+	if t.Status == "" {
+		t.Status = "pending"
+	}
+
+	_, err := d.conn.Exec(`
+		INSERT INTO storage_tasks (
+			id, type, source_account_id, source_path, target_account_id, target_path,
+			is_dir, is_move, mirror, status, progress_bytes, total_bytes,
+			items_processed, total_items, error_message, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, t.ID, t.Type, t.SourceAccountID, t.SourcePath, t.TargetAccountID, t.TargetPath,
+		boolToInt(t.IsDir), boolToInt(t.IsMove), boolToInt(t.Mirror), t.Status,
+		t.ProgressBytes, t.TotalBytes, t.ItemsProcessed, t.TotalItems,
+		t.ErrorMessage, t.CreatedAt, t.UpdatedAt)
+	return err
+}
+
+// GetTask retrieves a single storage task by ID.
+func (d *DB) GetTask(id string) (*StorageTask, error) {
+	row := d.conn.QueryRow(`
+		SELECT id, type, source_account_id, source_path, target_account_id, target_path,
+		       is_dir, is_move, mirror, status, progress_bytes, total_bytes,
+		       items_processed, total_items, error_message, created_at, updated_at
+		FROM storage_tasks WHERE id = ?
+	`, id)
+
+	var t StorageTask
+	var isDirInt, isMoveInt, mirrorInt int
+	err := row.Scan(
+		&t.ID, &t.Type, &t.SourceAccountID, &t.SourcePath, &t.TargetAccountID, &t.TargetPath,
+		&isDirInt, &isMoveInt, &mirrorInt, &t.Status, &t.ProgressBytes, &t.TotalBytes,
+		&t.ItemsProcessed, &t.TotalItems, &t.ErrorMessage, &t.CreatedAt, &t.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	t.IsDir = isDirInt == 1
+	t.IsMove = isMoveInt == 1
+	t.Mirror = mirrorInt == 1
+	return &t, nil
+}
+
+// ListTasks returns tasks ordered by active status first, then newest updated_at.
+func (d *DB) ListTasks(limit int) ([]StorageTask, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	rows, err := d.conn.Query(`
+		SELECT id, type, source_account_id, source_path, target_account_id, target_path,
+		       is_dir, is_move, mirror, status, progress_bytes, total_bytes,
+		       items_processed, total_items, error_message, created_at, updated_at
+		FROM storage_tasks
+		ORDER BY 
+			CASE status 
+				WHEN 'running' THEN 1 
+				WHEN 'pending' THEN 2 
+				ELSE 3 
+			END ASC,
+			updated_at DESC
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []StorageTask
+	for rows.Next() {
+		var t StorageTask
+		var isDirInt, isMoveInt, mirrorInt int
+		if err := rows.Scan(
+			&t.ID, &t.Type, &t.SourceAccountID, &t.SourcePath, &t.TargetAccountID, &t.TargetPath,
+			&isDirInt, &isMoveInt, &mirrorInt, &t.Status, &t.ProgressBytes, &t.TotalBytes,
+			&t.ItemsProcessed, &t.TotalItems, &t.ErrorMessage, &t.CreatedAt, &t.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		t.IsDir = isDirInt == 1
+		t.IsMove = isMoveInt == 1
+		t.Mirror = mirrorInt == 1
+		tasks = append(tasks, t)
+	}
+	return tasks, rows.Err()
+}
+
+// GetNextPendingTask claims the next FIFO pending task and transitions it to 'running'.
+func (d *DB) GetNextPendingTask() (*StorageTask, error) {
+	// ponytail: Single-process mutex / busy_timeout handles concurrent worker claim safely
+	tx, err := d.conn.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	row := tx.QueryRow(`
+		SELECT id, type, source_account_id, source_path, target_account_id, target_path,
+		       is_dir, is_move, mirror, status, progress_bytes, total_bytes,
+		       items_processed, total_items, error_message, created_at, updated_at
+		FROM storage_tasks
+		WHERE status = 'pending'
+		ORDER BY created_at ASC
+		LIMIT 1
+	`)
+
+	var t StorageTask
+	var isDirInt, isMoveInt, mirrorInt int
+	err = row.Scan(
+		&t.ID, &t.Type, &t.SourceAccountID, &t.SourcePath, &t.TargetAccountID, &t.TargetPath,
+		&isDirInt, &isMoveInt, &mirrorInt, &t.Status, &t.ProgressBytes, &t.TotalBytes,
+		&t.ItemsProcessed, &t.TotalItems, &t.ErrorMessage, &t.CreatedAt, &t.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC()
+	_, err = tx.Exec(`
+		UPDATE storage_tasks 
+		SET status = 'running', updated_at = ? 
+		WHERE id = ? AND status = 'pending'
+	`, now, t.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	t.Status = "running"
+	t.UpdatedAt = now
+	t.IsDir = isDirInt == 1
+	t.IsMove = isMoveInt == 1
+	t.Mirror = mirrorInt == 1
+	return &t, nil
+}
+
+// UpdateTaskStatus updates status and error message of a task.
+func (d *DB) UpdateTaskStatus(id, status, errMsg string) error {
+	_, err := d.conn.Exec(`
+		UPDATE storage_tasks
+		SET status = ?, error_message = ?, updated_at = ?
+		WHERE id = ?
+	`, status, errMsg, time.Now().UTC(), id)
+	return err
+}
+
+// UpdateTaskProgress updates byte and item progress counters for a running task.
+func (d *DB) UpdateTaskProgress(id string, progressBytes, totalBytes int64, itemsProcessed, totalItems int) error {
+	_, err := d.conn.Exec(`
+		UPDATE storage_tasks
+		SET progress_bytes = ?, total_bytes = ?, items_processed = ?, total_items = ?, updated_at = ?
+		WHERE id = ?
+	`, progressBytes, totalBytes, itemsProcessed, totalItems, time.Now().UTC(), id)
+	return err
+}
+
+// ResetInterruptedTasks marks any tasks left in 'running' state as 'interrupted'.
+func (d *DB) ResetInterruptedTasks() error {
+	_, err := d.conn.Exec(`
+		UPDATE storage_tasks
+		SET status = 'interrupted', error_message = 'Interrupted by server restart', updated_at = ?
+		WHERE status = 'running'
+	`, time.Now().UTC())
+	return err
+}
+
+// ClearFinishedTasks deletes all tasks that have reached a terminal state.
+func (d *DB) ClearFinishedTasks() error {
+	_, err := d.conn.Exec(`
+		DELETE FROM storage_tasks
+		WHERE status IN ('completed', 'failed', 'cancelled', 'interrupted')
+	`)
+	return err
+}
+
+// RetryTask resets a failed, cancelled, or interrupted task back to pending.
+func (d *DB) RetryTask(id string) (*StorageTask, error) {
+	now := time.Now().UTC()
+	res, err := d.conn.Exec(`
+		UPDATE storage_tasks
+		SET status = 'pending', error_message = '', progress_bytes = 0, items_processed = 0, updated_at = ?
+		WHERE id = ? AND status IN ('failed', 'cancelled', 'interrupted')
+	`, now, id)
+	if err != nil {
+		return nil, err
+	}
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("task not found or not in retryable state")
+	}
+	return d.GetTask(id)
+}
+
 

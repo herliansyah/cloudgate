@@ -126,4 +126,18 @@ _Avoid_: Login page, user account system, web guard
 The primary user-configured secret, cryptographically hashed and stored in the local SQLite database, used to unlock GatewayAuth and gain full administrative control of Cloudgate.
 _Avoid_: User password, login credential, account pin
 
+**StorageTask**:
+A persistent unit of asynchronous background work (e.g. cross-account transfer, folder replication, or remote URL ingest) tracked in the local SQLite catalog across server restarts.
+_Avoid_: Background job, worker thread, cron process
 
+**ReplicationSession**:
+A cross-account directory synchronization operation that reconciles files from a source RemoteAccount folder to a destination folder using additive or mirror semantics.
+_Avoid_: Folder sync, two-way sync, mirror job
+
+**RemoteIngest**:
+A zero-disk direct streaming pipeline that retrieves an external resource via HTTP/HTTPS and streams it into a designated RemoteAccount without saving to local host storage.
+_Avoid_: Offline download, web fetcher, torrent task
+
+**TaskDrawer**:
+An interactive floating viewport docked in the web interface that provides real-time telemetry, progress metrics, and lifecycle controls for active and past StorageTasks.
+_Avoid_: Download bar, progress popup, task modal

@@ -125,3 +125,19 @@ _Hindari_: Login page, user account system, web guard
 **MasterPassword**:
 Rahasia utama yang dikonfigurasi pengguna, di-hash secara kriptografis dan disimpan dalam database SQLite lokal, digunakan untuk membuka kunci GatewayAuth dan memperoleh kendali administratif penuh atas Cloudgate.
 _Hindari_: User password, login credential, account pin
+
+**StorageTask**:
+Unit pekerjaan latar belakang asinkron yang persisten (misalnya transfer lintas akun, replikasi folder, atau unduhan URL jarak jauh) yang dilacak dalam katalog SQLite lokal melintasi restart server.
+_Hindari_: Background job, worker thread, cron process
+
+**ReplicationSession**:
+Operasi sinkronisasi direktori lintas akun yang merekonsiliasi berkas dari folder RemoteAccount sumber ke folder target menggunakan semantik aditif atau cermin (mirror).
+_Hindari_: Folder sync, two-way sync, mirror job
+
+**RemoteIngest**:
+Pipeline streaming langsung tanpa disk yang mengambil sumber daya eksternal melalui HTTP/HTTPS dan mengalirkannya langsung ke RemoteAccount target tanpa menyimpannya ke penyimpanan lokal host.
+_Hindari_: Offline download, web fetcher, torrent task
+
+**TaskDrawer**:
+Viewport mengambang interaktif yang tertambat pada antarmuka web yang menyajikan telemetri waktu nyata, metrik progres, dan kendali siklus hidup untuk StorageTask aktif maupun riwayat sebelumnya.
+_Hindari_: Download bar, progress popup, task modal
