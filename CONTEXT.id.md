@@ -66,6 +66,15 @@ _Hindari_: PID file, process guard
 Aset rilis biner resmi yang dihosting di GitHub Releases, digunakan untuk pemeriksaan versi otomatis dan pembaruan mandiri.
 _Hindari_: Update bundle, binary patch
 
+**ReleaseChangelog**:
+Catatan perubahan versi dan catatan rilis yang dapat dibaca manusia, dikelola di CHANGELOG.md serta disematkan dalam biner Cloudgate atau diambil secara dinamis dari ReleasePackage.
+_Hindari_: Version history, commit log, patch notes
+
+**ProcessRestart**:
+Siklus transisi otomatis pasca-penerapan ReleasePackage, yang melepaskan network listener dan InstanceLock sebelum mengeksekusi biner terbarui.
+_Hindari_: Reboot, reload, daemon bounce
+
+
 **OAuthAuthorization**:
 Jabat tangan protokol yang memberikan Cloudgate access token dan refresh token dari penyedia identitas pihak ketiga tanpa menyimpan kata sandi plaintext.
 _Hindari_: Login session, API handshake

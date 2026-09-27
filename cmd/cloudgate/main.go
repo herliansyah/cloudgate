@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/herliansyah/cloudgate/pkg/db"
 	"github.com/herliansyah/cloudgate/pkg/server"
 	"github.com/herliansyah/cloudgate/pkg/storage"
+	"github.com/herliansyah/cloudgate/pkg/updater"
 	"github.com/herliansyah/cloudgate/web"
 )
 
@@ -41,6 +43,12 @@ func main() {
 			return
 		case "auth":
 			handleAuthCLI(args[1:])
+			return
+		case "update":
+			handleUpdateCLI(args[1:])
+			return
+		case "changelog":
+			handleChangelogCLI()
 			return
 		case "serve", "server":
 			runServer(args[1:])
@@ -72,6 +80,8 @@ func printHelp() {
 	fmt.Println("  cloudgate auth status      Check GatewayAuth protection status")
 	fmt.Println("  cloudgate auth setup <pw>  Set initial MasterPassword from terminal")
 	fmt.Println("  cloudgate auth reset       Reset MasterPassword and return to setup state")
+	fmt.Println("  cloudgate update [-y]      Check for newer version, verify SHA-256, and apply update")
+	fmt.Println("  cloudgate changelog        View offline human-readable version changelog")
 	fmt.Println("  cloudgate version          Show version and author information")
 	fmt.Println("  cloudgate help             Show this help screen")
 }
@@ -215,10 +225,18 @@ func runServer(rawArgs []string) {
 		openBrowser(localURL)
 	}()
 
-	// Graceful shutdown handling
+	// Graceful shutdown and restart handling
 	httpServer := &http.Server{Handler: srv.Handler()}
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
+	restartChan := make(chan struct{}, 1)
+	srv.SetRestartTrigger(func() {
+		select {
+		case restartChan <- struct{}{}:
+		default:
+		}
+	})
 
 	go func() {
 		if err := httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
@@ -226,12 +244,25 @@ func runServer(rawArgs []string) {
 		}
 	}()
 
-	<-stopChan
-	fmt.Println("\nShutting down gracefully...")
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	_ = httpServer.Shutdown(ctx)
-	fmt.Println("Cloudgate stopped.")
+	select {
+	case <-stopChan:
+		fmt.Println("\nShutting down gracefully...")
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		_ = httpServer.Shutdown(ctx)
+		fmt.Println("Cloudgate stopped.")
+	case <-restartChan:
+		fmt.Println("\nRestarting Cloudgate for applied update...")
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		_ = httpServer.Shutdown(ctx)
+		cancel()
+		_ = database.Close()
+		config.ReleaseInstanceLock(lockFile)
+		if err := updater.RestartProcess(); err != nil {
+			fmt.Fprintf(os.Stderr, "Restart error: %v\n", err)
+			os.Exit(1)
+		}
+	}
 }
 
 func getLocalIPv4s() []string {
@@ -413,4 +444,76 @@ func handleAuthCLI(subArgs []string) {
 		os.Exit(1)
 	}
 }
+
+func handleChangelogCLI() {
+	fmt.Println(updater.GetChangelog())
+}
+
+func handleUpdateCLI(subArgs []string) {
+	fs := flag.NewFlagSet("update", flag.ExitOnError)
+	yesFlag := fs.Bool("y", false, "Otomatis setujui pembaruan tanpa konfirmasi interaktif")
+	fs.BoolVar(yesFlag, "yes", false, "Otomatis setujui pembaruan tanpa konfirmasi interaktif")
+	_ = fs.Parse(subArgs)
+
+	fmt.Printf("Memeriksa rilis terbaru di GitHub (versi saat ini: v%s)...\n", config.AppVersion)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	res, err := updater.CheckUpdate(ctx, true)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Gagal memeriksa pembaruan: %v\n", err)
+		os.Exit(1)
+	}
+
+	if !res.UpdateAvailable {
+		fmt.Printf("Cloudgate sudah versi terbaru (v%s).\n", config.AppVersion)
+		return
+	}
+
+	fmt.Printf("\nVersi baru tersedia: %s (versi saat ini: v%s)\n", res.LatestVersion, config.AppVersion)
+	if res.ReleaseURL != "" {
+		fmt.Printf("Release URL: %s\n", res.ReleaseURL)
+	}
+	if res.Changelog != "" {
+		fmt.Println("\n--- Release Notes ---")
+		fmt.Println(res.Changelog)
+		fmt.Println("---------------------")
+	}
+
+	if res.DownloadURL == "" {
+		fmt.Fprintf(os.Stderr, "\nError: Biner untuk platform ini (%s_%s) tidak ditemukan di aset rilis.\n", runtime.GOOS, runtime.GOARCH)
+		os.Exit(1)
+	}
+	if res.ChecksumURL == "" {
+		fmt.Fprintf(os.Stderr, "\nError: Berkas checksums.txt tidak ditemukan di aset rilis. Pembaruan dibatalkan demi keamanan.\n")
+		os.Exit(1)
+	}
+
+	if !*yesFlag {
+		fmt.Print("\nPasang pembaruan sekarang? [y/N]: ")
+		var reply string
+		_, _ = fmt.Scanln(&reply)
+		reply = strings.ToLower(strings.TrimSpace(reply))
+		if reply != "y" && reply != "yes" {
+			fmt.Println("Pembaruan dibatalkan.")
+			return
+		}
+	}
+
+	fmt.Println("\nMengunduh dan memverifikasi SHA-256 checksums...")
+	applyCtx, applyCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer applyCancel()
+
+	if err := updater.ApplyUpdate(applyCtx, res.DownloadURL, res.ChecksumURL); err != nil {
+		fmt.Fprintf(os.Stderr, "Pembaruan gagal: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Pembaruan berhasil diterapkan!")
+	fmt.Println("Memulai ulang Cloudgate...")
+	if err := updater.RestartProcess(); err != nil {
+		fmt.Fprintf(os.Stderr, "Gagal memulai ulang secara otomatis: %v\nSilakan jalankan ulang biner secara manual.\n", err)
+	}
+}
+
 

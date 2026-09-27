@@ -34,8 +34,9 @@ type Server struct {
 	trashManager *storage.TrashManager
 	taskManager  *storage.TaskManager
 	drivers      map[string]storage.Driver
-	pools        map[string]*storage.StoragePool
-	assets       fs.FS
+	pools          map[string]*storage.StoragePool
+	assets         fs.FS
+	restartTrigger func()
 }
 
 func NewServer(database *db.DB, assets fs.FS) *Server {
@@ -57,8 +58,37 @@ func NewServer(database *db.DB, assets fs.FS) *Server {
 	})
 	_ = s.taskManager.Start()
 	_ = database.EnableFTSIndex()
+
+	// Start background updater check asynchronously
+	go func() {
+		time.Sleep(3 * time.Second)
+		_, _ = updater.CheckUpdate(context.Background(), false)
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			_, _ = updater.CheckUpdate(context.Background(), true)
+		}
+	}()
+
 	return s
 }
+
+// SetRestartTrigger configures the callback executed when an update requires a process restart.
+func (s *Server) SetRestartTrigger(fn func()) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.restartTrigger = fn
+}
+
+func (s *Server) triggerRestart() {
+	s.mu.RLock()
+	fn := s.restartTrigger
+	s.mu.RUnlock()
+	if fn != nil {
+		fn()
+	}
+}
+
 
 // Close gracefully terminates background tasks and releases resources.
 func (s *Server) Close() {
@@ -131,6 +161,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/audit/export", s.handleExportAudit)
 
 	mux.HandleFunc("GET /api/updater/check", s.handleCheckUpdate)
+	mux.HandleFunc("POST /api/updater/apply", s.handleApplyUpdate)
+	mux.HandleFunc("GET /api/changelog", s.handleGetChangelog)
 	mux.HandleFunc("POST /api/sync/github/push", s.handleSyncPush)
 	mux.HandleFunc("POST /api/sync/github/pull", s.handleSyncPull)
 
@@ -215,7 +247,7 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 
 		// When MasterPassword is not yet configured (Mandatory First-Run Setup state):
 		if !hasPassword {
-			if path == "/api/auth/gateway/status" || path == "/api/info" {
+			if path == "/api/auth/gateway/status" || path == "/api/info" || path == "/api/changelog" {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -240,6 +272,7 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 			path == "/api/auth/gateway/unlock" ||
 			path == "/api/auth/gateway/setup" ||
 			path == "/api/info" ||
+			path == "/api/changelog" ||
 			(strings.HasPrefix(path, "/api/auth/") && strings.HasSuffix(path, "/callback")) {
 			next.ServeHTTP(w, r)
 			return
@@ -1942,13 +1975,72 @@ func (s *Server) handleExportAudit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCheckUpdate(w http.ResponseWriter, r *http.Request) {
-	res, err := updater.CheckUpdate(r.Context())
+	force := r.URL.Query().Get("force") == "true"
+	res, err := updater.CheckUpdate(r.Context(), force)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, res)
 }
+
+func (s *Server) handleApplyUpdate(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		DownloadURL string `json:"download_url"`
+		ChecksumURL string `json:"checksum_url"`
+	}
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	downloadURL := req.DownloadURL
+	checksumURL := req.ChecksumURL
+
+	// If URLs not explicitly provided in body, discover automatically via CheckUpdate
+	if downloadURL == "" || checksumURL == "" {
+		res, err := updater.CheckUpdate(r.Context(), false)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to query update assets: %v", err))
+			return
+		}
+		if !res.UpdateAvailable {
+			writeError(w, http.StatusBadRequest, "No newer version available to apply")
+			return
+		}
+		if downloadURL == "" {
+			downloadURL = res.DownloadURL
+		}
+		if checksumURL == "" {
+			checksumURL = res.ChecksumURL
+		}
+	}
+
+	if err := updater.ApplyUpdate(r.Context(), downloadURL, checksumURL); err != nil {
+		_ = s.database.RecordAudit("update", "system", "system", fmt.Sprintf("Update failed: %v", err), "failed", 0)
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to apply update: %v", err))
+		return
+	}
+
+	_ = s.database.RecordAudit("update", "system", "system", "ReleasePackage successfully verified and applied; restarting server", "success", 0)
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":  "ok",
+		"message": "Pembaruan berhasil diterapkan. Server sedang memulai ulang...",
+	})
+
+	// Trigger graceful restart asynchronously after HTTP response is flushed
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		s.triggerRestart()
+	}()
+}
+
+func (s *Server) handleGetChangelog(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{
+		"changelog": updater.GetChangelog(),
+	})
+}
+
 
 func (s *Server) handleSyncPush(w http.ResponseWriter, r *http.Request) {
 	var req struct {

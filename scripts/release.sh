@@ -55,6 +55,13 @@ if ! grep -qE "^## \[${VERSION}\]" "$CHANGELOG_FILE"; then
     exit 1
 fi
 
+# 3b. Check embedded changelog parity in pkg/updater
+if [ -f "pkg/updater/CHANGELOG.md" ] && ! cmp -s "$CHANGELOG_FILE" "pkg/updater/CHANGELOG.md"; then
+    echo "ERROR: pkg/updater/CHANGELOG.md is out of sync with CHANGELOG.md." >&2
+    echo "Run: cp CHANGELOG.md pkg/updater/CHANGELOG.md and commit before releasing." >&2
+    exit 1
+fi
+
 # 4. Check if git tag already exists
 if git rev-parse "$TAG" >/dev/null 2>&1; then
     echo "ERROR: Git tag '${TAG}' already exists." >&2

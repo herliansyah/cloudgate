@@ -66,6 +66,15 @@ _Avoid_: PID file, process guard
 An official binary release asset hosted on GitHub Releases used for automated version checks and self-updates.
 _Avoid_: Update bundle, binary patch
 
+**ReleaseChangelog**:
+The human-readable record of version changes and release notes, maintained in CHANGELOG.md and embedded in the Cloudgate executable or retrieved dynamically from a ReleasePackage.
+_Avoid_: Version history, commit log, patch notes
+
+**ProcessRestart**:
+The automated transition cycle after applying a ReleasePackage, releasing network listeners and the InstanceLock before executing the updated binary.
+_Avoid_: Reboot, reload, daemon bounce
+
+
 **OAuthAuthorization**:
 The protocol handshake granting Cloudgate access tokens and refresh tokens from third-party identity providers without storing plaintext passwords.
 _Avoid_: Login session, API handshake

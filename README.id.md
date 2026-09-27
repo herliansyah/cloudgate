@@ -35,7 +35,7 @@
 8. **Arsitektur SQLite Lokal**: Ditenagai SQLite pure-Go (`modernc.org/sqlite`) untuk kompilasi statis tanpa dependensi CGO, dilengkapi indeks pencarian teks lengkap FTS5, rolling window 100 task selesai, dan log audit rolling 100 entri yang atomik.
 9. **EncryptedVault & Sinkronisasi GitHub**: Amankan konfigurasi akun dan kredensial dengan enkripsi PBKDF2 + AES-256-GCM, dengan opsi sinkronisasi ke repositori GitHub privat.
 10. **Mutex Single-Instance & Pencarian Port**: Secara otomatis mengunci file mutex OS (`~/.config/cloudgate/cloudgate.lock`) untuk mencegah duplikasi proses, dan memindai port yang tersedia mulai dari `5210` (`5210..5300`) mendengarkan pada `0.0.0.0` untuk akses lokal dan LAN.
-11. **Pembaruan Mandiri (Self-Updating)**: Pemeriksa rilis resmi GitHub Releases terintegrasi untuk verifikasi checksum SHA-256 dan pembaruan otomatis.
+11. **Pembaruan Mandiri & Changelog Offline (Self-Updating)**: Pemeriksa rilis resmi GitHub Releases terintegrasi dengan validasi ketat checksum SHA-256 (`checksums.txt`), penggantian biner in-place, siklus restart proses otomatis (`ProcessRestart`), dan pembacaan catatan rilis offline (`cloudgate changelog` dan `cloudgate update`).
 12. **Dukungan Dwibahasa (Dual Language)**: Antarmuka Web UI mendukung pergantian instan antara Bahasa Indonesia dan English, dengan persistensi preferensi lokal.
 
 ---
@@ -113,6 +113,23 @@ Buka antarmuka Web UI di browser Anda:
 > ```bash
 > ./bin/cloudgate auth setup "master-password-anda"
 > ```
+
+### 4. Perintah CLI & Pembaruan Mandiri
+
+```bash
+# Periksa dan pasang pembaruan versi terbaru dari GitHub Releases
+./bin/cloudgate update
+
+# Terapkan pembaruan otomatis tanpa konfirmasi interaktif
+./bin/cloudgate update -y
+
+# Baca riwayat rilis dan changelog tersemat secara offline
+./bin/cloudgate changelog
+
+# Periksa status proteksi GatewayAuth atau reset kata sandi
+./bin/cloudgate auth status
+./bin/cloudgate auth reset
+```
 
 ---
 

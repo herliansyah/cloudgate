@@ -35,7 +35,7 @@
 8. **Local SQLite Architecture**: Powered by pure-Go SQLite (`modernc.org/sqlite`) for zero-CGO static compilation, featuring an FTS5 full-text search index, bounded 100-record task rolling window, and an atomic 100-event rolling audit log.
 9. **Encrypted Vault & GitHub Sync**: Secure account configurations and credentials with PBKDF2 + AES-256-GCM encryption, with optional synchronization to private GitHub repositories.
 10. **Single-Instance Mutex & Port Hunting**: Automatically acquires an OS lock file (`~/.config/cloudgate/cloudgate.lock`) to prevent duplicate processes, and scans available ports starting at `5210` (`5210..5300`) listening on `0.0.0.0` for local and LAN access.
-11. **Self-Updating**: Built-in GitHub Releases updater checks for official releases and verifies SHA-256 checksums.
+11. **Automated Self-Update & Offline Changelog**: Built-in GitHub Releases updater checks for official releases, strictly verifies SHA-256 checksums against `checksums.txt`, applies in-place binary upgrades, and performs graceful in-process restarts (`ProcessRestart`) with embedded offline changelog viewing (`cloudgate changelog` and `cloudgate update`).
 12. **Bilingual UI & Documentation**: Seamless instant toggle between English and Bahasa Indonesia with persisted preferences and synchronized bilingual documentation.
 
 ---
@@ -113,6 +113,23 @@ Access the Web UI in your browser:
 > ```bash
 > ./bin/cloudgate auth setup "your-secure-master-password"
 > ```
+
+### 4. CLI Utilities & Self-Update
+
+```bash
+# Check and apply latest version update from GitHub Releases
+./bin/cloudgate update
+
+# Apply update automatically without interactive prompt
+./bin/cloudgate update -y
+
+# Read embedded human-readable release changelog offline
+./bin/cloudgate changelog
+
+# Inspect GatewayAuth status or reset password
+./bin/cloudgate auth status
+./bin/cloudgate auth reset
+```
 
 ---
 
