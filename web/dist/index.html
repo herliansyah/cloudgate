@@ -1886,6 +1886,10 @@
       <button class="btn-icon" id="btnTheme" data-i18n-title="topbar.theme" title="Ganti Tema Gelap/Terang" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span>
       </button>
+      <button class="btn-icon" id="btnTasksDrawer" data-i18n-title="topbar.tasks" title="Task & Unduhan Latar Belakang" onclick="toggleTaskDrawer()" style="position:relative;">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        <span id="activeTasksBadge" style="display:none;position:absolute;top:2px;right:2px;background:#38bdf8;color:#0f172a;font-size:10px;font-weight:700;border-radius:10px;padding:1px 5px;line-height:1;">0</span>
+      </button>
       <button class="btn-icon" data-i18n-title="topbar.activity" title="Riwayat Aktivitas & Detail" onclick="toggleSideSheet()">
         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
       </button>
@@ -1915,6 +1919,16 @@
         <span data-i18n="nav.upload">Unggah Baru</span>
       </button>
       <input type="file" id="hiddenFileInput" style="display:none" onchange="uploadSelectedFile(this)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:2px 2px 10px 2px;">
+        <button class="btn btn-outline" onclick="openRemoteIngestModal()" style="font-size:0.75rem;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:4px;border-radius:var(--md-sys-shape-corner-md);" title="Unduh langsung dari URL web ke cloud">
+          <svg width="14" height="14" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <span data-i18n="nav.urlIngest">URL Ingest</span>
+        </button>
+        <button class="btn btn-outline" onclick="openReplicateModal()" style="font-size:0.75rem;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:4px;border-radius:var(--md-sys-shape-corner-md);" title="Sinkronisasi folder antar akun cloud">
+          <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          <span data-i18n="nav.syncFolder">Sync Folder</span>
+        </button>
+      </div>
 
       <ul class="nav-list" id="sidebarNav">
         <li class="nav-section-title" data-i18n="nav.storage">Penyimpanan</li>
@@ -2679,6 +2693,117 @@
     </div>
   </div>
 
+  <!-- Modal: Remote URL Ingest -->
+  <div class="modal-backdrop" id="remoteIngestModal" onclick="if(event.target===this)closeModal('remoteIngestModal')">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:1.15rem;font-weight:700;">Unduh Langsung dari URL</div>
+            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);">RemoteIngest: Stream langsung ke Cloud Storage</div>
+          </div>
+        </div>
+        <button class="btn-icon" onclick="closeModal('remoteIngestModal')">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">URL File (HTTP / HTTPS)</label>
+          <input type="url" id="ingestUrlInput" placeholder="https://example.com/archive.zip" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Target Akun Cloud</label>
+          <select id="ingestAccountSelect" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);"></select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Folder Tujuan</label>
+            <input type="text" id="ingestDirInput" value="/" placeholder="/" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Nama File (Opsional)</label>
+            <input type="text" id="ingestNameInput" placeholder="Otomatis jika kosong" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
+          </div>
+        </div>
+        <div id="ingestError" style="display:none;color:var(--md-sys-color-error);font-size:0.8rem;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-text" onclick="closeModal('remoteIngestModal')">Batal</button>
+        <button class="btn btn-primary" onclick="submitRemoteIngest()">Mulai Unduh</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Replicate / Sync Folder -->
+  <div class="modal-backdrop" id="replicateFolderModal" onclick="if(event.target===this)closeModal('replicateFolderModal')">
+    <div class="modal" style="max-width:540px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:1.15rem;font-weight:700;">Replikasi & Sinkronisasi Folder</div>
+            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);">ReplicationSession: Sinkronisasi antar Akun Cloud</div>
+          </div>
+        </div>
+        <button class="btn-icon" onclick="closeModal('replicateFolderModal')">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Akun Sumber</label>
+            <select id="repSourceAccount" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);"></select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Folder Sumber</label>
+            <input type="text" id="repSourcePath" value="/" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Akun Tujuan</label>
+            <select id="repTargetAccount" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);"></select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Folder Tujuan</label>
+            <input type="text" id="repTargetPath" value="/sync_backup" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <input type="checkbox" id="repMirrorCheckbox" style="width:18px;height:18px;cursor:pointer;">
+          <label for="repMirrorCheckbox" style="font-size:0.85rem;cursor:pointer;"><strong>Mirror Mode:</strong> Pindahkan berkas di tujuan ke Sampah jika sudah tidak ada di sumber</label>
+        </div>
+        <div id="repError" style="display:none;color:var(--md-sys-color-error);font-size:0.8rem;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-text" onclick="closeModal('replicateFolderModal')">Batal</button>
+        <button class="btn btn-primary" onclick="submitReplication()">Mulai Replikasi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Docked TaskDrawer Component -->
+  <div id="taskDrawer" style="position:fixed;bottom:24px;right:24px;width:380px;max-width:calc(100vw - 32px);background:var(--md-sys-color-surface-container);border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-lg);box-shadow:var(--md-sys-elevation-3);z-index:900;display:none;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--md-sys-color-surface-container-high);border-bottom:1px solid var(--md-sys-color-outline-variant);cursor:pointer;" onclick="toggleTaskDrawerBody()">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-weight:700;font-size:0.9rem;">Task Latar Belakang</span>
+        <span id="taskDrawerActiveCount" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:0.75rem;padding:2px 7px;border-radius:10px;font-weight:700;">0</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <button class="btn-icon" style="width:28px;height:28px;" title="Bersihkan Riwayat" onclick="event.stopPropagation();clearFinishedTasks()">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z"/></svg>
+        </button>
+        <button class="btn-icon" style="width:28px;height:28px;" title="Tutup" onclick="event.stopPropagation();closeTaskDrawer()">✕</button>
+      </div>
+    </div>
+    <div id="taskDrawerBody" style="max-height:340px;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:8px;">
+      <div id="taskDrawerEmpty" style="padding:20px;text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:0.85rem;">Tidak ada task aktif.</div>
+      <div id="taskDrawerList"></div>
+    </div>
+  </div>
 
   <!-- M3 Context Menu -->
   <div class="context-menu" id="contextMenu"></div>
@@ -6367,6 +6492,8 @@
       document.getElementById(id).style.display = 'flex';
       if (id === 'addAccountModal') {
         updateProviderAuthUI();
+      } else if (id === 'remoteIngestModal' || id === 'replicateFolderModal') {
+        populateTaskAccountOptions();
       }
     }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -6877,6 +7004,298 @@
         document.querySelectorAll('.action-dropdown-menu.show').forEach(el => el.classList.remove('show'));
       }
     });
+
+    // ==========================================
+    // Background Storage Tasks & TaskDrawer (ADR-0023)
+    // ==========================================
+
+    function populateTaskAccountOptions() {
+      const ingestSelect = document.getElementById('ingestAccountSelect');
+      const repSrc = document.getElementById('repSourceAccount');
+      const repDst = document.getElementById('repTargetAccount');
+      if (!ingestSelect || !repSrc || !repDst) return;
+
+      const opts = (cachedAccounts || []).map(a => {
+        const title = a.name || a.provider || a.id;
+        return `<option value="${a.id}">${escapeHtml(title)} (${a.id})</option>`;
+      }).join('');
+
+      ingestSelect.innerHTML = opts || '<option value="">(Tidak ada akun terhubung)</option>';
+      repSrc.innerHTML = opts || '<option value="">(Tidak ada akun)</option>';
+      repDst.innerHTML = opts || '<option value="">(Tidak ada akun)</option>';
+    }
+
+    function openRemoteIngestModal() {
+      document.getElementById('ingestUrlInput').value = '';
+      document.getElementById('ingestNameInput').value = '';
+      document.getElementById('ingestDirInput').value = (currentPath && currentPath !== '') ? currentPath : '/';
+      document.getElementById('ingestError').style.display = 'none';
+      openModal('remoteIngestModal');
+      populateTaskAccountOptions();
+      if (activeAccountID && document.getElementById('ingestAccountSelect')) {
+        document.getElementById('ingestAccountSelect').value = activeAccountID;
+      }
+    }
+
+    function openReplicateModal() {
+      document.getElementById('repSourcePath').value = (currentPath && currentPath !== '') ? currentPath : '/';
+      document.getElementById('repTargetPath').value = '/sync_backup';
+      document.getElementById('repMirrorCheckbox').checked = false;
+      document.getElementById('repError').style.display = 'none';
+      openModal('replicateFolderModal');
+      populateTaskAccountOptions();
+      if (activeAccountID && document.getElementById('repSourceAccount')) {
+        document.getElementById('repSourceAccount').value = activeAccountID;
+      }
+    }
+
+    async function submitRemoteIngest() {
+      const url = document.getElementById('ingestUrlInput').value.trim();
+      const targetAccountID = document.getElementById('ingestAccountSelect').value;
+      const targetDir = document.getElementById('ingestDirInput').value.trim() || '/';
+      const customName = document.getElementById('ingestNameInput').value.trim();
+      const errBox = document.getElementById('ingestError');
+
+      if (!url) {
+        errBox.textContent = 'URL wajib diisi';
+        errBox.style.display = 'block';
+        return;
+      }
+      if (!targetAccountID) {
+        errBox.textContent = 'Pilih akun cloud tujuan';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      errBox.style.display = 'none';
+      try {
+        const res = await fetch('/api/tasks/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: url,
+            target_account_id: targetAccountID,
+            target_path: targetDir,
+            custom_name: customName
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Gagal memulai unduhan');
+        }
+        closeModal('remoteIngestModal');
+        showToast('Unduhan URL dimulai di latar belakang');
+        openTaskDrawer();
+        fetchTasks();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+    }
+
+    async function submitReplication() {
+      const srcAcc = document.getElementById('repSourceAccount').value;
+      const srcPath = document.getElementById('repSourcePath').value.trim() || '/';
+      const dstAcc = document.getElementById('repTargetAccount').value;
+      const dstPath = document.getElementById('repTargetPath').value.trim() || '/';
+      const mirror = document.getElementById('repMirrorCheckbox').checked;
+      const errBox = document.getElementById('repError');
+
+      if (!srcAcc || !dstAcc) {
+        errBox.textContent = 'Akun sumber dan akun tujuan wajib dipilih';
+        errBox.style.display = 'block';
+        return;
+      }
+      if (srcAcc === dstAcc && srcPath === dstPath) {
+        errBox.textContent = 'Folder sumber dan tujuan tidak boleh identik pada akun yang sama';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      errBox.style.display = 'none';
+      try {
+        const res = await fetch('/api/tasks/replicate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_account_id: srcAcc,
+            source_path: srcPath,
+            target_account_id: dstAcc,
+            target_path: dstPath,
+            mirror: mirror
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Gagal memulai replikasi');
+        }
+        closeModal('replicateFolderModal');
+        showToast('Sinkronisasi folder dimulai di latar belakang');
+        openTaskDrawer();
+        fetchTasks();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+    }
+
+    function toggleTaskDrawer() {
+      const drawer = document.getElementById('taskDrawer');
+      if (drawer.style.display === 'none' || drawer.style.display === '') {
+        openTaskDrawer();
+      } else {
+        closeTaskDrawer();
+      }
+    }
+
+    function openTaskDrawer() {
+      const drawer = document.getElementById('taskDrawer');
+      drawer.style.display = 'flex';
+      fetchTasks();
+    }
+
+    function closeTaskDrawer() {
+      const drawer = document.getElementById('taskDrawer');
+      drawer.style.display = 'none';
+    }
+
+    function toggleTaskDrawerBody() {
+      const body = document.getElementById('taskDrawerBody');
+      body.style.display = (body.style.display === 'none') ? 'flex' : 'none';
+    }
+
+    async function fetchTasks() {
+      try {
+        const res = await fetch('/api/tasks?limit=30');
+        if (!res.ok) return;
+        const tasks = await res.json();
+        renderTasks(tasks || []);
+      } catch (e) {
+        // silent background poll fail
+      }
+    }
+
+    function renderTasks(tasks) {
+      const listEl = document.getElementById('taskDrawerList');
+      const emptyEl = document.getElementById('taskDrawerEmpty');
+      const badge = document.getElementById('activeTasksBadge');
+      const countEl = document.getElementById('taskDrawerActiveCount');
+
+      if (!listEl) return;
+
+      const activeTasks = tasks.filter(t => t.status === 'running' || t.status === 'pending');
+      const activeCount = activeTasks.length;
+
+      if (countEl) countEl.textContent = activeCount;
+      if (badge) {
+        badge.textContent = activeCount;
+        badge.style.display = activeCount > 0 ? 'inline-block' : 'none';
+      }
+
+      if (tasks.length === 0) {
+        emptyEl.style.display = 'block';
+        listEl.innerHTML = '';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      listEl.innerHTML = tasks.map(t => {
+        let typeIcon = '📁';
+        let typeLabel = 'Transfer';
+        if (t.type === 'ingest') {
+          typeIcon = '🌐';
+          typeLabel = 'URL Ingest';
+        } else if (t.type === 'replicate') {
+          typeIcon = '🔄';
+          typeLabel = t.mirror ? 'Mirror Sync' : 'Folder Sync';
+        }
+
+        let statusColor = 'var(--md-sys-color-primary)';
+        let statusBadge = t.status;
+        if (t.status === 'completed') statusColor = '#22c55e';
+        else if (t.status === 'failed') statusColor = '#ef4444';
+        else if (t.status === 'cancelled') statusColor = '#f59e0b';
+        else if (t.status === 'interrupted') statusColor = '#eab308';
+
+        let progressPct = 0;
+        if (t.total_bytes > 0) {
+          progressPct = Math.min(100, Math.round((t.progress_bytes / t.total_bytes) * 100));
+        } else if (t.status === 'completed') {
+          progressPct = 100;
+        }
+
+        const isRunning = t.status === 'running';
+        const isPending = t.status === 'pending';
+        const isFailed = t.status === 'failed' || t.status === 'interrupted' || t.status === 'cancelled';
+
+        let actionBtn = '';
+        if (isRunning || isPending) {
+          actionBtn = `<button class="btn-icon" style="width:24px;height:24px;color:#ef4444;" title="Batalkan" onclick="cancelTask('${t.id}')">✕</button>`;
+        } else if (isFailed) {
+          actionBtn = `<button class="btn-icon" style="width:24px;height:24px;color:var(--md-sys-color-primary);" title="Coba lagi" onclick="retryTask('${t.id}')">↻</button>`;
+        }
+
+        const targetDisplay = t.target_path ? escapeHtml(t.target_path) : '';
+        const sourceDisplay = t.source_path ? escapeHtml(t.source_path) : '';
+
+        return `
+          <div style="background:var(--md-sys-color-surface);border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-md);padding:8px 10px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              <div style="display:flex;align-items:center;gap:6px;overflow:hidden;">
+                <span>${typeIcon}</span>
+                <span style="font-weight:600;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${typeLabel}: ${targetDisplay || sourceDisplay}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:0.7rem;font-weight:700;color:${statusColor};text-transform:uppercase;">${statusBadge}</span>
+                ${actionBtn}
+              </div>
+            </div>
+            ${(isRunning || progressPct > 0) ? `
+              <div style="width:100%;height:4px;background:var(--md-sys-color-surface-variant);border-radius:2px;overflow:hidden;">
+                <div style="width:${progressPct}%;height:100%;background:${statusColor};transition:width 0.3s;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--md-sys-color-on-surface-variant);">
+                <span>${formatBytes(t.progress_bytes)} ${t.total_bytes > 0 ? '/ ' + formatBytes(t.total_bytes) : ''}</span>
+                <span>${progressPct}%</span>
+              </div>
+            ` : ''}
+            ${t.error_message ? `<div style="font-size:0.7rem;color:var(--md-sys-color-error);word-break:break-all;">${escapeHtml(t.error_message)}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function cancelTask(id) {
+      try {
+        await fetch(`/api/tasks/${id}/cancel`, { method: 'POST' });
+        fetchTasks();
+      } catch (e) {
+        showToast('Gagal membatalkan task', 'error');
+      }
+    }
+
+    async function retryTask(id) {
+      try {
+        await fetch(`/api/tasks/${id}/retry`, { method: 'POST' });
+        showToast('Task dimasukkan kembali ke antrean');
+        fetchTasks();
+      } catch (e) {
+        showToast('Gagal mengulang task', 'error');
+      }
+    }
+
+    async function clearFinishedTasks() {
+      try {
+        await fetch('/api/tasks/finished', { method: 'DELETE' });
+        showToast('Riwayat task dibersihkan');
+        fetchTasks();
+      } catch (e) {
+        showToast('Gagal membersihkan riwayat task', 'error');
+      }
+    }
+
+    // Auto-polling for background tasks
+    setInterval(fetchTasks, 3000);
   </script>
 </body>
 </html>

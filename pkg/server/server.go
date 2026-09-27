@@ -32,6 +32,7 @@ type Server struct {
 	mu           sync.RWMutex
 	database     *db.DB
 	trashManager *storage.TrashManager
+	taskManager  *storage.TaskManager
 	drivers      map[string]storage.Driver
 	pools        map[string]*storage.StoragePool
 	assets       fs.FS
@@ -45,8 +46,25 @@ func NewServer(database *db.DB, assets fs.FS) *Server {
 		pools:        make(map[string]*storage.StoragePool),
 		assets:       assets,
 	}
+	s.taskManager = storage.NewTaskManager(database, s.trashManager, func(accountID string) (storage.Driver, error) {
+		s.mu.RLock()
+		defer s.mu.RUnlock()
+		drv, ok := s.drivers[accountID]
+		if !ok || drv == nil {
+			return nil, fmt.Errorf("account %s not found or disconnected", accountID)
+		}
+		return drv, nil
+	})
+	_ = s.taskManager.Start()
 	_ = database.EnableFTSIndex()
 	return s
+}
+
+// Close gracefully terminates background tasks and releases resources.
+func (s *Server) Close() {
+	if s.taskManager != nil {
+		s.taskManager.Stop()
+	}
 }
 
 // RegisterDriver registers a live driver into the server registry.
@@ -115,6 +133,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/updater/check", s.handleCheckUpdate)
 	mux.HandleFunc("POST /api/sync/github/push", s.handleSyncPush)
 	mux.HandleFunc("POST /api/sync/github/pull", s.handleSyncPull)
+
+	// Background Task Routes
+	mux.HandleFunc("GET /api/tasks", s.handleListTasks)
+	mux.HandleFunc("POST /api/tasks/transfer", s.handleCreateTransferTask)
+	mux.HandleFunc("POST /api/tasks/ingest", s.handleCreateIngestTask)
+	mux.HandleFunc("POST /api/tasks/replicate", s.handleCreateReplicateTask)
+	mux.HandleFunc("POST /api/tasks/{id}/cancel", s.handleCancelTask)
+	mux.HandleFunc("POST /api/tasks/{id}/retry", s.handleRetryTask)
+	mux.HandleFunc("DELETE /api/tasks/finished", s.handleClearFinishedTasks)
 
 	// Embedded Static Assets
 	if s.assets != nil {
@@ -860,7 +887,9 @@ func (s *Server) handleSyncStorage(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UTC()
 	updatedCount := 0
 	for id, drv := range drivers {
-		quota, err := drv.About(r.Context())
+		syncCtx, syncCancel := context.WithTimeout(r.Context(), 3*time.Second)
+		quota, err := drv.About(syncCtx)
+		syncCancel()
 		acc, accErr := s.database.GetAccount(id)
 		if accErr != nil || acc == nil {
 			continue
@@ -2202,4 +2231,203 @@ func (s *Server) handleGatewayChangePassword(w http.ResponseWriter, r *http.Requ
 		"message": "Kata sandi berhasil diperbarui",
 	})
 }
+
+// Background Task Handlers
+
+func (s *Server) handleListTasks(w http.ResponseWriter, r *http.Request) {
+	limit := 50
+	if lStr := r.URL.Query().Get("limit"); lStr != "" {
+		if l, err := strconv.Atoi(lStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+	tasks, err := s.database.ListTasks(limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if tasks == nil {
+		tasks = []db.StorageTask{}
+	}
+	writeJSON(w, http.StatusOK, tasks)
+}
+
+func (s *Server) handleCreateTransferTask(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		SourceAccountID string `json:"source_account_id"`
+		SourcePath      string `json:"source_path"`
+		TargetAccountID string `json:"target_account_id"`
+		TargetPath      string `json:"target_path"`
+		IsDir           bool   `json:"is_dir"`
+		IsMove          bool   `json:"is_move"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if req.SourceAccountID == "" || req.SourcePath == "" || req.TargetAccountID == "" || req.TargetPath == "" {
+		writeError(w, http.StatusBadRequest, "source_account_id, source_path, target_account_id, and target_path are required")
+		return
+	}
+
+	taskID := fmt.Sprintf("task_%d", time.Now().UnixNano())
+	task := &db.StorageTask{
+		ID:              taskID,
+		Type:            "transfer",
+		SourceAccountID: req.SourceAccountID,
+		SourcePath:      req.SourcePath,
+		TargetAccountID: req.TargetAccountID,
+		TargetPath:      req.TargetPath,
+		IsDir:           req.IsDir,
+		IsMove:          req.IsMove,
+		Status:          "pending",
+	}
+
+	if err := s.taskManager.Enqueue(task); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	action := "copy"
+	if req.IsMove {
+		action = "move"
+	}
+	_ = s.database.RecordAudit(action, req.SourcePath, req.SourceAccountID, fmt.Sprintf("Queued %s to %s on %s", action, req.TargetPath, req.TargetAccountID), "success", 0)
+
+	writeJSON(w, http.StatusAccepted, task)
+}
+
+func (s *Server) handleCreateIngestTask(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		URL             string `json:"url"`
+		TargetAccountID string `json:"target_account_id"`
+		TargetPath      string `json:"target_path"`
+		CustomName      string `json:"custom_name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if req.URL == "" || req.TargetAccountID == "" {
+		writeError(w, http.StatusBadRequest, "url and target_account_id are required")
+		return
+	}
+
+	// Strict SSRF validation
+	if _, err := storage.ValidateSSRF(req.URL); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("SSRF check failed: %v", err))
+		return
+	}
+
+	targetPath := req.TargetPath
+	if targetPath == "" {
+		targetPath = "/"
+	}
+	if req.CustomName != "" {
+		targetPath = path.Join(targetPath, req.CustomName)
+	}
+
+	taskID := fmt.Sprintf("ingest_%d", time.Now().UnixNano())
+	task := &db.StorageTask{
+		ID:              taskID,
+		Type:            "ingest",
+		SourcePath:      req.URL,
+		TargetAccountID: req.TargetAccountID,
+		TargetPath:      targetPath,
+		Status:          "pending",
+	}
+
+	if err := s.taskManager.Enqueue(task); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	_ = s.database.RecordAudit("ingest", req.URL, req.TargetAccountID, fmt.Sprintf("Queued remote ingest to %s", targetPath), "success", 0)
+	writeJSON(w, http.StatusAccepted, task)
+}
+
+func (s *Server) handleCreateReplicateTask(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		SourceAccountID string `json:"source_account_id"`
+		SourcePath      string `json:"source_path"`
+		TargetAccountID string `json:"target_account_id"`
+		TargetPath      string `json:"target_path"`
+		Mirror          bool   `json:"mirror"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if req.SourceAccountID == "" || req.SourcePath == "" || req.TargetAccountID == "" || req.TargetPath == "" {
+		writeError(w, http.StatusBadRequest, "source_account_id, source_path, target_account_id, and target_path are required")
+		return
+	}
+
+	taskID := fmt.Sprintf("rep_%d", time.Now().UnixNano())
+	task := &db.StorageTask{
+		ID:              taskID,
+		Type:            "replicate",
+		SourceAccountID: req.SourceAccountID,
+		SourcePath:      req.SourcePath,
+		TargetAccountID: req.TargetAccountID,
+		TargetPath:      req.TargetPath,
+		IsDir:           true,
+		Mirror:          req.Mirror,
+		Status:          "pending",
+	}
+
+	if err := s.taskManager.Enqueue(task); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	mode := "additive"
+	if req.Mirror {
+		mode = "mirror"
+	}
+	_ = s.database.RecordAudit("replicate", req.SourcePath, req.SourceAccountID, fmt.Sprintf("Queued folder replication (%s) to %s on %s", mode, req.TargetPath, req.TargetAccountID), "success", 0)
+
+	writeJSON(w, http.StatusAccepted, task)
+}
+
+func (s *Server) handleCancelTask(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "task id required")
+		return
+	}
+
+	if err := s.taskManager.Cancel(id); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "id": id, "status": "cancelled"})
+}
+
+func (s *Server) handleRetryTask(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "task id required")
+		return
+	}
+
+	task, err := s.taskManager.Retry(id)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, task)
+}
+
+func (s *Server) handleClearFinishedTasks(w http.ResponseWriter, r *http.Request) {
+	if err := s.database.ClearFinishedTasks(); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Riwayat task yang selesai telah dibersihkan"})
+}
+
 
