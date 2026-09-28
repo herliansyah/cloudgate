@@ -1924,11 +1924,11 @@
       </button>
       <input type="file" id="hiddenFileInput" style="display:none" onchange="uploadSelectedFile(this)">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:2px 2px 10px 2px;">
-        <button class="btn btn-outline" onclick="openRemoteIngestModal()" style="font-size:0.75rem;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:4px;border-radius:var(--md-sys-shape-corner-md);" title="Unduh langsung dari URL web ke cloud">
+        <button class="btn btn-outline" onclick="openRemoteIngestModal()" style="font-size:0.75rem;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:4px;border-radius:var(--md-sys-shape-corner-md);" data-i18n-title="nav.urlIngestTitle" title="Unduh langsung dari URL web ke cloud">
           <svg width="14" height="14" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
           <span data-i18n="nav.urlIngest">URL Ingest</span>
         </button>
-        <button class="btn btn-outline" onclick="openReplicateModal()" style="font-size:0.75rem;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:4px;border-radius:var(--md-sys-shape-corner-md);" title="Sinkronisasi folder antar akun cloud">
+        <button class="btn btn-outline" onclick="openReplicateModal()" style="font-size:0.75rem;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:4px;border-radius:var(--md-sys-shape-corner-md);" data-i18n-title="nav.syncFolderTitle" title="Sinkronisasi folder antar akun cloud">
           <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
           <span data-i18n="nav.syncFolder">Sync Folder</span>
         </button>
@@ -2101,8 +2101,8 @@
             <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
           </div>
           <div>
-            <div style="font-size:1.15rem;font-weight:700;">Tambah Penyedia Storage</div>
-            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);">ConnectionPipeline: Agregasi Multi-Cloud</div>
+            <div style="font-size:1.15rem;font-weight:700;" data-i18n="addAcc.title">Tambah Penyedia Storage</div>
+            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" data-i18n="addAcc.subtitle">ConnectionPipeline: Agregasi Multi-Cloud</div>
           </div>
         </div>
         <button class="btn-icon" onclick="closeModal('addAccountModal')">✕</button>
@@ -2110,9 +2110,9 @@
 
       <!-- Stepper Indicator -->
       <div class="stepper-header">
-        <div class="stepper-pill active" id="stepPill1">1. Pilih Provider</div>
-        <div class="stepper-pill" id="stepPill2">2. Otorisasi</div>
-        <div class="stepper-pill" id="stepPill3">3. Uji & Simpan</div>
+        <div class="stepper-pill active" id="stepPill1" data-i18n="addAcc.step1">1. Pilih Provider</div>
+        <div class="stepper-pill" id="stepPill2" data-i18n="addAcc.step2">2. Otorisasi</div>
+        <div class="stepper-pill" id="stepPill3" data-i18n="addAcc.step3">3. Uji & Simpan</div>
       </div>
 
       <!-- Hidden select for programmatic compatibility -->
@@ -2137,12 +2137,12 @@
 
       <!-- PHASE 1: Select Provider -->
       <div id="phaseSelectProvider" style="display:flex;flex-direction:column;gap:12px;">
-        <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface-variant);">Pilih layanan cloud storage yang ingin Anda hubungkan ke Cloudgate:</div>
+        <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface-variant);" data-i18n="addAcc.selectIntro">Pilih layanan cloud storage yang ingin Anda hubungkan ke Cloudgate:</div>
         <div class="provider-select-grid" id="providerSelectGrid">
           <!-- Rendered via JS -->
         </div>
         <div class="modal-footer" style="margin-top:4px;">
-          <button class="btn btn-text" onclick="closeModal('addAccountModal')">Batal</button>
+          <button class="btn btn-text" onclick="closeModal('addAccountModal')" data-i18n="addAcc.cancel">Batal</button>
         </div>
       </div>
 
@@ -2152,7 +2152,7 @@
           <div style="display:flex;align-items:center;gap:10px;" id="selectedProviderBanner">
             <!-- Selected provider icon & name -->
           </div>
-          <button class="btn btn-text btn-sm" onclick="showOnboardingStep(1)">← Ganti Provider</button>
+          <button class="btn btn-text btn-sm" onclick="showOnboardingStep(1)" data-i18n="addAcc.changeProvider">← Ganti Provider</button>
         </div>
 
         <div id="oauthSection" style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);display:flex;flex-direction:column;gap:12px;">
@@ -2161,7 +2161,7 @@
           </div>
 
           <div style="display:flex;flex-direction:column;gap:10px;margin-top:2px;">
-            <div style="font-size:0.84rem;font-weight:700;color:var(--md-sys-color-on-surface);display:flex;align-items:center;gap:6px;">
+            <div style="font-size:0.84rem;font-weight:700;color:var(--md-sys-color-on-surface);display:flex;align-items:center;gap:6px;" data-i18n="addAcc.oauthRequired">
               <span>🔑</span> Kredensial Aplikasi OAuth (Wajib Diisi):
             </div>
             <div class="form-group" id="groupOAuthClientID">
@@ -2176,7 +2176,7 @@
 
           <button class="btn btn-primary" id="btnOAuthAction" style="justify-content:center;height:44px;font-size:0.92rem;margin-top:4px;" onclick="startOAuthConnect()">
             <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
-            <span id="btnOAuthText">Masuk dengan Akun Cloud</span>
+            <span id="btnOAuthText" data-i18n="addAcc.loginCloud">Masuk dengan Akun Cloud</span>
           </button>
         </div>
 
@@ -2286,26 +2286,26 @@
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group">
-            <label>Nama / Label Akun</label>
-            <input type="text" class="form-control" id="newAccountName" placeholder="Contoh: Akun Kerja Utama">
+            <label data-i18n="addAcc.accountLabel">Nama / Label Akun</label>
+            <input type="text" class="form-control" id="newAccountName" data-i18n-placeholder="addAcc.accountPlaceholder" placeholder="Contoh: Akun Kerja Utama">
           </div>
           <div class="form-group">
-            <label>Alokasi Kuota (GB)</label>
+            <label data-i18n="addAcc.quotaAllocation">Alokasi Kuota (GB)</label>
             <input type="number" class="form-control" id="newAccountQuota" value="15">
           </div>
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-text" onclick="showOnboardingStep(1)">Kembali</button>
-          <button class="btn btn-primary" id="btnManualAdd" onclick="executeOnboardingSave()">Test & Hubungkan Akun</button>
+          <button class="btn btn-text" onclick="showOnboardingStep(1)" data-i18n="addAcc.back">Kembali</button>
+          <button class="btn btn-primary" id="btnManualAdd" onclick="executeOnboardingSave()" data-i18n="addAcc.testAndConnect">Test & Hubungkan Akun</button>
         </div>
       </div>
 
       <!-- PHASE 3: Diagnostics & Live Verification -->
       <div id="phaseDiagnosticsProvider" style="display:none;flex-direction:column;gap:16px;">
         <div style="text-align:center;padding:10px 0;">
-          <div style="font-size:1rem;font-weight:700;color:var(--md-sys-color-on-surface);">Memverifikasi & Mendaftarkan Akun</div>
-          <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;">Menghubungkan ke layanan remote dan mengecek integritas kuota</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--md-sys-color-on-surface);" data-i18n="addAcc.verifyingTitle">Memverifikasi & Mendaftarkan Akun</div>
+          <div style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;" data-i18n="addAcc.verifyingDesc">Menghubungkan ke layanan remote dan mengecek integritas kuota</div>
         </div>
 
         <div class="diagnostics-list">
@@ -2314,8 +2314,8 @@
               <div class="status-pulse-dot" style="background-color:var(--md-sys-color-primary);"></div>
             </div>
             <div>
-              <div style="font-weight:600;" id="diagTitle1">1. Uji Konektivitas Jaringan & Kredensial</div>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc1">Melakukan handshake autentikasi...</div>
+              <div style="font-weight:600;" id="diagTitle1" data-i18n="addAcc.diagStep1">1. Uji Konektivitas Jaringan & Kredensial</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc1" data-i18n="addAcc.diagDesc1">Melakukan handshake autentikasi...</div>
             </div>
           </div>
 
@@ -2324,8 +2324,8 @@
               <span style="opacity:0.3;">⏳</span>
             </div>
             <div>
-              <div style="font-weight:600;" id="diagTitle2">2. Interogasi Kapasitas Storage</div>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc2">Mengambil kuota total dan sisa ruang bebas...</div>
+              <div style="font-weight:600;" id="diagTitle2" data-i18n="addAcc.diagStep2">2. Interogasi Kapasitas Storage</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc2" data-i18n="addAcc.diagDesc2">Mengambil kuota total dan sisa ruang bebas...</div>
             </div>
           </div>
 
@@ -2334,8 +2334,8 @@
               <span style="opacity:0.3;">⏳</span>
             </div>
             <div>
-              <div style="font-weight:600;" id="diagTitle3">3. Registrasi ke Virtual StoragePool</div>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc3">Mengaktifkan driver ke round-robin allocation policy...</div>
+              <div style="font-weight:600;" id="diagTitle3" data-i18n="addAcc.diagStep3">3. Registrasi ke Virtual StoragePool</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" id="diagDesc3" data-i18n="addAcc.diagDesc3">Mengaktifkan driver ke round-robin allocation policy...</div>
             </div>
           </div>
         </div>
@@ -2343,12 +2343,12 @@
         <div id="diagFailureBox" style="display:none;background:rgba(255,84,73,0.1);border:1px solid var(--md-sys-color-error);border-radius:var(--md-sys-shape-corner-md);padding:14px;flex-direction:column;gap:10px;">
           <div style="font-weight:700;font-size:0.88rem;color:var(--md-sys-color-error);display:flex;align-items:center;gap:6px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-            Koneksi Gagal Terverifikasi
+            <span data-i18n="addAcc.diagFailed">Koneksi Gagal Terverifikasi</span>
           </div>
           <div id="diagFailureMsg" style="font-size:0.8rem;color:var(--md-sys-color-on-surface);line-height:1.45;word-break:break-word;"></div>
           <div id="diagRemediationMsg" style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);line-height:1.45;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border:1px solid var(--md-sys-color-outline-variant);"></div>
           <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
-            <button class="btn btn-secondary btn-sm" onclick="showOnboardingStep(2)">← Kembali & Perbaiki Kredensial</button>
+            <button class="btn btn-secondary btn-sm" onclick="showOnboardingStep(2)" data-i18n="addAcc.diagBackToFix">← Kembali & Perbaiki Kredensial</button>
           </div>
         </div>
       </div>
@@ -2361,22 +2361,22 @@
       <div class="modal-header">
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:1.2rem;">🔗</span>
-          <span>Bagikan File (Share Link)</span>
+          <span data-i18n="share.title">Bagikan File (Share Link)</span>
         </div>
         <button class="btn-icon" onclick="closeModal('shareModal')">✕</button>
       </div>
       <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface-variant);line-height:1.45;">
-        Link akses langsung telah dibuat untuk file: <strong id="shareModalFileName" style="color:var(--md-sys-color-on-surface);"></strong>
+        <span data-i18n="share.created">Link akses langsung telah dibuat untuk file:</span> <strong id="shareModalFileName" style="color:var(--md-sys-color-on-surface);"></strong>
       </div>
       <div class="form-group" style="margin-top:6px;">
         <label>Share URL</label>
         <div style="display:flex;gap:8px;">
           <input type="text" class="form-control" id="shareUrlInput" readonly style="font-family:monospace;font-size:0.82rem;">
-          <button class="btn btn-primary" onclick="copyShareUrl()" id="btnCopyShare">Salin</button>
+          <button class="btn btn-primary" onclick="copyShareUrl()" id="btnCopyShare" data-i18n="share.copy">Salin</button>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('shareModal')">Tutup</button>
+        <button class="btn btn-text" onclick="closeModal('shareModal')" data-i18n="share.close">Tutup</button>
       </div>
     </div>
   </div>
@@ -2390,7 +2390,7 @@
           <span style="display:inline-flex;padding:6px;border-radius:var(--md-sys-shape-corner-xs);background:rgba(255,180,171,0.2);color:var(--md-sys-color-error);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
           </span>
-          <span style="font-weight:700;">Putuskan Remote Account</span>
+          <span style="font-weight:700;" data-i18n="disAcc.title">Putuskan Remote Account</span>
         </div>
         <button class="btn-icon" onclick="closeModal('disconnectAccountModal')">✕</button>
       </div>
@@ -2400,13 +2400,13 @@
       </div>
 
       <div class="form-group">
-        <label style="font-size:0.8rem;font-weight:600;">Untuk mengonfirmasi, ketik persis nama akun di bawah ini:</label>
-        <input type="text" class="form-control" id="disconnectConfirmInput" placeholder="Ketik nama akun..." oninput="handleDisconnectInputChange()" onkeydown="if(event.key==='Enter'&&!document.getElementById('btnConfirmDisconnect').disabled)executeDisconnectAccount()" autocomplete="off">
+        <label style="font-size:0.8rem;font-weight:600;" data-i18n="disAcc.confirmLabel">Untuk mengonfirmasi, ketik persis nama akun di bawah ini:</label>
+        <input type="text" class="form-control" id="disconnectConfirmInput" data-i18n-placeholder="disAcc.placeholder" placeholder="Ketik nama akun..." oninput="handleDisconnectInputChange()" onkeydown="if(event.key==='Enter'&&!document.getElementById('btnConfirmDisconnect').disabled)executeDisconnectAccount()" autocomplete="off">
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('disconnectAccountModal')">Batal</button>
-        <button class="btn btn-danger" id="btnConfirmDisconnect" disabled onclick="executeDisconnectAccount()">Putuskan Akun</button>
+        <button class="btn btn-text" onclick="closeModal('disconnectAccountModal')" data-i18n="disAcc.cancel">Batal</button>
+        <button class="btn btn-danger" id="btnConfirmDisconnect" disabled onclick="executeDisconnectAccount()" data-i18n="disAcc.disconnect">Putuskan Akun</button>
       </div>
     </div>
   </div>
@@ -2419,37 +2419,37 @@
           <span style="display:inline-flex;padding:6px;border-radius:var(--md-sys-shape-corner-xs);background:rgba(180,197,255,0.2);color:var(--md-sys-color-primary);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
           </span>
-          <span style="font-weight:700;">Edit RemoteAccount</span>
+          <span style="font-weight:700;" data-i18n="editAcc.title">Edit RemoteAccount</span>
         </div>
         <button class="btn-icon" onclick="closeModal('editAccountModal')">✕</button>
       </div>
 
-      <div style="font-size:0.86rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;margin-bottom:14px;">
+      <div style="font-size:0.86rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;margin-bottom:14px;" data-i18n="editAcc.desc">
         Perbarui label nama, folder mount root, atau alokasi kuota akun ini.
       </div>
 
       <input type="hidden" id="editAccountID">
 
       <div class="form-group" style="margin-bottom:12px;">
-        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Nama Akun (Label)</label>
+        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;" data-i18n="editAcc.nameLabel">Nama Akun (Label)</label>
         <input type="text" class="form-control" id="editAccountName" placeholder="Contoh: My Google Drive" onkeydown="if(event.key==='Enter')executeEditAccount()" autocomplete="off">
       </div>
 
       <div class="form-group" style="margin-bottom:12px;">
-        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Root Folder</label>
+        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;" data-i18n="editAcc.rootFolderLabel">Root Folder</label>
         <input type="text" class="form-control" id="editAccountRootFolder" placeholder="/" autocomplete="off">
-        <span style="font-size:0.72rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;display:block;">Mengubah root folder akan mereset cache indeks metadata lokal untuk akun ini.</span>
+        <span style="font-size:0.72rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;display:block;" data-i18n="editAcc.rootFolderDesc">Mengubah root folder akan mereset cache indeks metadata lokal untuk akun ini.</span>
       </div>
 
       <div class="form-group" style="margin-bottom:16px;">
-        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Total Quota (GB)</label>
+        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;" data-i18n="editAcc.quotaLabel">Total Quota (GB)</label>
         <input type="number" step="any" min="0" class="form-control" id="editAccountQuotaGB" placeholder="Contoh: 15" autocomplete="off">
-        <span style="font-size:0.72rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;display:block;">Kapasitas penyimpanan total dalam Gigabyte.</span>
+        <span style="font-size:0.72rem;color:var(--md-sys-color-on-surface-variant);margin-top:2px;display:block;" data-i18n="editAcc.quotaDesc">Kapasitas penyimpanan total dalam Gigabyte.</span>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('editAccountModal')">Batal</button>
-        <button class="btn btn-primary" id="btnSaveEditAccount" onclick="executeEditAccount()">Simpan Perubahan</button>
+        <button class="btn btn-text" onclick="closeModal('editAccountModal')" data-i18n="editAcc.cancel">Batal</button>
+        <button class="btn btn-primary" id="btnSaveEditAccount" onclick="executeEditAccount()" data-i18n="editAcc.save">Simpan Perubahan</button>
       </div>
     </div>
   </div>
@@ -2514,10 +2514,10 @@
         <div id="updateStatusText" style="color:var(--md-sys-color-on-surface-variant);">Click below to check for updates.</div>
       </div>
       <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <button class="btn btn-secondary" onclick="openChangelogModal()">📜 Changelog</button>
+        <button class="btn btn-secondary" onclick="openChangelogModal()" data-i18n="about.changelog">📜 Changelog</button>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-secondary" onclick="closeModal('aboutModal')">Close</button>
-          <button class="btn btn-primary" onclick="checkAppUpdates(true)">Check for Updates</button>
+          <button class="btn btn-secondary" onclick="closeModal('aboutModal')" data-i18n="about.close">Close</button>
+          <button class="btn btn-primary" onclick="checkAppUpdates(true)" data-i18n="about.checkUpdates">Check for Updates</button>
         </div>
       </div>
     </div>
@@ -2537,7 +2537,7 @@
         Memuat catatan rilis...
       </div>
       <div class="modal-footer" style="margin-top:14px; display:flex; justify-content:flex-end;">
-        <button class="btn btn-secondary" onclick="closeModal('changelogModal')">Tutup</button>
+        <button class="btn btn-secondary" onclick="closeModal('changelogModal')" data-i18n="changelog.close">Tutup</button>
       </div>
     </div>
   </div>
@@ -2581,7 +2581,7 @@
           <div class="brand-mark" style="width:36px;height:36px;border-radius:var(--md-sys-shape-corner-sm);">
             <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
           </div>
-          <span>Download File?</span>
+          <span data-i18n="dlConfirm.title">Download File?</span>
         </div>
         <button class="btn-icon" onclick="closeModal('downloadConfirmModal')">✕</button>
       </div>
@@ -2590,11 +2590,11 @@
           <div id="dlModalName" style="font-weight:700; color:var(--md-sys-color-on-surface); word-break:break-all; margin-bottom:4px;"></div>
           <div id="dlModalMeta" style="font-size:0.78rem; color:var(--md-sys-color-on-surface-variant);"></div>
         </div>
-        <span>Apakah Anda ingin mengunduh file ini ke perangkat lokal Anda?</span>
+        <span data-i18n="dlConfirm.question">Apakah Anda ingin mengunduh file ini ke perangkat lokal Anda?</span>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('downloadConfirmModal')">Batal</button>
-        <button class="btn btn-primary" id="dlModalConfirmBtn">Unduh Sekarang</button>
+        <button class="btn btn-text" onclick="closeModal('downloadConfirmModal')" data-i18n="dlConfirm.cancel">Batal</button>
+        <button class="btn btn-primary" id="dlModalConfirmBtn" data-i18n="dlConfirm.confirm">Unduh Sekarang</button>
       </div>
     </div>
   </div>
@@ -2735,36 +2735,36 @@
             <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
           </div>
           <div>
-            <div style="font-size:1.15rem;font-weight:700;">Unduh Langsung dari URL</div>
-            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);">RemoteIngest: Stream langsung ke Cloud Storage</div>
+            <div style="font-size:1.15rem;font-weight:700;" data-i18n="ingest.title">Unduh Langsung dari URL</div>
+            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" data-i18n="ingest.subtitle">RemoteIngest: Stream langsung ke Cloud Storage</div>
           </div>
         </div>
         <button class="btn-icon" onclick="closeModal('remoteIngestModal')">✕</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
         <div>
-          <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">URL File (HTTP / HTTPS)</label>
+          <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;" data-i18n="ingest.urlLabel">URL File (HTTP / HTTPS)</label>
           <input type="url" id="ingestUrlInput" placeholder="https://example.com/archive.zip" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
         </div>
         <div>
-          <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Target Akun Cloud</label>
+          <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;" data-i18n="ingest.accountLabel">Target Akun Cloud</label>
           <select id="ingestAccountSelect" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);"></select>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div>
-            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Folder Tujuan</label>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;" data-i18n="ingest.dirLabel">Folder Tujuan</label>
             <input type="text" id="ingestDirInput" value="/" placeholder="/" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
           </div>
           <div>
-            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Nama File (Opsional)</label>
-            <input type="text" id="ingestNameInput" placeholder="Otomatis jika kosong" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;" data-i18n="ingest.nameLabel">Nama File (Opsional)</label>
+            <input type="text" id="ingestNameInput" data-i18n-placeholder="ingest.namePlaceholder" placeholder="Otomatis jika kosong" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
           </div>
         </div>
         <div id="ingestError" style="display:none;color:var(--md-sys-color-error);font-size:0.8rem;"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('remoteIngestModal')">Batal</button>
-        <button class="btn btn-primary" onclick="submitRemoteIngest()">Mulai Unduh</button>
+        <button class="btn btn-text" onclick="closeModal('remoteIngestModal')" data-i18n="ingest.cancel">Batal</button>
+        <button class="btn btn-primary" onclick="submitRemoteIngest()" data-i18n="ingest.submit">Mulai Unduh</button>
       </div>
     </div>
   </div>
@@ -2778,8 +2778,8 @@
             <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
           </div>
           <div>
-            <div style="font-size:1.15rem;font-weight:700;">Replikasi & Sinkronisasi Folder</div>
-            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);">ReplicationSession: Sinkronisasi antar Akun Cloud</div>
+            <div style="font-size:1.15rem;font-weight:700;" data-i18n="replicate.title">Replikasi & Sinkronisasi Folder</div>
+            <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);" data-i18n="replicate.subtitle">ReplicationSession: Sinkronisasi antar Akun Cloud</div>
           </div>
         </div>
         <button class="btn-icon" onclick="closeModal('replicateFolderModal')">✕</button>
@@ -2787,33 +2787,33 @@
       <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div>
-            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Akun Sumber</label>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;" data-i18n="replicate.sourceAccount">Akun Sumber</label>
             <select id="repSourceAccount" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);"></select>
           </div>
           <div>
-            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Folder Sumber</label>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;" data-i18n="replicate.sourcePath">Folder Sumber</label>
             <input type="text" id="repSourcePath" value="/" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div>
-            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Akun Tujuan</label>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;" data-i18n="replicate.targetAccount">Akun Tujuan</label>
             <select id="repTargetAccount" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);"></select>
           </div>
           <div>
-            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Folder Tujuan</label>
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;" data-i18n="replicate.targetPath">Folder Tujuan</label>
             <input type="text" id="repTargetPath" value="/sync_backup" style="width:100%;padding:10px 12px;border-radius:var(--md-sys-shape-corner-sm);border:1px solid var(--md-sys-color-outline);background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
           <input type="checkbox" id="repMirrorCheckbox" style="width:18px;height:18px;cursor:pointer;">
-          <label for="repMirrorCheckbox" style="font-size:0.85rem;cursor:pointer;"><strong>Mirror Mode:</strong> Pindahkan berkas di tujuan ke Sampah jika sudah tidak ada di sumber</label>
+          <label for="repMirrorCheckbox" style="font-size:0.85rem;cursor:pointer;" data-i18n="replicate.mirrorMode"><strong>Mirror Mode:</strong> Pindahkan berkas di tujuan ke Sampah jika sudah tidak ada di sumber</label>
         </div>
         <div id="repError" style="display:none;color:var(--md-sys-color-error);font-size:0.8rem;"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-text" onclick="closeModal('replicateFolderModal')">Batal</button>
-        <button class="btn btn-primary" onclick="submitReplication()">Mulai Replikasi</button>
+        <button class="btn btn-text" onclick="closeModal('replicateFolderModal')" data-i18n="replicate.cancel">Batal</button>
+        <button class="btn btn-primary" onclick="submitReplication()" data-i18n="replicate.submit">Mulai Replikasi</button>
       </div>
     </div>
   </div>
@@ -2822,7 +2822,7 @@
   <div id="taskDrawer" style="position:fixed;bottom:24px;right:24px;width:380px;max-width:calc(100vw - 32px);background:var(--md-sys-color-surface-container);border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-lg);box-shadow:var(--md-sys-elevation-3);z-index:900;display:none;flex-direction:column;overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--md-sys-color-surface-container-high);border-bottom:1px solid var(--md-sys-color-outline-variant);cursor:pointer;" onclick="toggleTaskDrawerBody()">
       <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-weight:700;font-size:0.9rem;">Task Latar Belakang</span>
+        <span style="font-weight:700;font-size:0.9rem;" data-i18n="tasks.title">Task Latar Belakang</span>
         <span id="taskDrawerActiveCount" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:0.75rem;padding:2px 7px;border-radius:10px;font-weight:700;">0</span>
       </div>
       <div style="display:flex;align-items:center;gap:4px;">
@@ -2833,7 +2833,7 @@
       </div>
     </div>
     <div id="taskDrawerBody" style="max-height:340px;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:8px;">
-      <div id="taskDrawerEmpty" style="padding:20px;text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:0.85rem;">Tidak ada task aktif.</div>
+      <div id="taskDrawerEmpty" style="padding:20px;text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:0.85rem;" data-i18n="tasks.empty">Tidak ada task aktif.</div>
       <div id="taskDrawerList"></div>
     </div>
   </div>
@@ -2974,6 +2974,16 @@
         'sheet.title': 'Details & Activity',
         'sheet.tabInspector': 'File Details',
         'sheet.tabAudit': 'Activity History',
+        'sheet.noFileSelected': 'No File Selected',
+        'sheet.noFileDesc': 'Click any file or folder to inspect domain allocation, physical account, and checksum.',
+        'sheet.domainMapping': 'Domain Mapping',
+        'sheet.remotePath': 'Remote Path',
+        'sheet.fileSize': 'File Size',
+        'sheet.lastModified': 'Last Modified',
+        'sheet.autoAlloc': 'Automatic Allocation',
+        'sheet.directory': 'Directory',
+        'sheet.loadingAudit': 'Loading audit trail…',
+        'sheet.noActivity': 'No activity yet',
         'transfer.title': 'Active Transfers',
         'dropzone.title': 'Drop files here to upload',
         'dropzone.desc': 'Distributing through active StoragePool',
@@ -3054,6 +3064,188 @@
         'gateway.firstRunBtn': 'Set MasterPassword & Unlock',
         'gateway.remoteLockedTitle': 'Initialization Required',
         'gateway.remoteLockedDesc': 'For security, the initial MasterPassword can only be configured directly from localhost or via the server terminal using: cloudgate auth setup <password>',
+
+        'nav.urlIngest': 'URL Ingest',
+        'nav.urlIngestTitle': 'Direct URL download to cloud storage',
+        'nav.syncFolder': 'Sync Folder',
+        'nav.syncFolderTitle': 'Synchronize folders between cloud accounts',
+
+        'files.emptyTitle': 'No files found',
+        'files.emptyFilterDesc': 'Try changing the category filter in the toolbar above.',
+        'files.emptyUploadDesc': 'Upload new files or return to parent directory.',
+        'files.parentFolder': '← Back to Parent Folder',
+        'files.groupOther': 'Other',
+        'files.groupFolder': '📁 Folders',
+        'files.groupImage': '🖼️ Images',
+        'files.groupDoc': '📄 Documents',
+        'files.groupMedia': '🎬 Audio & Video Media',
+        'files.groupArchive': '📦 Archives',
+        'files.groupCode': '💻 Source Code',
+        'files.groupFilesOther': '📎 Other Files',
+        'files.groupToday': '⚡ Today',
+        'files.groupLast7Days': '🗓️ Last 7 Days',
+        'files.groupLast30Days': '📅 Last 30 Days',
+        'files.groupOlder': '🗄️ Older',
+        'files.groupRoundRobin': '☁️ Round-Robin Pool',
+        'files.starTitle': 'Star File',
+        'files.shareTitle': 'Share Link',
+        'files.open': 'Open',
+        'files.preview': 'Preview',
+        'files.download': 'Download',
+        'files.trash': 'Delete',
+        'files.openFolder': 'Open Folder',
+        'files.moveToTrash': 'Move to Trash',
+        'files.downloadFile': 'Download File',
+        'files.confirmTrash': 'Move to Trash Bin?',
+        'files.noPreviewAvailable': 'Direct preview is not available for this file format.<br>You can download this file to open it locally.',
+        'files.loadingPreview': 'Loading preview…',
+        'files.chars': 'characters',
+        'files.lines': 'lines',
+        'files.copyText': 'Copy Text',
+        'files.textCopied': 'Text copied to clipboard! 📋',
+        'files.downloadOnly': 'Download File Only',
+        'files.cloudAccessIssue': 'Cloud Access Issue',
+        'files.reloadFiles': 'Reload Files ↻',
+
+        'ingest.title': 'Download Directly from URL',
+        'ingest.subtitle': 'RemoteIngest: Stream directly to Cloud Storage',
+        'ingest.urlLabel': 'File URL (HTTP / HTTPS)',
+        'ingest.accountLabel': 'Target Cloud Account',
+        'ingest.dirLabel': 'Target Directory',
+        'ingest.nameLabel': 'File Name (Optional)',
+        'ingest.namePlaceholder': 'Auto-detected if empty',
+        'ingest.noAccount': '(No connected accounts)',
+        'ingest.cancel': 'Cancel',
+        'ingest.submit': 'Start Download',
+        'ingest.startedToast': 'URL download started in background',
+        'ingest.errUrlRequired': 'URL is required',
+        'ingest.errAccountRequired': 'Please select a target cloud account',
+
+        'replicate.title': 'Folder Replication & Sync',
+        'replicate.subtitle': 'ReplicationSession: Sync between Cloud Accounts',
+        'replicate.sourceAccount': 'Source Account',
+        'replicate.sourcePath': 'Source Directory',
+        'replicate.targetAccount': 'Target Account',
+        'replicate.targetPath': 'Target Directory',
+        'replicate.mirrorMode': '<strong>Mirror Mode:</strong> Move files in destination to Trash if no longer present in source',
+        'replicate.cancel': 'Cancel',
+        'replicate.submit': 'Start Replication',
+        'replicate.startedToast': 'Folder sync started in background',
+        'replicate.noAccount': '(No accounts)',
+
+        'docs.title': 'REST API & System Documentation',
+        'docs.subtitle': 'Unified Cloudgate gateway endpoint specifications for automated integrations.',
+        'docs.archModel': 'Architecture Model',
+        'docs.singleBinary': 'Single-Binary Gateway',
+        'docs.singleBinaryDesc': '0 external runtime dependencies',
+        'docs.catalogCache': 'Catalog & Cache',
+        'docs.sqliteDesc': 'Zero-latency local metadata queries',
+        'docs.credSecurity': 'Credential Security',
+        'docs.aesDesc': 'OAuth Refresh Token & Direct Credential persistence',
+        'docs.endpointsSummary': 'API Endpoints Summary',
+        'docs.epInfo': '— Gateway metadata information, app version, author, and repository link',
+        'docs.epProviders': '— Fetch catalog of 16 supported storage providers & protocols with authentication methods',
+        'docs.epStats': '— Fetch aggregate quota, used capacity, and live status of all accounts',
+        'docs.epAccounts': '— Fetch complete list of all remote accounts connected to the gateway',
+        'docs.epTest': '— Test live validity of provider credentials before registration',
+        'docs.epSync': '— Synchronize all quotas and remote metadata directly',
+        'docs.epFiles': '— Read virtual StoragePool files or specific account (?account_id=...)',
+        'docs.epToggle': '— Enable or disable an account from pool write allocation',
+        'docs.epShare': '— Generate direct streaming URL / share link for virtual file',
+        'docs.epTasks': '— Monitor background task queue (file transfer, URL ingest, folder replication)',
+        'docs.handbookTitle': 'Official Cloud Account Registration & Troubleshooting Guide (16 Providers)',
+        'docs.handbookSubtitle': 'Step-by-step instructions updated for each provider\'s policies and troubleshooting common issues.',
+
+        'tasks.title': 'Background Tasks',
+        'tasks.empty': 'No active tasks or task history.',
+        'tasks.clearFinished': 'Clear Finished',
+        'tasks.cancel': 'Cancel',
+        'tasks.retry': 'Retry',
+
+        'hub.utilization': 'Aggregated Capacity Utilization',
+        'hub.providerDist': 'Quota Distribution per Provider',
+        'hub.noAccounts': 'No cloud accounts connected yet',
+        'hub.fleetTitle': 'Connected Cloud Accounts',
+        'hub.registered': 'Registered',
+        'hub.thProvider': 'Provider',
+        'hub.thIdentity': 'Account & Identity',
+        'hub.thQuota': 'Capacity & Quota',
+        'hub.thStatus': 'Status',
+        'hub.thSync': 'Sync',
+        'hub.thIntegration': 'Pool Integration',
+        'hub.thActions': 'Actions',
+        'hub.justNow': 'Just now',
+        'hub.active': 'Active',
+        'hub.error': 'Connection Issue',
+        'hub.inactive': 'Inactive',
+        'hub.togglePool': 'Enable/Disable integration in StoragePool',
+        'hub.accountOptions': 'Account Options',
+
+        'addAcc.title': 'Add Storage Provider',
+        'addAcc.subtitle': 'ConnectionPipeline: Multi-Cloud Aggregation',
+        'addAcc.step1': '1. Select Provider',
+        'addAcc.step2': '2. Authorize',
+        'addAcc.step3': '3. Test & Save',
+        'addAcc.selectIntro': 'Choose the cloud storage service you want to connect to Cloudgate:',
+        'addAcc.cancel': 'Cancel',
+        'addAcc.changeProvider': '← Change Provider',
+        'addAcc.oauthRequired': 'OAuth App Credentials (Required):',
+        'addAcc.loginCloud': 'Sign in with Cloud Account',
+        'addAcc.accountLabel': 'Account Name / Label',
+        'addAcc.accountPlaceholder': 'e.g. Primary Cloud Account',
+        'addAcc.quotaAllocation': 'Quota Allocation (GB)',
+        'addAcc.back': 'Back',
+        'addAcc.testAndConnect': 'Test & Connect Account',
+        'addAcc.verifyingTitle': 'Verifying & Registering Account',
+        'addAcc.verifyingDesc': 'Connecting to remote service and checking quota integrity',
+        'addAcc.diagStep1': '1. Testing Network Connectivity & Credentials',
+        'addAcc.diagDesc1': 'Performing authentication handshake…',
+        'addAcc.diagStep2': '2. Interrogating Storage Capacity',
+        'addAcc.diagDesc2': 'Retrieving total quota and free space…',
+        'addAcc.diagStep3': '3. Registering to Virtual StoragePool',
+        'addAcc.diagDesc3': 'Activating driver to round-robin allocation policy…',
+        'addAcc.diagFailed': 'Connection Verification Failed',
+        'addAcc.diagBackToFix': '← Back & Fix Credentials',
+
+        'editAcc.title': 'Edit RemoteAccount',
+        'editAcc.desc': 'Update account label, root mount folder, or quota allocation for this account.',
+        'editAcc.nameLabel': 'Account Name (Label)',
+        'editAcc.rootFolderLabel': 'Root Folder',
+        'editAcc.rootFolderDesc': 'Changing root folder resets local metadata index cache for this account.',
+        'editAcc.quotaLabel': 'Total Quota (GB)',
+        'editAcc.quotaDesc': 'Total storage capacity in Gigabytes.',
+        'editAcc.cancel': 'Cancel',
+        'editAcc.save': 'Save Changes',
+
+        'disAcc.title': 'Disconnect Remote Account',
+        'disAcc.confirmLabel': 'To confirm, type the exact account name below:',
+        'disAcc.placeholder': 'Type account name…',
+        'disAcc.cancel': 'Cancel',
+        'disAcc.disconnect': 'Disconnect Account',
+
+        'share.title': 'Share File (Share Link)',
+        'share.created': 'Direct access link created for file:',
+        'share.copy': 'Copy',
+        'share.close': 'Close',
+        'share.copiedToast': 'Link successfully copied to clipboard! 📋',
+
+        'dlConfirm.title': 'Download File?',
+        'dlConfirm.question': 'Do you want to download this file to your local device?',
+        'dlConfirm.cancel': 'Cancel',
+        'dlConfirm.confirm': 'Download Now',
+
+        'bc.dashboard': 'Dashboard',
+        'bc.storageHub': 'StorageHub',
+        'bc.starred': 'Starred Files',
+        'bc.recent': 'Recent Files',
+        'bc.settings': 'Settings & API',
+        'bc.trash': 'Trash',
+        'bc.cloudAccount': 'Cloud Account',
+        'bc.backUp': 'Back to Parent Folder',
+        'changelog.close': 'Close',
+        'about.changelog': '📜 Changelog',
+        'about.close': 'Close',
+        'about.checkUpdates': 'Check for Updates',
       },
       id: {
         'topbar.search': 'Cari file di semua akun cloud…',
@@ -3103,6 +3295,16 @@
         'sheet.title': 'Detail & Aktivitas',
         'sheet.tabInspector': 'Detail File',
         'sheet.tabAudit': 'Riwayat Aktivitas',
+        'sheet.noFileSelected': 'Tidak Ada File Dipilih',
+        'sheet.noFileDesc': 'Klik file atau folder untuk melihat alokasi domain, akun fisik, dan checksum.',
+        'sheet.domainMapping': 'Pemetaan Domain',
+        'sheet.remotePath': 'Path Remote',
+        'sheet.fileSize': 'Ukuran File',
+        'sheet.lastModified': 'Terakhir Diubah',
+        'sheet.autoAlloc': 'Alokasi Otomatis',
+        'sheet.directory': 'Direktori',
+        'sheet.loadingAudit': 'Memuat riwayat audit…',
+        'sheet.noActivity': 'Belum ada aktivitas',
         'transfer.title': 'Transfer Berjalan',
         'dropzone.title': 'Lepaskan file di sini untuk mengunggah',
         'dropzone.desc': 'Mendistribusikan melalui StoragePool aktif',
@@ -3183,6 +3385,188 @@
         'gateway.firstRunBtn': 'Simpan & Buka Cloudgate',
         'gateway.remoteLockedTitle': 'Inisialisasi Diperlukan',
         'gateway.remoteLockedDesc': 'Demi keamanan, MasterPassword awal hanya dapat disetel langsung dari mesin lokal (localhost) atau melalui terminal server dengan perintah: cloudgate auth setup <password>',
+
+        'nav.urlIngest': 'URL Ingest',
+        'nav.urlIngestTitle': 'Unduh langsung dari URL web ke cloud',
+        'nav.syncFolder': 'Sync Folder',
+        'nav.syncFolderTitle': 'Sinkronisasi folder antar akun cloud',
+
+        'files.emptyTitle': 'Tidak ada file ditemukan',
+        'files.emptyFilterDesc': 'Coba ubah filter kategori di toolbar atas.',
+        'files.emptyUploadDesc': 'Upload file baru atau kembali ke direktori induk',
+        'files.parentFolder': '← Kembali ke Folder Induk',
+        'files.groupOther': 'Lainnya',
+        'files.groupFolder': '📁 Folder',
+        'files.groupImage': '🖼️ Gambar',
+        'files.groupDoc': '📄 Dokumen',
+        'files.groupMedia': '🎬 Media Audio & Video',
+        'files.groupArchive': '📦 Arsip',
+        'files.groupCode': '💻 Kode Sumber',
+        'files.groupFilesOther': '📎 File Lainnya',
+        'files.groupToday': '⚡ Hari Ini',
+        'files.groupLast7Days': '🗓️ 7 Hari Terakhir',
+        'files.groupLast30Days': '📅 30 Hari Terakhir',
+        'files.groupOlder': '🗄️ Lebih Lama',
+        'files.groupRoundRobin': '☁️ Round-Robin Pool',
+        'files.starTitle': 'Tandai Bintang',
+        'files.shareTitle': 'Bagikan Link (Share Link)',
+        'files.open': 'Buka',
+        'files.preview': 'Pratinjau',
+        'files.download': 'Unduh',
+        'files.trash': 'Hapus',
+        'files.openFolder': 'Buka Folder',
+        'files.moveToTrash': 'Hapus ke Trash',
+        'files.downloadFile': 'Download File',
+        'files.confirmTrash': 'Pindahkan ke Trash Bin?',
+        'files.noPreviewAvailable': 'Pratinjau langsung tidak tersedia untuk format file ini.<br>Anda dapat mengunduh file ini untuk membukanya secara lokal.',
+        'files.loadingPreview': 'Memuat pratinjau...',
+        'files.chars': 'karakter',
+        'files.lines': 'baris',
+        'files.copyText': 'Salin Teks',
+        'files.textCopied': 'Teks disalin ke clipboard!',
+        'files.downloadOnly': 'Unduh File Saja',
+        'files.cloudAccessIssue': 'Kendala Akses Cloud',
+        'files.reloadFiles': 'Muat Ulang File ↻',
+
+        'ingest.title': 'Unduh Langsung dari URL',
+        'ingest.subtitle': 'RemoteIngest: Stream langsung ke Cloud Storage',
+        'ingest.urlLabel': 'URL File (HTTP / HTTPS)',
+        'ingest.accountLabel': 'Target Akun Cloud',
+        'ingest.dirLabel': 'Folder Tujuan',
+        'ingest.nameLabel': 'Nama File (Opsional)',
+        'ingest.namePlaceholder': 'Otomatis jika kosong',
+        'ingest.noAccount': '(Tidak ada akun terhubung)',
+        'ingest.cancel': 'Batal',
+        'ingest.submit': 'Mulai Unduh',
+        'ingest.startedToast': 'Unduhan URL dimulai di latar belakang',
+        'ingest.errUrlRequired': 'URL wajib diisi',
+        'ingest.errAccountRequired': 'Pilih akun cloud tujuan',
+
+        'replicate.title': 'Replikasi & Sinkronisasi Folder',
+        'replicate.subtitle': 'ReplicationSession: Sinkronisasi antar Akun Cloud',
+        'replicate.sourceAccount': 'Akun Sumber',
+        'replicate.sourcePath': 'Folder Sumber',
+        'replicate.targetAccount': 'Akun Tujuan',
+        'replicate.targetPath': 'Folder Tujuan',
+        'replicate.mirrorMode': '<strong>Mirror Mode:</strong> Pindahkan berkas di tujuan ke Sampah jika sudah tidak ada di sumber',
+        'replicate.cancel': 'Batal',
+        'replicate.submit': 'Mulai Replikasi',
+        'replicate.startedToast': 'Sinkronisasi folder dimulai di latar belakang',
+        'replicate.noAccount': '(Tidak ada akun)',
+
+        'docs.title': 'REST API & System Documentation',
+        'docs.subtitle': 'Spesifikasi endpoint gateway terpadu Cloudgate untuk integrasi otomatis.',
+        'docs.archModel': 'Model Arsitektur',
+        'docs.singleBinary': 'Single-Binary Gateway',
+        'docs.singleBinaryDesc': '0 external runtime dependencies',
+        'docs.catalogCache': 'Katalog & Cache',
+        'docs.sqliteDesc': 'Zero-latency local metadata queries',
+        'docs.credSecurity': 'Keamanan Kredensial',
+        'docs.aesDesc': 'OAuth Refresh Token & Direct Credential persistence',
+        'docs.endpointsSummary': 'Ringkasan API Endpoints',
+        'docs.epInfo': '— Informasi metadata gateway, versi aplikasi, author, dan tautan repositori',
+        'docs.epProviders': '— Mengambil katalog 16 provider storage & protokol yang didukung beserta metode autentikasinya',
+        'docs.epStats': '— Mengambil total kuota agregat, kapasitas terpakai, dan status live seluruh akun',
+        'docs.epAccounts': '— Mengambil daftar lengkap seluruh remote account yang terhubung ke gateway',
+        'docs.epTest': '— Menguji keabsahan kredensial provider secara live sebelum didaftarkan',
+        'docs.epSync': '— Menyelaraskan seluruh kuota dan metadata remote secara langsung',
+        'docs.epFiles': '— Membaca file gabungan virtual StoragePool atau akun spesifik (?account_id=...)',
+        'docs.epToggle': '— Mengaktifkan atau menonaktifkan akun dari alokasi penulisan pool',
+        'docs.epShare': '— Menghasilkan URL streaming langsung / share link untuk file virtual',
+        'docs.epTasks': '— Memantau antrean background tasks (transfer file, ingest URL, replikasi folder)',
+        'docs.handbookTitle': 'Panduan Resmi Pendaftaran Akun Cloud & Troubleshooting (16 Provider)',
+        'docs.handbookSubtitle': 'Petunjuk step-by-step terbaru sesuai ketentuan masing-masing provider dan penanganan jika terjadi kendala.',
+
+        'tasks.title': 'Task Latar Belakang',
+        'tasks.empty': 'Belum ada task yang aktif atau riwayat task.',
+        'tasks.clearFinished': 'Bersihkan yang Selesai',
+        'tasks.cancel': 'Batalkan',
+        'tasks.retry': 'Coba lagi',
+
+        'hub.utilization': 'Penggunaan Kapasitas Teragregasi',
+        'hub.providerDist': 'Distribusi Kuota per Provider',
+        'hub.noAccounts': 'Belum ada akun cloud terhubung',
+        'hub.fleetTitle': 'Daftar Akun Cloud Terhubung',
+        'hub.registered': 'Terdaftar',
+        'hub.thProvider': 'Penyedia',
+        'hub.thIdentity': 'Akun & Identitas',
+        'hub.thQuota': 'Kapasitas & Kuota',
+        'hub.thStatus': 'Status',
+        'hub.thSync': 'Sinkronisasi',
+        'hub.thIntegration': 'Integrasi Pool',
+        'hub.thActions': 'Aksi',
+        'hub.justNow': 'Baru saja',
+        'hub.active': 'Aktif',
+        'hub.error': 'Kendala Koneksi',
+        'hub.inactive': 'Nonaktif',
+        'hub.togglePool': 'Aktifkan/Nonaktifkan integrasi pada StoragePool',
+        'hub.accountOptions': 'Opsi Akun',
+
+        'addAcc.title': 'Tambah Penyedia Storage',
+        'addAcc.subtitle': 'ConnectionPipeline: Agregasi Multi-Cloud',
+        'addAcc.step1': '1. Pilih Provider',
+        'addAcc.step2': '2. Otorisasi',
+        'addAcc.step3': '3. Uji & Simpan',
+        'addAcc.selectIntro': 'Pilih layanan cloud storage yang ingin Anda hubungkan ke Cloudgate:',
+        'addAcc.cancel': 'Batal',
+        'addAcc.changeProvider': '← Ganti Provider',
+        'addAcc.oauthRequired': 'Kredensial Aplikasi OAuth (Wajib Diisi):',
+        'addAcc.loginCloud': 'Masuk dengan Akun Cloud',
+        'addAcc.accountLabel': 'Nama / Label Akun',
+        'addAcc.accountPlaceholder': 'Contoh: Akun Kerja Utama',
+        'addAcc.quotaAllocation': 'Alokasi Kuota (GB)',
+        'addAcc.back': 'Kembali',
+        'addAcc.testAndConnect': 'Test & Hubungkan Akun',
+        'addAcc.verifyingTitle': 'Memverifikasi & Mendaftarkan Akun',
+        'addAcc.verifyingDesc': 'Menghubungkan ke layanan remote dan mengecek integritas kuota',
+        'addAcc.diagStep1': '1. Uji Konektivitas Jaringan & Kredensial',
+        'addAcc.diagDesc1': 'Melakukan handshake autentikasi...',
+        'addAcc.diagStep2': '2. Interogasi Kapasitas Storage',
+        'addAcc.diagDesc2': 'Mengambil kuota total dan sisa ruang bebas...',
+        'addAcc.diagStep3': '3. Registrasi ke Virtual StoragePool',
+        'addAcc.diagDesc3': 'Mengaktifkan driver ke round-robin allocation policy...',
+        'addAcc.diagFailed': 'Koneksi Gagal Terverifikasi',
+        'addAcc.diagBackToFix': '← Kembali & Perbaiki Kredensial',
+
+        'editAcc.title': 'Edit RemoteAccount',
+        'editAcc.desc': 'Perbarui label nama, folder mount root, atau alokasi kuota akun ini.',
+        'editAcc.nameLabel': 'Nama Akun (Label)',
+        'editAcc.rootFolderLabel': 'Root Folder',
+        'editAcc.rootFolderDesc': 'Mengubah root folder akan mereset cache indeks metadata lokal untuk akun ini.',
+        'editAcc.quotaLabel': 'Total Quota (GB)',
+        'editAcc.quotaDesc': 'Kapasitas penyimpanan total dalam Gigabyte.',
+        'editAcc.cancel': 'Batal',
+        'editAcc.save': 'Simpan Perubahan',
+
+        'disAcc.title': 'Putuskan Remote Account',
+        'disAcc.confirmLabel': 'Untuk mengonfirmasi, ketik persis nama akun di bawah ini:',
+        'disAcc.placeholder': 'Ketik nama akun...',
+        'disAcc.cancel': 'Batal',
+        'disAcc.disconnect': 'Putuskan Akun',
+
+        'share.title': 'Bagikan File (Share Link)',
+        'share.created': 'Link akses langsung telah dibuat untuk file:',
+        'share.copy': 'Salin',
+        'share.close': 'Tutup',
+        'share.copiedToast': 'Link berhasil disalin ke clipboard! 📋',
+
+        'dlConfirm.title': 'Download File?',
+        'dlConfirm.question': 'Apakah Anda ingin mengunduh file ini ke perangkat lokal Anda?',
+        'dlConfirm.cancel': 'Batal',
+        'dlConfirm.confirm': 'Unduh Sekarang',
+
+        'bc.dashboard': 'Dashboard',
+        'bc.storageHub': 'Pusat Penyimpanan',
+        'bc.starred': 'File Berbintang',
+        'bc.recent': 'File Terbaru',
+        'bc.settings': 'Pengaturan & API',
+        'bc.trash': 'Sampah',
+        'bc.cloudAccount': 'Akun Cloud',
+        'bc.backUp': 'Kembali ke Folder Atas',
+        'changelog.close': 'Tutup',
+        'about.changelog': '📜 Changelog',
+        'about.close': 'Tutup',
+        'about.checkUpdates': 'Periksa Pembaruan',
       }
     };
 
@@ -3256,7 +3640,12 @@
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (key && I18N[currentLang] && I18N[currentLang][key]) {
-          el.textContent = I18N[currentLang][key];
+          const val = I18N[currentLang][key];
+          if (val.includes('<') && val.includes('>')) {
+            el.innerHTML = val;
+          } else {
+            el.textContent = val;
+          }
         }
       });
       document.querySelectorAll('[data-i18n-title]').forEach(el => {
@@ -3273,6 +3662,9 @@
       });
       if (typeof updateCapacityCard === 'function') {
         updateCapacityCard();
+      }
+      if (typeof updateBreadcrumbs === 'function') {
+        updateBreadcrumbs();
       }
     }
 
@@ -3335,8 +3727,8 @@
           content.innerHTML = `
             <div style="text-align:center;padding:48px 16px;color:var(--md-sys-color-on-surface-variant);">
               <svg width="40" height="40" viewBox="0 0 24 24" style="fill:var(--md-sys-color-on-surface-variant);margin-bottom:8px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-              <div style="font-weight:600;font-size:0.95rem;">No File Selected</div>
-              <div style="font-size:0.8rem;margin-top:4px;">Click any file or folder to inspect domain allocation, physical account, and checksum.</div>
+              <div style="font-weight:600;font-size:0.95rem;">${t('sheet.noFileSelected')}</div>
+              <div style="font-size:0.8rem;margin-top:4px;">${t('sheet.noFileDesc')}</div>
             </div>
           `;
           return;
@@ -3345,7 +3737,7 @@
         const isDir = selectedFile.is_dir;
         const type = getFileType(name, isDir);
         const accObj = (cachedAccounts || []).find(a => a.id === selectedFile.account_id);
-        const hostAcc = accObj ? (accObj.email ? `${accObj.name} (${accObj.email})` : accObj.name) : (selectedFile.account_id || (currentMode === 'account' ? activeAccountName : 'Automatic Allocation'));
+        const hostAcc = accObj ? (accObj.email ? `${accObj.name} (${accObj.email})` : accObj.name) : (selectedFile.account_id || (currentMode === 'account' ? activeAccountName : t('sheet.autoAlloc')));
         const hostBadge = selectedFile.account_id ? getAccountBadge(selectedFile.account_id) : `<span class="m3-chip">${hostAcc}</span>`;
         content.innerHTML = `
           <div class="inspector-card">
@@ -3360,7 +3752,7 @@
 
           <div class="inspector-card">
             <div class="inspector-prop">
-              <span class="inspector-label">Domain Mapping</span>
+              <span class="inspector-label">${t('sheet.domainMapping')}</span>
               <span class="inspector-value">VirtualFile ➔ Intact Remote File</span>
             </div>
             <div class="inspector-prop">
@@ -3368,22 +3760,22 @@
               <span class="inspector-value">${hostAcc}</span>
             </div>
             <div class="inspector-prop">
-              <span class="inspector-label">Remote Path</span>
+              <span class="inspector-label">${t('sheet.remotePath')}</span>
               <span class="inspector-value">${selectedFile.path || selectedFile.original_path || currentPath + '/' + name}</span>
             </div>
             <div class="inspector-prop">
-              <span class="inspector-label">File Size</span>
-              <span class="inspector-value">${isDir ? 'Directory' : formatBytes(selectedFile.size)}</span>
+              <span class="inspector-label">${t('sheet.fileSize')}</span>
+              <span class="inspector-value">${isDir ? t('sheet.directory') : formatBytes(selectedFile.size)}</span>
             </div>
             <div class="inspector-prop">
-              <span class="inspector-label">Last Modified</span>
+              <span class="inspector-label">${t('sheet.lastModified')}</span>
               <span class="inspector-value">${selectedFile.mod_time ? new Date(selectedFile.mod_time).toLocaleString() : 'N/A'}</span>
             </div>
           </div>
 
           <div style="display:flex;gap:8px;">
-            ${!isDir ? `<button class="btn btn-primary" style="flex:1;" onclick="askDownload(selectedFile)">Download</button>` : `<button class="btn btn-primary" style="flex:1;" onclick="openFolder(selectedFile)">Open</button>`}
-            <button class="btn btn-danger" onclick="contextTrash()">Trash</button>
+            ${!isDir ? `<button class="btn btn-primary" style="flex:1;" onclick="askDownload(selectedFile)">${t('files.download')}</button>` : `<button class="btn btn-primary" style="flex:1;" onclick="openFolder(selectedFile)">${t('files.open')}</button>`}
+            <button class="btn btn-danger" onclick="contextTrash()">${t('files.trash')}</button>
           </div>
         `;
       } else {
@@ -4177,16 +4569,16 @@
         const meta = PROVIDER_METADATA[acc.provider] || { name: acc.provider };
         const isEnabled = acc.enabled !== false;
         let dotCls = 'active';
-        let dotTooltip = 'Aktif';
+        let dotTooltip = t('dash.statusActive');
         if (accStat.status === 'error') {
           dotCls = 'error';
-          dotTooltip = 'Kendala Koneksi';
+          dotTooltip = t('dash.statusError');
         } else if (!isEnabled) {
           dotCls = 'inactive';
-          dotTooltip = 'Nonaktif';
+          dotTooltip = t('dash.statusInactive');
         }
 
-        const lastSyncText = acc.last_sync_at ? new Date(acc.last_sync_at).toLocaleTimeString() : 'Baru saja';
+        const lastSyncText = acc.last_sync_at ? new Date(acc.last_sync_at).toLocaleTimeString() : t('hub.justNow');
 
         return `
           <tr>
@@ -4220,7 +4612,7 @@
             </td>
             <td style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${lastSyncText}</td>
             <td>
-              <label class="toggle-switch" title="Aktifkan/Nonaktifkan integrasi pada StoragePool">
+              <label class="toggle-switch" title="${t('hub.togglePool')}">
                 <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleAccountIntegration('${acc.id}', this.checked)">
                 <span class="toggle-slider"></span>
               </label>
@@ -4232,7 +4624,7 @@
                   ${t('dash.open')}
                 </button>
                 <div class="action-menu-wrap">
-                  <button class="btn-icon-kebab" onclick="toggleActionMenu(event, 'tblMenu_${acc.id}')" title="Opsi Akun">
+                  <button class="btn-icon-kebab" onclick="toggleActionMenu(event, 'tblMenu_${acc.id}')" title="${t('hub.accountOptions')}">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                   </button>
                   <div class="action-dropdown-menu" id="tblMenu_${acc.id}">
@@ -4303,37 +4695,37 @@
           <!-- Aggregated Storage Utilization Bar -->
           <div class="storage-breakdown-card" id="storageHubUsageBar">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-weight:700;font-size:0.95rem;">Penggunaan Kapasitas Teragregasi</span>
-              <span style="font-weight:700;color:var(--md-sys-color-primary);font-size:0.9rem;">${hubUsage.text} (${formatBytes(stats.total_used)} dari ${formatBytes(stats.total_storage)})</span>
+              <span style="font-weight:700;font-size:0.95rem;">${t('hub.utilization')}</span>
+              <span style="font-weight:700;color:var(--md-sys-color-primary);font-size:0.9rem;">${hubUsage.text} (${formatBytes(stats.total_used)} ${t('dash.of')} ${formatBytes(stats.total_storage)})</span>
             </div>
             <div class="progress-bar-bg" style="height:12px;margin:2px 0;">
               <div class="progress-bar-fill" style="width:${hubUsage.fillWidth}%;"></div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:0.76rem;color:var(--md-sys-color-on-surface-variant);">
-              <span>Terpakai: ${formatBytes(stats.total_used)}</span>
-              <span>Tersedia: ${formatBytes(totalFree)}</span>
+              <span>${t('dash.used')}: ${formatBytes(stats.total_used)}</span>
+              <span>${t('dash.free')}: ${formatBytes(totalFree)}</span>
             </div>
           </div>
 
           <!-- Storage Provider Breakdown Card -->
           <div class="storage-breakdown-card">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-weight:700;font-size:0.95rem;">Distribusi Kuota per Provider</span>
-              <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${segments.length} Provider</span>
+              <span style="font-weight:700;font-size:0.95rem;">${t('hub.providerDist')}</span>
+              <span style="font-size:0.8rem;color:var(--md-sys-color-on-surface-variant);">${segments.length} ${currentLang === 'id' ? 'Provider' : 'Providers'}</span>
             </div>
             <div class="breakdown-bar-wrap">
               ${segments.length > 0 ? segments.join('') : '<div style="width:100%;height:100%;background:var(--md-sys-color-outline-variant);"></div>'}
             </div>
             <div class="breakdown-legend">
-              ${legend.length > 0 ? legend.join('') : '<span style="color:var(--md-sys-color-on-surface-variant);font-size:0.82rem;">Belum ada akun cloud terhubung</span>'}
+              ${legend.length > 0 ? legend.join('') : `<span style="color:var(--md-sys-color-on-surface-variant);font-size:0.82rem;">${t('hub.noAccounts')}</span>`}
             </div>
           </div>
 
           <!-- Connected Accounts Table Section -->
           <div style="display:flex;flex-direction:column;gap:12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <h3 style="font-size:1.1rem;font-weight:700;">Daftar Akun Cloud Terhubung</h3>
-              <span style="font-size:0.82rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} Terdaftar</span>
+              <h3 style="font-size:1.1rem;font-weight:700;">${t('hub.fleetTitle')}</h3>
+              <span style="font-size:0.82rem;color:var(--md-sys-color-on-surface-variant);">${accounts.length} ${t('hub.registered')}</span>
             </div>
 
             ${accounts.length > 0 ? `
@@ -4341,13 +4733,13 @@
                 <table class="fleet-table">
                   <thead>
                     <tr>
-                      <th>Penyedia</th>
-                      <th>Akun & Identitas</th>
-                      <th>Kapasitas & Kuota</th>
-                      <th>Status</th>
-                      <th>Sinkronisasi</th>
-                      <th>Integrasi Pool</th>
-                      <th>Aksi</th>
+                      <th>${t('hub.thProvider')}</th>
+                      <th>${t('hub.thIdentity')}</th>
+                      <th>${t('hub.thQuota')}</th>
+                      <th>${t('hub.thStatus')}</th>
+                      <th>${t('hub.thSync')}</th>
+                      <th>${t('hub.thIntegration')}</th>
+                      <th>${t('hub.thActions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -4872,38 +5264,38 @@
           <div style="margin-bottom:20px;">
             <h2 style="font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px;">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-              REST API & System Documentation
+              ${t('docs.title')}
             </h2>
-            <div style="font-size:0.86rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Spesifikasi endpoint gateway terpadu Cloudgate untuk integrasi otomatis.</div>
+            <div style="font-size:0.86rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${t('docs.subtitle')}</div>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:14px;margin-bottom:24px;">
             <div class="pool-stat-box" style="padding:16px;">
-              <span class="pool-stat-label">Model Arsitektur</span>
-              <span style="font-size:1.05rem;font-weight:700;color:var(--md-sys-color-primary);">Single-Binary Gateway</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">0 external runtime dependencies</div>
+              <span class="pool-stat-label">${t('docs.archModel')}</span>
+              <span style="font-size:1.05rem;font-weight:700;color:var(--md-sys-color-primary);">${t('docs.singleBinary')}</span>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${t('docs.singleBinaryDesc')}</div>
             </div>
             <div class="pool-stat-box" style="padding:16px;">
-              <span class="pool-stat-label">Katalog & Cache</span>
+              <span class="pool-stat-label">${t('docs.catalogCache')}</span>
               <span style="font-size:1.05rem;font-weight:700;color:var(--status-success);">SQLite Pure-Go WAL + FTS5</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">Zero-latency local metadata queries</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${t('docs.sqliteDesc')}</div>
             </div>
             <div class="pool-stat-box" style="padding:16px;">
-              <span class="pool-stat-label">Keamanan Kredensial</span>
+              <span class="pool-stat-label">${t('docs.credSecurity')}</span>
               <span style="font-size:1.05rem;font-weight:700;color:var(--md-sys-color-tertiary);">AES-256-GCM Vault</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">OAuth Refresh Token & Direct Credential persistence</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">${t('docs.aesDesc')}</div>
             </div>
           </div>
 
           <div class="storage-breakdown-card" style="gap:16px;">
-            <h3 style="font-size:1.05rem;font-weight:700;border-bottom:1px solid var(--md-sys-color-outline-variant);padding-bottom:10px;">Ringkasan API Endpoints</h3>
+            <h3 style="font-size:1.05rem;font-weight:700;border-bottom:1px solid var(--md-sys-color-outline-variant);padding-bottom:10px;">${t('docs.endpointsSummary')}</h3>
 
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/info</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Informasi metadata gateway, versi aplikasi, author, dan tautan repositori</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epInfo')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/info | jq</pre>
               </div>
@@ -4912,7 +5304,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/providers</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengambil katalog 16 provider storage & protokol yang didukung beserta metode autentikasinya</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epProviders')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/providers | jq</pre>
               </div>
@@ -4921,7 +5313,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/stats</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengambil total kuota agregat, kapasitas terpakai, dan status live seluruh akun</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epStats')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/stats | jq</pre>
               </div>
@@ -4930,7 +5322,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/accounts</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengambil daftar lengkap seluruh remote account yang terhubung ke gateway</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epAccounts')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/accounts | jq</pre>
               </div>
@@ -4939,7 +5331,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#2356cc;color:#fff;font-weight:700;">POST</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/accounts/test</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menguji keabsahan kredensial provider secara live sebelum didaftarkan</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epTest')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST ${origin}/api/accounts/test -H "Content-Type: application/json" -d '{"provider":"s3","endpoint":"https://...","access_key":"...","secret_key":"...","bucket":"mybucket"}'</pre>
               </div>
@@ -4948,7 +5340,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#2356cc;color:#fff;font-weight:700;">POST</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/storage/sync</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menyelaraskan seluruh kuota dan metadata remote secara langsung</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epSync')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST ${origin}/api/storage/sync</pre>
               </div>
@@ -4957,7 +5349,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/files?pool_id=all_pool&path=/</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Membaca file gabungan virtual StoragePool atau akun spesifik (?account_id=...)</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epFiles')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "${origin}/api/files?pool_id=all_pool&path=/"</pre>
               </div>
@@ -4966,7 +5358,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#2356cc;color:#fff;font-weight:700;">POST</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/accounts/{id}/toggle</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengaktifkan atau menonaktifkan akun dari alokasi penulisan pool</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epToggle')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST ${origin}/api/accounts/acc_123/toggle -d '{"enabled":false}'</pre>
               </div>
@@ -4975,7 +5367,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/files/share?path=/dokumen.pdf</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menghasilkan URL streaming langsung / share link untuk file virtual</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epShare')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "${origin}/api/files/share?path=/dokumen.pdf"</pre>
               </div>
@@ -4984,7 +5376,7 @@
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/tasks</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Memantau antrean background tasks (transfer file, ingest URL, replikasi folder)</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">${t('docs.epTasks')}</span>
                 </div>
                 <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/tasks | jq</pre>
               </div>
@@ -4996,10 +5388,10 @@
             <div style="border-bottom:1px solid var(--md-sys-color-outline-variant);padding-bottom:12px;">
               <h3 style="font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:10px;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
-                Panduan Resmi Pendaftaran Akun Cloud & Troubleshooting (16 Provider)
+                ${t('docs.handbookTitle')}
               </h3>
               <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">
-                Petunjuk step-by-step terbaru sesuai ketentuan masing-masing provider dan penanganan jika terjadi kendala.
+                ${t('docs.handbookSubtitle')}
               </div>
             </div>
 
@@ -5675,9 +6067,9 @@
               <div class="file-icon" style="width:56px;height:56px;border-radius:var(--md-sys-shape-corner-md);">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--md-sys-color-on-surface-variant)"><path d="M19 13H5v-2h14v2z"/></svg>
               </div>
-              <p style="font-weight:700;font-size:1.05rem;">Tidak ada file ditemukan</p>
-              <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);">${fileFilter !== 'all' ? 'Coba ubah filter kategori di toolbar atas.' : 'Upload file baru atau kembali ke direktori induk'}</p>
-              ${currentPath !== '/' ? '<button class="btn btn-secondary" style="margin-top:8px;" onclick="navigateUp()">← Kembali ke Folder Induk</button>' : ''}
+              <p style="font-weight:700;font-size:1.05rem;">${t('files.emptyTitle')}</p>
+              <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);">${fileFilter !== 'all' ? t('files.emptyFilterDesc') : t('files.emptyUploadDesc')}</p>
+              ${currentPath !== '/' ? `<button class="btn btn-secondary" style="margin-top:8px;" onclick="navigateUp()">${t('files.parentFolder')}</button>` : ''}
             </div>
           </div>
         `;
@@ -5692,28 +6084,28 @@
       // Grouping
       const groups = new Map();
       files.forEach(f => {
-        let key = 'Lainnya';
+        let key = t('files.groupOther');
         if (fileGroup === 'type') {
-          if (f.is_dir) key = '📁 Folder';
+          if (f.is_dir) key = '📁 ' + t('files.groupFolder');
           else {
             const type = getFileType(f.name || f.file_name, false);
-            if (type === 'image') key = '🖼️ Gambar';
-            else if (['pdf', 'document', 'spreadsheet', 'text', 'presentation'].includes(type)) key = '📄 Dokumen';
-            else if (['video', 'audio'].includes(type)) key = '🎬 Media Audio & Video';
-            else if (type === 'archive') key = '📦 Arsip';
-            else if (type === 'code') key = '💻 Kode Sumber';
-            else key = '📎 File Lainnya';
+            if (type === 'image') key = '🖼️ ' + t('files.groupImage');
+            else if (['pdf', 'document', 'spreadsheet', 'text', 'presentation'].includes(type)) key = '📄 ' + t('files.groupDoc');
+            else if (['video', 'audio'].includes(type)) key = '🎬 ' + t('files.groupMedia');
+            else if (type === 'archive') key = '📦 ' + t('files.groupArchive');
+            else if (type === 'code') key = '💻 ' + t('files.groupCode');
+            else key = '📎 ' + t('files.groupFilesOther');
           }
         } else if (fileGroup === 'date') {
           const mod = new Date(f.mod_time || 0);
           const now = new Date();
           const diffDays = Math.floor((now - mod) / (1000 * 60 * 60 * 24));
-          if (diffDays <= 0) key = '⚡ Hari Ini';
-          else if (diffDays <= 7) key = '🗓️ 7 Hari Terakhir';
-          else if (diffDays <= 30) key = '📅 30 Hari Terakhir';
-          else key = '🗄️ Lebih Lama';
+          if (diffDays <= 0) key = '⚡ ' + t('files.groupToday');
+          else if (diffDays <= 7) key = '🗓️ ' + t('files.groupLast7Days');
+          else if (diffDays <= 30) key = '📅 ' + t('files.groupLast30Days');
+          else key = '🗄️ ' + t('files.groupOlder');
         } else if (fileGroup === 'account') {
-          key = f.account_id ? `☁️ ${f.account_id}` : '☁️ Round-Robin Pool';
+          key = f.account_id ? `☁️ ${f.account_id}` : t('files.groupRoundRobin');
         }
 
         if (!groups.has(key)) groups.set(key, []);
@@ -5751,10 +6143,10 @@
 
           card.innerHTML = `
             <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:3;" onclick="event.stopPropagation()">
-              <button class="star-btn ${isStarred ? 'starred' : ''}" title="Tandai Bintang" onclick="toggleStar('${f.account_id || activeAccountID || ''}', '${filePath.replace(/'/g, "\\'")}', '${fileName.replace(/'/g, "\\'")}', ${f.size || 0}, ${f.is_dir || false}, this, event)">
+              <button class="star-btn ${isStarred ? 'starred' : ''}" title="${t('files.starTitle')}" onclick="toggleStar('${f.account_id || activeAccountID || ''}', '${filePath.replace(/'/g, "\\'")}', '${fileName.replace(/'/g, "\\'")}', ${f.size || 0}, ${f.is_dir || false}, this, event)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="${isStarred ? '#ffba00' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
               </button>
-              <button class="share-btn" title="Bagikan Link (Share Link)" onclick="openShareModal('${filePath.replace(/'/g, "\\'")}', '${f.account_id || activeAccountID || ''}')">
+              <button class="share-btn" title="${t('files.shareTitle')}" onclick="openShareModal('${filePath.replace(/'/g, "\\'")}', '${f.account_id || activeAccountID || ''}')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               </button>
             </div>
@@ -5829,10 +6221,10 @@
                   <td style="color:var(--md-sys-color-on-surface-variant);">${f.mod_time ? new Date(f.mod_time).toLocaleDateString() : '-'}</td>
                   <td style="text-align:center;" onclick="event.stopPropagation()">
                     <div style="display:inline-flex;gap:4px;">
-                      <button class="star-btn ${isStarred ? 'starred' : ''}" title="Tandai Bintang" onclick="toggleStar('${f.account_id || activeAccountID || ''}', '${filePath.replace(/'/g, "\\'")}', '${fileName.replace(/'/g, "\\'")}', ${f.size || 0}, ${f.is_dir || false}, this, event)">
+                      <button class="star-btn ${isStarred ? 'starred' : ''}" title="${t('files.starTitle')}" onclick="toggleStar('${f.account_id || activeAccountID || ''}', '${filePath.replace(/'/g, "\\'")}', '${fileName.replace(/'/g, "\\'")}', ${f.size || 0}, ${f.is_dir || false}, this, event)">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="${isStarred ? '#ffba00' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                       </button>
-                      <button class="share-btn" title="Bagikan Link (Share Link)" onclick="openShareModal('${filePath.replace(/'/g, "\\'")}', '${f.account_id || activeAccountID || ''}')">
+                      <button class="share-btn" title="${t('files.shareTitle')}" onclick="openShareModal('${filePath.replace(/'/g, "\\'")}', '${f.account_id || activeAccountID || ''}')">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                       </button>
                     </div>
@@ -5899,15 +6291,15 @@
       const actionsEl = document.getElementById('selectedItemActions');
       if (isDir) {
         actionsEl.innerHTML = `
-          <button class="btn btn-primary" style="height:32px;padding:0 12px;font-size:0.8rem;" onclick="openFolder(selectedFile)">Buka</button>
-          <button class="btn btn-danger" style="height:32px;padding:0 10px;font-size:0.8rem;" onclick="contextTrash()">Hapus</button>
+          <button class="btn btn-primary" style="height:32px;padding:0 12px;font-size:0.8rem;" onclick="openFolder(selectedFile)">${t('files.open')}</button>
+          <button class="btn btn-danger" style="height:32px;padding:0 10px;font-size:0.8rem;" onclick="contextTrash()">${t('files.trash')}</button>
           <button class="btn-icon" style="width:28px;height:28px;" title="Deselect" onclick="deselectItem()">✕</button>
         `;
       } else {
         actionsEl.innerHTML = `
-          <button class="btn btn-primary" style="height:32px;padding:0 10px;font-size:0.8rem;" onclick="previewFile(selectedFile)">Preview</button>
-          <button class="btn btn-secondary" style="height:32px;padding:0 10px;font-size:0.8rem;" onclick="askDownload(selectedFile)">Unduh</button>
-          <button class="btn btn-danger" style="height:32px;padding:0 10px;font-size:0.8rem;" onclick="contextTrash()">Hapus</button>
+          <button class="btn btn-primary" style="height:32px;padding:0 10px;font-size:0.8rem;" onclick="previewFile(selectedFile)">${t('files.preview')}</button>
+          <button class="btn btn-secondary" style="height:32px;padding:0 10px;font-size:0.8rem;" onclick="askDownload(selectedFile)">${t('files.download')}</button>
+          <button class="btn btn-danger" style="height:32px;padding:0 10px;font-size:0.8rem;" onclick="contextTrash()">${t('files.trash')}</button>
           <button class="btn-icon" style="width:28px;height:28px;" title="Deselect" onclick="deselectItem()">✕</button>
         `;
       }
@@ -5940,40 +6332,40 @@
     function updateBreadcrumbs() {
       const container = document.getElementById('breadcrumbs');
       if (currentMode === 'dashboard') {
-        container.innerHTML = `<span class="breadcrumb-item active">Dashboard</span>`;
+        container.innerHTML = `<span class="breadcrumb-item active">${t('bc.dashboard')}</span>`;
         return;
       }
       if (currentMode === 'storage') {
-        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Pusat Penyimpanan</span>`;
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">${t('bc.dashboard')}</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">${t('bc.storageHub')}</span>`;
         return;
       }
       if (currentMode === 'starred') {
-        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">File Berbintang</span>`;
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">${t('bc.dashboard')}</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">${t('bc.starred')}</span>`;
         return;
       }
       if (currentMode === 'recent') {
-        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">File Terbaru</span>`;
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">${t('bc.dashboard')}</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">${t('bc.recent')}</span>`;
         return;
       }
       if (currentMode === 'docs') {
-        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">Pengaturan & API</span>`;
+        container.innerHTML = `<span class="breadcrumb-item" onclick="selectDashboard()">${t('bc.dashboard')}</span> <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span> <span class="breadcrumb-item active">${t('bc.settings')}</span>`;
         return;
       }
 
       let rootName = 'StoragePool';
       if (currentMode === 'account') {
-        rootName = activeAccountName || 'Akun Cloud';
+        rootName = activeAccountName || t('bc.cloudAccount');
       } else if (currentMode === 'trash') {
-        rootName = 'Sampah';
+        rootName = t('bc.trash');
       }
       const isRoot = currentPath === '/' || !currentPath;
       let html = `
-        <span class="breadcrumb-item" onclick="selectDashboard()">Dashboard</span>
+        <span class="breadcrumb-item" onclick="selectDashboard()">${t('bc.dashboard')}</span>
         <span style="color:var(--md-sys-color-outline);margin:0 4px;">/</span>
       `;
       if (!isRoot) {
         html += `
-          <button class="btn-icon" style="width:28px;height:28px;margin-right:4px;" title="Kembali ke Folder Atas" onclick="navigateUp()">
+          <button class="btn-icon" style="width:28px;height:28px;margin-right:4px;" title="${t('bc.backUp')}" onclick="navigateUp()">
             <svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
           </button>
         `;
@@ -6106,14 +6498,14 @@
       const isDir = file.is_dir;
       if (isDir) {
         menu.innerHTML = `
-          <div class="context-menu-item" onclick="openFolder(selectedFile)"><svg width="18" height="18" viewBox="0 0 24 24" fill="#ffb955"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>Buka Folder</div>
-          <div class="context-menu-item danger" onclick="contextTrash()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Hapus ke Trash</div>
+          <div class="context-menu-item" onclick="openFolder(selectedFile)"><svg width="18" height="18" viewBox="0 0 24 24" fill="#ffb955"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>${t('files.openFolder')}</div>
+          <div class="context-menu-item danger" onclick="contextTrash()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>${t('files.moveToTrash')}</div>
         `;
       } else {
         menu.innerHTML = `
-          <div class="context-menu-item" onclick="previewFile(selectedFile)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Lihat (Preview)</div>
-          <div class="context-menu-item" onclick="askDownload(selectedFile)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>Download File</div>
-          <div class="context-menu-item danger" onclick="contextTrash()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Hapus ke Trash</div>
+          <div class="context-menu-item" onclick="previewFile(selectedFile)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>${t('files.preview')}</div>
+          <div class="context-menu-item" onclick="askDownload(selectedFile)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>${t('files.downloadFile')}</div>
+          <div class="context-menu-item danger" onclick="contextTrash()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>${t('files.moveToTrash')}</div>
         `;
       }
       menu.style.display = 'flex';
@@ -6134,18 +6526,18 @@
       const type = getFileType(name, f.is_dir);
       document.getElementById('previewFileName').innerText = name;
       document.getElementById('previewFileName').title = name;
-      document.getElementById('previewFileMeta').innerText = `${formatBytes(f.size)} • Akun: ${acc || 'Pool'} • Path: ${filePath}`;
+      document.getElementById('previewFileMeta').innerText = `${formatBytes(f.size)} • ${t('table.remoteAccount')}: ${acc || 'Pool'} • Path: ${filePath}`;
       document.getElementById('previewFileIcon').innerHTML = getFileIconSvg(type, 24);
       const dlBtn = document.getElementById('previewDownloadBtn');
       dlBtn.onclick = () => askDownload(f);
       const contentArea = document.getElementById('previewContentArea');
-      contentArea.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);display:flex;align-items:center;gap:12px;"><div class="spinner"></div><span>Memuat pratinjau...</span></div>';
+      contentArea.innerHTML = `<div style="color:var(--md-sys-color-on-surface-variant);display:flex;align-items:center;gap:12px;"><div class="spinner"></div><span>${t('files.loadingPreview')}</span></div>`;
       openModal('filePreviewModal');
       const rawUrl = `/api/files/download?account_id=${encodeURIComponent(acc)}&path=${encodeURIComponent(filePath)}&inline=true`;
       if (type === 'pdf') {
         contentArea.innerHTML = `<iframe src="${rawUrl}" style="width:100%; height:75vh; border:none; border-radius:8px; background:#fff;"></iframe>`;
       } else if (type === 'image') {
-        contentArea.innerHTML = `<div style="padding:16px; display:flex; align-items:center; justify-content:center; width:100%; height:100%;"><img src="${rawUrl}" alt="${name}" style="max-width:100%; max-height:72vh; object-fit:contain; border-radius:var(--md-sys-shape-corner-md); box-shadow:var(--md-sys-elevation-2);" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'color:var(--md-sys-color-error);\\'>Gagal memuat gambar preview.</div>'" /></div>`;
+        contentArea.innerHTML = `<div style="padding:16px; display:flex; align-items:center; justify-content:center; width:100%; height:100%;"><img src="${rawUrl}" alt="${name}" style="max-width:100%; max-height:72vh; object-fit:contain; border-radius:var(--md-sys-shape-corner-md); box-shadow:var(--md-sys-elevation-2);" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'color:var(--md-sys-color-error);\\'>${currentLang === 'id' ? 'Gagal memuat gambar preview.' : 'Failed to load preview image.'}</div>'" /></div>`;
       } else if (type === 'video') {
         contentArea.innerHTML = `<div style="padding:16px; width:100%; display:flex; justify-content:center;"><video controls autoplay src="${rawUrl}" style="max-width:100%; max-height:72vh; border-radius:var(--md-sys-shape-corner-md); background:#000; outline:none;"></video></div>`;
       } else if (type === 'audio') {
@@ -6156,13 +6548,13 @@
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const text = await res.text();
           const escaped = escapeHtml(text);
-          contentArea.innerHTML = `<div style="width:100%; height:75vh; display:flex; flex-direction:column; overflow:hidden;"><div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; background-color:var(--md-sys-color-surface-container-high); border-bottom:1px solid var(--md-sys-color-outline-variant); font-size:0.8rem; color:var(--md-sys-color-on-surface-variant);"><span>${text.length} karakter • ${text.split('\n').length} baris</span><button class="btn btn-secondary" style="font-size:0.75rem; height:32px; padding:0 12px;" id="btnCopyText">Salin Teks</button></div><pre style="flex:1; margin:0; padding:16px; overflow:auto; font-family:Consolas, Monaco, monospace; font-size:0.86rem; line-height:1.6; color:var(--md-sys-color-on-surface); background-color:var(--md-sys-color-surface-container-lowest); white-space:pre-wrap; word-break:break-word;"><code>${escaped}</code></pre></div>`;
-          document.getElementById('btnCopyText').onclick = () => { navigator.clipboard.writeText(text); showToast('Teks disalin ke clipboard!'); };
+          contentArea.innerHTML = `<div style="width:100%; height:75vh; display:flex; flex-direction:column; overflow:hidden;"><div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; background-color:var(--md-sys-color-surface-container-high); border-bottom:1px solid var(--md-sys-color-outline-variant); font-size:0.8rem; color:var(--md-sys-color-on-surface-variant);"><span>${text.length} ${t('files.chars')} • ${text.split('\n').length} ${t('files.lines')}</span><button class="btn btn-secondary" style="font-size:0.75rem; height:32px; padding:0 12px;" id="btnCopyText">${t('files.copyText')}</button></div><pre style="flex:1; margin:0; padding:16px; overflow:auto; font-family:Consolas, Monaco, monospace; font-size:0.86rem; line-height:1.6; color:var(--md-sys-color-on-surface); background-color:var(--md-sys-color-surface-container-lowest); white-space:pre-wrap; word-break:break-word;"><code>${escaped}</code></pre></div>`;
+          document.getElementById('btnCopyText').onclick = () => { navigator.clipboard.writeText(text); showToast(t('files.textCopied')); };
         } catch (err) {
-          contentArea.innerHTML = `<div style="text-align:center; padding:30px; color:var(--md-sys-color-error);"><p>Gagal memuat pratinjau teks: ${err.message}</p><button class="btn btn-primary" style="margin-top:12px;" onclick="askDownload(selectedFile)">Unduh File Saja</button></div>`;
+          contentArea.innerHTML = `<div style="text-align:center; padding:30px; color:var(--md-sys-color-error);"><p>${currentLang === 'id' ? 'Gagal memuat pratinjau teks:' : 'Failed to load text preview:'} ${err.message}</p><button class="btn btn-primary" style="margin-top:12px;" onclick="askDownload(selectedFile)">${t('files.downloadOnly')}</button></div>`;
         }
       } else {
-        contentArea.innerHTML = `<div style="text-align:center; padding:48px 24px; max-width:440px;"><div style="margin-bottom:16px;">${getFileIconSvg(type, 64)}</div><h3 style="font-size:1.15rem; margin-bottom:8px; color:var(--md-sys-color-on-surface);">${name}</h3><p style="color:var(--md-sys-color-on-surface-variant); font-size:0.88rem; line-height:1.5; margin-bottom:24px;">Pratinjau langsung tidak tersedia untuk format file ini.<br>Anda dapat mengunduh file ini untuk membukanya secara lokal.</p><button class="btn btn-primary" onclick="executeDownload('${acc}', '${filePath}', '${name}')"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>Unduh File (${formatBytes(f.size)})</button></div>`;
+        contentArea.innerHTML = `<div style="text-align:center; padding:48px 24px; max-width:440px;"><div style="margin-bottom:16px;">${getFileIconSvg(type, 64)}</div><h3 style="font-size:1.15rem; margin-bottom:8px; color:var(--md-sys-color-on-surface);">${name}</h3><p style="color:var(--md-sys-color-on-surface-variant); font-size:0.88rem; line-height:1.5; margin-bottom:24px;">${t('files.noPreviewAvailable')}</p><button class="btn btn-primary" onclick="executeDownload('${acc}', '${filePath}', '${name}')"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>${t('files.downloadFile')} (${formatBytes(f.size)})</button></div>`;
       }
     }
 
@@ -6172,7 +6564,7 @@
       const acc = f.account_id || activeAccountID;
       const filePath = f.path || f.original_path;
       document.getElementById('dlModalName').innerText = name;
-      document.getElementById('dlModalMeta').innerText = `${formatBytes(f.size)} • Akun: ${acc || 'Pool'} • Path: ${filePath}`;
+      document.getElementById('dlModalMeta').innerText = `${formatBytes(f.size)} • ${t('table.remoteAccount')}: ${acc || 'Pool'} • Path: ${filePath}`;
       const confirmBtn = document.getElementById('dlModalConfirmBtn');
       confirmBtn.onclick = () => { closeModal('downloadConfirmModal'); executeDownload(acc, filePath, name); };
       openModal('downloadConfirmModal');
@@ -6180,7 +6572,7 @@
 
     function executeDownload(acc, filePath, fileName) {
       window.location.href = `/api/files/download?account_id=${encodeURIComponent(acc)}&path=${encodeURIComponent(filePath)}`;
-      showToast(`Mengunduh ${fileName}...`);
+      showToast(currentLang === 'id' ? `Mengunduh ${fileName}...` : `Downloading ${fileName}...`);
     }
 
     function contextDownload() {
@@ -6194,7 +6586,10 @@
       if (!selectedFile) return;
       const acc = selectedFile.account_id || activeAccountID;
       const filePath = selectedFile.path || selectedFile.original_path;
-      if (!confirm(`Pindahkan "${selectedFile.name || selectedFile.file_name}" ke Trash Bin?`)) return;
+      const confirmMsg = currentLang === 'id'
+        ? `Pindahkan "${selectedFile.name || selectedFile.file_name}" ke Trash Bin?`
+        : `Move "${selectedFile.name || selectedFile.file_name}" to Trash?`;
+      if (!confirm(confirmMsg)) return;
       try {
         const res = await fetch('/api/files/trash', {
           method: 'POST',
@@ -6202,7 +6597,7 @@
           body: JSON.stringify({ account_id: acc, path: filePath })
         });
         if (!res.ok) throw new Error('Trash operation failed');
-        showToast(`Moved ${selectedFile.name} to trash`);
+        showToast(currentLang === 'id' ? `Berhasil memindahkan ${selectedFile.name} ke sampah` : `Moved ${selectedFile.name} to trash`);
         deselectItem();
         loadCurrentView();
         loadStats();
@@ -7110,13 +7505,13 @@
 
     async function loadAuditLog() {
       const list = document.getElementById('sheetContentArea');
-      list.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);font-size:0.86rem;display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Loading audit trail…</div>';
+      list.innerHTML = `<div style="color:var(--md-sys-color-on-surface-variant);font-size:0.86rem;display:flex;align-items:center;gap:8px;"><div class="spinner"></div> ${t('sheet.loadingAudit')}</div>`;
       try {
         const res = await fetch('/api/audit');
         const events = await res.json();
         list.innerHTML = '';
         if (!events || events.length === 0) {
-          list.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);text-align:center;padding:24px;">Belum ada aktivitas</div>';
+          list.innerHTML = `<div style="color:var(--md-sys-color-on-surface-variant);text-align:center;padding:24px;">${t('sheet.noActivity')}</div>`;
           return;
         }
         list.innerHTML = `
@@ -7380,9 +7775,9 @@
         return `<option value="${a.id}">${escapeHtml(title)} (${a.id})</option>`;
       }).join('');
 
-      ingestSelect.innerHTML = opts || '<option value="">(Tidak ada akun terhubung)</option>';
-      repSrc.innerHTML = opts || '<option value="">(Tidak ada akun)</option>';
-      repDst.innerHTML = opts || '<option value="">(Tidak ada akun)</option>';
+      ingestSelect.innerHTML = opts || `<option value="">${t('ingest.noAccount')}</option>`;
+      repSrc.innerHTML = opts || `<option value="">${t('replicate.noAccount')}</option>`;
+      repDst.innerHTML = opts || `<option value="">${t('replicate.noAccount')}</option>`;
     }
 
     function openRemoteIngestModal() {
@@ -7590,9 +7985,9 @@
 
         let actionBtn = '';
         if (isRunning || isPending) {
-          actionBtn = `<button class="btn-icon" style="width:24px;height:24px;color:#ef4444;" title="Batalkan" onclick="cancelTask('${t.id}')">✕</button>`;
+          actionBtn = `<button class="btn-icon" style="width:24px;height:24px;color:#ef4444;" title="${t('tasks.cancel')}" onclick="cancelTask('${t.id}')">✕</button>`;
         } else if (isFailed) {
-          actionBtn = `<button class="btn-icon" style="width:24px;height:24px;color:var(--md-sys-color-primary);" title="Coba lagi" onclick="retryTask('${t.id}')">↻</button>`;
+          actionBtn = `<button class="btn-icon" style="width:24px;height:24px;color:var(--md-sys-color-primary);" title="${t('tasks.retry')}" onclick="retryTask('${t.id}')">↻</button>`;
         }
 
         const targetDisplay = t.target_path ? escapeHtml(t.target_path) : '';

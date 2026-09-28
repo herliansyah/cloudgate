@@ -568,3 +568,132 @@ ctx.checkAppUpdates().then(() => {
 	}
 }
 
+func TestEnglishLocalizationCoverage(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	// 1. Empty files state must not hardcode Indonesian text
+	if strings.Contains(content, `<p style="font-weight:700;font-size:1.05rem;">Tidak ada file ditemukan</p>`) {
+		t.Errorf("renderRenderableFiles hardcodes Indonesian empty state: 'Tidak ada file ditemukan'")
+	}
+
+	// 2. URL Ingest modal must be localized
+	if strings.Contains(content, `>URL File (HTTP / HTTPS)</label>`) && !strings.Contains(content, `data-i18n="ingest.urlLabel"`) {
+		t.Errorf("URL Ingest modal missing data-i18n for URL input label")
+	}
+	if strings.Contains(content, `<button class="btn btn-primary" onclick="submitRemoteIngest()">Mulai Unduh</button>`) {
+		t.Errorf("URL Ingest modal hardcodes Indonesian submit button 'Mulai Unduh'")
+	}
+
+	// 3. Settings & API (renderDocs) must support English localization
+	if strings.Contains(content, `>Ringkasan API Endpoints</h3>`) {
+		t.Errorf("renderDocs hardcodes Indonesian heading 'Ringkasan API Endpoints'")
+	}
+	if strings.Contains(content, `<span class="pool-stat-label">Keamanan Kredensial</span>`) {
+		t.Errorf("renderDocs hardcodes Indonesian label 'Keamanan Kredensial'")
+	}
+
+	// 4. StorageHub table headers must not hardcode Indonesian
+	if strings.Contains(content, `<th>Penyedia</th>`) {
+		t.Errorf("renderStorageHub hardcodes Indonesian column header 'Penyedia'")
+	}
+	if strings.Contains(content, `<span style="font-weight:700;font-size:0.95rem;">Penggunaan Kapasitas Teragregasi</span>`) {
+		t.Errorf("renderStorageHub hardcodes Indonesian section title 'Penggunaan Kapasitas Teragregasi'")
+	}
+
+	// 5. Breadcrumbs must use dynamic t() values instead of hardcoded strings
+	if strings.Contains(content, `<span class="breadcrumb-item active">Pusat Penyimpanan</span>`) {
+		t.Errorf("updateBreadcrumbs hardcodes Indonesian 'Pusat Penyimpanan'")
+	}
+	if strings.Contains(content, `<span class="breadcrumb-item active">Pengaturan & API</span>`) {
+		t.Errorf("updateBreadcrumbs hardcodes Indonesian 'Pengaturan & API'")
+	}
+
+	// 6. Required I18N keys must be present in both EN and ID dictionaries
+	requiredKeys := []string{
+		"nav.urlIngest",
+		"nav.syncFolder",
+		"files.emptyTitle",
+		"files.emptyFilterDesc",
+		"files.emptyUploadDesc",
+		"files.parentFolder",
+		"files.starTitle",
+		"files.shareTitle",
+		"files.open",
+		"files.preview",
+		"files.download",
+		"files.trash",
+		"bc.dashboard",
+		"bc.storageHub",
+		"bc.starred",
+		"bc.recent",
+		"bc.settings",
+		"bc.trash",
+		"bc.cloudAccount",
+		"bc.backUp",
+		"ingest.title",
+		"ingest.urlLabel",
+		"ingest.accountLabel",
+		"ingest.dirLabel",
+		"ingest.nameLabel",
+		"ingest.submit",
+		"ingest.noAccount",
+		"replicate.title",
+		"replicate.sourceAccount",
+		"replicate.targetAccount",
+		"replicate.submit",
+		"replicate.noAccount",
+		"docs.endpointsSummary",
+		"docs.credSecurity",
+		"tasks.title",
+		"tasks.empty",
+		"tasks.cancel",
+		"tasks.retry",
+		"hub.fleetTitle",
+		"hub.utilization",
+		"hub.providerDist",
+		"hub.thProvider",
+		"hub.thIdentity",
+		"hub.thQuota",
+		"hub.thStatus",
+		"hub.thSync",
+		"hub.thIntegration",
+		"hub.thActions",
+		"sheet.noFileSelected",
+		"sheet.noFileDesc",
+		"sheet.domainMapping",
+		"sheet.remotePath",
+		"sheet.fileSize",
+		"sheet.lastModified",
+		"sheet.loadingAudit",
+		"sheet.noActivity",
+		"addAcc.title",
+		"editAcc.title",
+		"disAcc.title",
+		"share.title",
+		"dlConfirm.title",
+	}
+
+	for _, key := range requiredKeys {
+		if !strings.Contains(content, "'"+key+"':") {
+			t.Errorf("expected I18N dictionary to contain key %q, but was not found", key)
+		}
+	}
+}
+
+
+
