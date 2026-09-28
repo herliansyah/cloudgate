@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-09-28
+
 ### Fixed
 - **Bilingual Consistency & English UI Coverage**: Resolved hardcoded Indonesian strings across file explorer empty states, category filters, breadcrumb navigation, context menus, side sheet inspector, StorageHub table headers, URL Ingest modal, Folder Sync modal, task status drawer, and REST API documentation. Expanded client-side `I18N` dictionaries with ~90 keys and enhanced `applyTranslations()` for seamless English and Indonesian language switching.
 
+### Changed
+- **CLI Startup Banner Framing**: Refined Cyber Block ASCII art banner styling with High-Intensity ANSI Cyan (`\033[1;36m`), 2-space left padding, top spacing, and 75-column divider bars for balanced terminal framing.
+
+## [0.2.2] - 2026-09-28
 
 ### Added
-- **CLI Startup Banner**: Introduced Cyber Block ASCII art banner with High-Intensity ANSI Cyan styling, 2-space padding, 75-column framing, and zero-dependency terminal capability and fallback detection (`NO_COLOR`, non-TTY, and `TERM=dumb`).
+- **Matrix-Style CLI Startup Banner**: Introduced Cyber Block ASCII art banner with High-Intensity ANSI Green styling and zero-dependency terminal capability and fallback detection (`NO_COLOR`, non-TTY, and `TERM=dumb`).
 
 ### Changed
 - **CLI Language Standardization**: Standardized CLI startup banners, flags, and operational prompts (`cmd/cloudgate`) to pure English, aligning with Unix command conventions while preserving bilingual Web UI capabilities.
