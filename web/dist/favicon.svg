@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="cg-fav-grad" x1="15%" y1="90%" x2="85%" y2="10%">
+      <stop offset="0%" stop-color="#2D4BFF"/>
+      <stop offset="50%" stop-color="#3859FF"/>
+      <stop offset="100%" stop-color="#00D2FF"/>
+    </linearGradient>
+    <linearGradient id="cg-fav-beam" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#00D2FF"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+  </defs>
+  <path d="M 49 96 L 26 96 C 18 96 12 89.5 12 81.5 C 12 74.2 16.8 68.2 23.8 66.8 C 23.3 64.7 23 62.6 23 60.5 C 23 46 34.5 34 49 34 C 54.6 34 59.8 35.8 64 38.8 C 68.8 30.5 77.8 25 88 25 C 103.5 25 116 37.5 116 53 C 116 55.2 115.7 57.3 115.2 59.3 C 121.5 62.5 126 69 126 76.5 C 126 87.3 117.2 96 106.5 96 L 79 96 L 79 73 C 79 64.7 72.3 58 64 58 C 55.7 58 49 64.7 49 73 Z"
+        fill="url(#cg-fav-grad)"/>
+  <rect x="61" y="75" width="6" height="19" rx="3" fill="url(#cg-fav-beam)"/>
+  <path d="M 57 71 L 64 64 L 71 71"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-width="3.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>

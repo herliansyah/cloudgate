@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cloudgate — Unified Cloud Storage</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -171,14 +173,13 @@
       width: 40px;
       height: 40px;
       border-radius: var(--md-sys-shape-corner-md);
-      background-color: var(--md-sys-color-primary-container);
-      color: var(--md-sys-color-on-primary-container);
+      background-color: rgba(56, 89, 255, 0.12);
+      border: 1px solid rgba(56, 89, 255, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: var(--md-sys-elevation-1);
     }
-    .brand-mark svg { fill: currentColor; }
     .brand .tag {
       font-size: 0.72rem;
       background-color: var(--md-sys-color-surface-container-high);
@@ -1857,7 +1858,22 @@
       </button>
       <div class="brand" onclick="selectDashboard()">
         <div class="brand-mark">
-          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+          <svg width="24" height="24" viewBox="0 0 128 128" fill="none">
+            <defs>
+              <linearGradient id="nav-cloud-grad" x1="15%" y1="90%" x2="85%" y2="10%">
+                <stop offset="0%" stop-color="#2D4BFF"/>
+                <stop offset="50%" stop-color="#3859FF"/>
+                <stop offset="100%" stop-color="#00D2FF"/>
+              </linearGradient>
+              <linearGradient id="nav-beam-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stop-color="#00D2FF"/>
+                <stop offset="100%" stop-color="#FFFFFF"/>
+              </linearGradient>
+            </defs>
+            <path d="M 49 96 L 26 96 C 18 96 12 89.5 12 81.5 C 12 74.2 16.8 68.2 23.8 66.8 C 23.3 64.7 23 62.6 23 60.5 C 23 46 34.5 34 49 34 C 54.6 34 59.8 35.8 64 38.8 C 68.8 30.5 77.8 25 88 25 C 103.5 25 116 37.5 116 53 C 116 55.2 115.7 57.3 115.2 59.3 C 121.5 62.5 126 69 126 76.5 C 126 87.3 117.2 96 106.5 96 L 79 96 L 79 73 C 79 64.7 72.3 58 64 58 C 55.7 58 49 64.7 49 73 Z" fill="url(#nav-cloud-grad)"/>
+            <rect x="61" y="75" width="6" height="19" rx="3" fill="url(#nav-beam-grad)"/>
+            <path d="M 57 71 L 64 64 L 71 71" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
         <span>Cloudgate</span>
         <span class="tag" id="appVersionTag">M3 v0.2.3</span>
