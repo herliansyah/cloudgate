@@ -104,7 +104,7 @@ The central control and telemetry view dedicated to managing all connected Remot
 _Avoid_: Accounts page, settings screen, connection list
 
 **UnifiedExplorer**:
-The consolidated file browsing and manipulation interface presenting an aggregate virtual hierarchy across all enabled RemoteAccounts as a single seamless storage system.
+The consolidated user-facing file browsing and manipulation interface presenting the aggregate virtual hierarchy of the active StoragePool across all enabled RemoteAccounts.
 _Avoid_: Drive view, file manager window, bucket explorer
 
 **ConnectionPipeline**:

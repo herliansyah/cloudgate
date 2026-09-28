@@ -104,7 +104,7 @@ Pusat kendali dan telemetri yang didedikasikan untuk mengelola seluruh RemoteAcc
 _Hindari_: Accounts page, settings screen, connection list
 
 **UnifiedExplorer**:
-Antarmuka penjelajahan dan manipulasi file terkonsolidasi yang menyajikan hierarki virtual gabungan di seluruh RemoteAccount yang aktif sebagai satu sistem penyimpanan mulus.
+Antarmuka penjelajahan dan manipulasi file terkonsolidasi yang menyajikan hierarki virtual gabungan dari StoragePool aktif di seluruh RemoteAccount sebagai satu sistem penyimpanan mulus.
 _Hindari_: Drive view, file manager window, bucket explorer
 
 **ConnectionPipeline**:

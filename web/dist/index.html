@@ -1942,7 +1942,7 @@
         </li>
         <li class="nav-item" id="navItemFiles" onclick="selectFiles(); closeSidebarOnMobile()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
-          <span data-i18n="nav.allFiles">Semua File</span>
+          <span data-i18n="nav.allFiles">StoragePool</span>
         </li>
 
         <li class="nav-section-title" data-i18n="nav.quickAccess">Akses Cepat</li>
@@ -2937,7 +2937,7 @@
         'nav.upload': 'Upload New',
         'nav.storage': 'Storage',
         'nav.dashboard': 'Dashboard',
-        'nav.allFiles': 'All Files',
+        'nav.allFiles': 'StoragePool',
         'nav.quickAccess': 'Quick Access',
         'nav.starred': 'Starred',
         'nav.recent': 'Recent',
@@ -2997,7 +2997,7 @@
         'dash.accountsCount': 'Accounts',
         'dash.accountsTitle': 'Connected Cloud Accounts',
         'dash.accountsRegistered': 'Accounts Registered',
-        'dash.explore': 'Explore All Files',
+        'dash.explore': 'Explore StoragePool',
         'dash.addAccount': 'Add Cloud Account',
         'dash.emptyTitle': 'No Cloud Accounts Connected',
         'dash.emptyDesc': 'Connect your Google Drive, OneDrive, Dropbox, or other cloud providers to aggregate multi-cloud capacity automatically.',
@@ -3066,7 +3066,7 @@
         'nav.upload': 'Unggah Baru',
         'nav.storage': 'Penyimpanan',
         'nav.dashboard': 'Dashboard',
-        'nav.allFiles': 'Semua File',
+        'nav.allFiles': 'StoragePool',
         'nav.quickAccess': 'Akses Cepat',
         'nav.starred': 'Berbintang',
         'nav.recent': 'Terbaru',
@@ -3126,7 +3126,7 @@
         'dash.accountsCount': 'Akun',
         'dash.accountsTitle': 'Daftar Akun Cloud',
         'dash.accountsRegistered': 'Akun Terdaftar',
-        'dash.explore': 'Jelajahi Semua File',
+        'dash.explore': 'Jelajahi StoragePool',
         'dash.addAccount': 'Hubungkan Akun Cloud',
         'dash.emptyTitle': 'Belum Ada Akun Cloud Terhubung',
         'dash.emptyDesc': 'Hubungkan akun Google Drive, OneDrive, Dropbox, atau penyedia storage lainnya untuk mulai menggabungkan kapasitas penyimpanan multi-cloud secara otomatis.',
@@ -5960,7 +5960,7 @@
         return;
       }
 
-      let rootName = 'Semua File';
+      let rootName = 'StoragePool';
       if (currentMode === 'account') {
         rootName = activeAccountName || 'Akun Cloud';
       } else if (currentMode === 'trash') {
