@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Background Release Telemetry**: Asynchronous 24-hour rate-limit caching for GitHub Releases checks with topbar notification indicator in the Web UI.
 - **GatewayAuth Protection on Self-Update**: `POST /api/updater/apply` endpoint secured behind MasterPassword authentication to prevent unauthorized tampering or denial of service.
 
+### Fixed
+- **Web UI Version Parity**: Synchronized hardcoded static web header badge and About modal version from stale `0.2.0` to match `config.AppVersion` (`0.1.0`), and added dynamic `/api/info` synchronization on page initialization.
+
 ## [0.1.0] - 2026-09-27
 
 ### Added

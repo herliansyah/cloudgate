@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/herliansyah/cloudgate/pkg/config"
 	"github.com/herliansyah/cloudgate/web"
 )
 
@@ -370,6 +371,39 @@ func TestFilenUIComponentsAndGuide(t *testing.T) {
 		if !strings.Contains(content, marker) {
 			t.Errorf("expected embedded index.html to contain Filen marker %q, but was not found", marker)
 		}
+	}
+}
+
+func TestEmbeddedAppVersionConsistency(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	// Ensure stale version strings like 0.2.0 are not present in the UI
+	if strings.Contains(content, "M3 v0.2.0") || strings.Contains(content, `id="aboutVersion">0.2.0<`) {
+		t.Errorf("embedded index.html still contains stale version 0.2.0; expected version to match config.AppVersion (%q)", config.AppVersion)
+	}
+
+	expectedBadge := "M3 v" + config.AppVersion
+	expectedAbout := `id="aboutVersion">` + config.AppVersion + `<`
+	if !strings.Contains(content, expectedBadge) {
+		t.Errorf("embedded index.html does not contain header version badge %q", expectedBadge)
+	}
+	if !strings.Contains(content, expectedAbout) {
+		t.Errorf("embedded index.html does not contain about version tag %q", expectedAbout)
 	}
 }
 
