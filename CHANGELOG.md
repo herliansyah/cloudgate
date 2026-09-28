@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-28
+
 ### Changed
 - **StoragePool UI Branding & Canonical Terminology**: Replaced generic "All Files" / "Semua File" navigation labels with the canonical domain term `StoragePool` across sidebar navigation, breadcrumbs, and hero action buttons in both English and Indonesian modes; updated `UnifiedExplorer` domain definition in `CONTEXT.md` and `CONTEXT.id.md`.
 
