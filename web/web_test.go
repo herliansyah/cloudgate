@@ -784,5 +784,57 @@ func TestEmbeddedFaviconAndBranding(t *testing.T) {
 	}
 }
 
+func TestAddProviderGuideBilingualSupport(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	// In the Add Provider modal, provider onboarding guides must support English:
+	// They must not hardcode static Indonesian titles without bilingual branching.
+	hardcodedIndonesianSnippets := []string{
+		`<span>📘</span> Panduan Pendaftaran Google Drive API (Terbaru):`,
+		`<summary style="cursor:pointer;font-weight:700;color:var(--md-sys-color-on-surface);font-size:0.78rem;">⚠️ Panduan Jika Gagal (Troubleshooting)</summary>`,
+		`<span>📘</span> Panduan Pendaftaran Microsoft Azure / Entra ID (Ketentuan Terbaru):`,
+		`<span>📘</span> Panduan Pendaftaran Dropbox Developer Console:`,
+		`<span>📘</span> Panduan Pendaftaran Box Developer Console:`,
+		`<span>📘</span> Panduan Pendaftaran pCloud Developer Console:`,
+		`<span>📘</span> Panduan Pendaftaran Yandex OAuth:`,
+		`<span>📘</span> Panduan Penghubungan Akun Mega (Native Engine):`,
+		`<span>📘</span> Panduan Penghubungan Akun Filen (Zero-Knowledge E2EE):`,
+		`<span>📘</span> Panduan Kredensial Backblaze B2:`,
+		`<span>📘</span> Panduan Autentikasi PikPak:`,
+		`<span>📘</span> Panduan Koneksi SFTP / SSH:`,
+		`<span>📘</span> Panduan Koneksi SMB / Samba (Windows Share):`,
+		`<span>📘</span> Panduan Autentikasi Proton Drive (Zero-Knowledge):`,
+		`<span>📘</span> Panduan Koneksi S3 & S3-Compatible Object Storage:`,
+		`<span>📘</span> Panduan Koneksi Nextcloud / WebDAV:`,
+		`<span>📘</span> Panduan Koneksi Koofr (WebDAV):`,
+	}
+
+	for _, snippet := range hardcodedIndonesianSnippets {
+		if strings.Contains(content, snippet) {
+			t.Errorf("Add Provider guide hardcodes Indonesian snippet: %q", snippet)
+		}
+	}
+
+	// Must supply English translations for guide headings in Add Provider modal
+	if !strings.Contains(content, "Google Drive API Registration Guide") {
+		t.Errorf("Add Provider guide missing English translation for Google Drive API Registration Guide")
+	}
+}
+
 
 
