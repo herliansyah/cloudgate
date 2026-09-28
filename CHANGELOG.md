@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-28
+
 ### Added
 - **Automated Self-Update Engine (`pkg/updater`)**: End-to-end in-place binary upgrade mechanism with strict SHA-256 integrity verification against official `checksums.txt` assets on GitHub Releases.
 - **Automated CI/CD Release Pipeline**: GitHub Actions workflow (`.github/workflows/release.yml`) compiling multi-platform standalone binaries, generating SHA-256 `checksums.txt`, extracting release notes, and publishing GitHub Releases on tag push.
