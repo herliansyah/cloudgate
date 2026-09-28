@@ -19,9 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CLI Self-Update (`cloudgate update`)**: Interactive terminal command with release notes preview, SHA-256 verification, and `-y`/`--yes` non-interactive flag.
 - **Background Release Telemetry**: Asynchronous 24-hour rate-limit caching for GitHub Releases checks with topbar notification indicator in the Web UI.
 - **GatewayAuth Protection on Self-Update**: `POST /api/updater/apply` endpoint secured behind MasterPassword authentication to prevent unauthorized tampering or denial of service.
+- **Provider Catalog REST API (`GET /api/providers`)**: Added endpoint exposing all 16 supported cloud and server protocol storage providers with metadata, authentication mechanisms, and categories.
 
 ### Fixed
 - **Web UI Version Parity**: Synchronized hardcoded static web header badge and About modal version from stale `0.2.0` to match `config.AppVersion` (`0.1.0`), and added dynamic `/api/info` synchronization on page initialization.
+- **Provider Documentation & Setup Sync in Web UI**: Synchronized the "Pengaturan & API" documentation screen to include step-by-step guides and troubleshooting cards for all 16 supported providers (adding Box, pCloud, Yandex Disk, Koofr, Backblaze B2, PikPak, SFTP, SMB, and Proton Drive), replaced static port 8080 redirect URIs with dynamic host origin, and expanded the REST API reference.
 
 ## [0.1.0] - 2026-09-27
 

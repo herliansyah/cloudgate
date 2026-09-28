@@ -653,5 +653,88 @@ func TestAccountPrincipalAndDefaultNaming(t *testing.T) {
 	}
 }
 
+func TestProvidersAPI(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "cloudgate_providers_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
 
+	database, err := db.Open(tempDir)
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer database.Close()
 
+	srv := server.NewServer(database, nil)
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
+
+	resp, err := http.Get(ts.URL + "/api/providers")
+	if err != nil {
+		t.Fatalf("GET /api/providers failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200 OK, got %d", resp.StatusCode)
+	}
+
+	var providers []map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&providers); err != nil {
+		t.Fatalf("failed to decode providers: %v", err)
+	}
+
+	expectedProviders := map[string]string{
+		"gdrive":      "Google Drive",
+		"onedrive":    "OneDrive",
+		"dropbox":     "Dropbox",
+		"box":         "Box",
+		"pcloud":      "pCloud",
+		"yandex":      "Yandex Disk",
+		"koofr":       "Koofr",
+		"mega":        "MEGA",
+		"filen":       "Filen",
+		"b2":          "Backblaze B2",
+		"pikpak":      "PikPak",
+		"sftp":        "SFTP / SSH",
+		"smb":         "SMB / Samba",
+		"protondrive": "Proton Drive",
+		"s3":          "Amazon S3",
+		"webdav":      "WebDAV",
+	}
+
+	if len(providers) != len(expectedProviders) {
+		t.Fatalf("expected %d providers, got %d", len(expectedProviders), len(providers))
+	}
+
+	found := make(map[string]bool)
+	for _, p := range providers {
+		id, _ := p["id"].(string)
+		name, _ := p["name"].(string)
+		authMethod, _ := p["auth_method"].(string)
+		category, _ := p["category"].(string)
+
+		if expName, ok := expectedProviders[id]; ok {
+			found[id] = true
+			if name != expName {
+				t.Errorf("provider %s name expected %s, got %s", id, expName, name)
+			}
+			if authMethod == "" {
+				t.Errorf("provider %s missing auth_method", id)
+			}
+			if category == "" {
+				t.Errorf("provider %s missing category", id)
+			}
+		} else {
+			t.Errorf("unexpected provider %s in response", id)
+		}
+	}
+
+	for id := range expectedProviders {
+		if !found[id] {
+			t.Errorf("expected provider %s not found in API response", id)
+		}
+	}
+}

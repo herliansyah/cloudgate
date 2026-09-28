@@ -116,6 +116,7 @@ func (s *Server) Handler() http.Handler {
 
 	// API Routes
 	mux.HandleFunc("GET /api/info", s.handleInfo)
+	mux.HandleFunc("GET /api/providers", s.handleProviders)
 	mux.HandleFunc("GET /api/stats", s.handleStats)
 	mux.HandleFunc("GET /api/accounts", s.handleGetAccounts)
 	mux.HandleFunc("POST /api/accounts", s.handleAddAccount)
@@ -247,7 +248,7 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 
 		// When MasterPassword is not yet configured (Mandatory First-Run Setup state):
 		if !hasPassword {
-			if path == "/api/auth/gateway/status" || path == "/api/info" || path == "/api/changelog" {
+			if path == "/api/auth/gateway/status" || path == "/api/info" || path == "/api/providers" || path == "/api/changelog" {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -272,6 +273,7 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 			path == "/api/auth/gateway/unlock" ||
 			path == "/api/auth/gateway/setup" ||
 			path == "/api/info" ||
+			path == "/api/providers" ||
 			path == "/api/changelog" ||
 			(strings.HasPrefix(path, "/api/auth/") && strings.HasSuffix(path, "/callback")) {
 			next.ServeHTTP(w, r)
@@ -305,6 +307,29 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		"author":     config.AppAuthor,
 		"repository": config.AppRepo,
 	})
+}
+
+func (s *Server) handleProviders(w http.ResponseWriter, r *http.Request) {
+	// ponytail: static provider registry matching all 16 supported rclone drivers
+	providers := []map[string]any{
+		{"id": "gdrive", "name": "Google Drive", "category": "Cloud Drive", "auth_method": "oauth", "description": "Google Drive cloud storage via OAuth 2.0"},
+		{"id": "onedrive", "name": "OneDrive", "category": "Cloud Drive", "auth_method": "oauth", "description": "Microsoft OneDrive via OAuth 2.0"},
+		{"id": "dropbox", "name": "Dropbox", "category": "Cloud Drive", "auth_method": "oauth", "description": "Dropbox cloud storage via OAuth 2.0"},
+		{"id": "box", "name": "Box", "category": "Cloud Drive", "auth_method": "oauth", "description": "Box cloud storage via OAuth 2.0"},
+		{"id": "pcloud", "name": "pCloud", "category": "Cloud Drive", "auth_method": "oauth", "description": "pCloud storage via OAuth 2.0"},
+		{"id": "yandex", "name": "Yandex Disk", "category": "Cloud Drive", "auth_method": "oauth", "description": "Yandex Disk storage via OAuth 2.0"},
+		{"id": "koofr", "name": "Koofr", "category": "Cloud Drive", "auth_method": "credentials", "description": "Koofr storage via WebDAV credentials"},
+		{"id": "mega", "name": "MEGA", "category": "Privacy Cloud", "auth_method": "credentials", "description": "Client-side encrypted MEGA storage"},
+		{"id": "filen", "name": "Filen", "category": "Privacy Cloud", "auth_method": "credentials", "description": "Zero-knowledge end-to-end encrypted Filen cloud"},
+		{"id": "b2", "name": "Backblaze B2", "category": "Object Storage", "auth_method": "access_keys", "description": "Backblaze B2 Cloud Object Storage"},
+		{"id": "pikpak", "name": "PikPak", "category": "Privacy Cloud", "auth_method": "credentials", "description": "PikPak private cloud drive"},
+		{"id": "sftp", "name": "SFTP / SSH", "category": "Server Protocol", "auth_method": "ssh", "description": "Secure File Transfer Protocol over SSH"},
+		{"id": "smb", "name": "SMB / Samba", "category": "Server Protocol", "auth_method": "network_share", "description": "Server Message Block (Windows Share / Samba)"},
+		{"id": "protondrive", "name": "Proton Drive", "category": "Privacy Cloud", "auth_method": "credentials", "description": "Zero-knowledge Proton Drive storage"},
+		{"id": "s3", "name": "Amazon S3", "category": "Object Storage", "auth_method": "access_keys", "description": "AWS S3 and S3-compatible object storage"},
+		{"id": "webdav", "name": "WebDAV", "category": "Protocol / Cloud", "auth_method": "credentials", "description": "Nextcloud, ownCloud, and standard WebDAV"},
+	}
+	writeJSON(w, http.StatusOK, providers)
 }
 
 func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {

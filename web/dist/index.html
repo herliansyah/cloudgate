@@ -4855,6 +4855,7 @@
 
     function renderDocs() {
       const area = document.getElementById('contentArea');
+      const origin = window.location.origin || 'http://localhost:5210';
       area.innerHTML = `
         <div class="dashboard-container" style="max-width:980px;margin:0 auto;padding-bottom:40px;">
           <div style="margin-bottom:20px;">
@@ -4879,7 +4880,7 @@
             <div class="pool-stat-box" style="padding:16px;">
               <span class="pool-stat-label">Keamanan Kredensial</span>
               <span style="font-size:1.05rem;font-weight:700;color:var(--md-sys-color-tertiary);">AES-256-GCM Vault</span>
-              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">OAuth Refresh Token encrypted persistence</div>
+              <div style="font-size:0.75rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">OAuth Refresh Token & Direct Credential persistence</div>
             </div>
           </div>
 
@@ -4890,10 +4891,46 @@
               <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
-                  <code style="font-size:0.9rem;font-weight:600;">/api/stats</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengambil total kuota, kapasitas terpakai, dan status semua akun</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/info</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Informasi metadata gateway, versi aplikasi, author, dan tautan repositori</span>
                 </div>
-                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s http://localhost:8080/api/stats | jq</pre>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/info | jq</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/providers</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengambil katalog 16 provider storage & protokol yang didukung beserta metode autentikasinya</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/providers | jq</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/stats</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengambil total kuota agregat, kapasitas terpakai, dan status live seluruh akun</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/stats | jq</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/accounts</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengambil daftar lengkap seluruh remote account yang terhubung ke gateway</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/accounts | jq</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#2356cc;color:#fff;font-weight:700;">POST</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/accounts/test</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menguji keabsahan kredensial provider secara live sebelum didaftarkan</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST ${origin}/api/accounts/test -H "Content-Type: application/json" -d '{"provider":"s3","endpoint":"https://...","access_key":"...","secret_key":"...","bucket":"mybucket"}'</pre>
               </div>
 
               <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
@@ -4902,53 +4939,62 @@
                   <code style="font-size:0.9rem;font-weight:600;">/api/storage/sync</code>
                   <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menyelaraskan seluruh kuota dan metadata remote secara langsung</span>
                 </div>
-                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST http://localhost:8080/api/storage/sync</pre>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST ${origin}/api/storage/sync</pre>
               </div>
 
               <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/files?pool_id=all_pool&path=/</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Membaca file gabungan virtual StoragePool</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Membaca file gabungan virtual StoragePool atau akun spesifik (?account_id=...)</span>
                 </div>
-                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "http://localhost:8080/api/files?pool_id=all_pool&path=/"</pre>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "${origin}/api/files?pool_id=all_pool&path=/"</pre>
               </div>
 
               <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#2356cc;color:#fff;font-weight:700;">POST</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/accounts/{id}/toggle</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengaktifkan atau menonaktifkan akun dari pool alokasi</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Mengaktifkan atau menonaktifkan akun dari alokasi penulisan pool</span>
                 </div>
-                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST http://localhost:8080/api/accounts/acc_123/toggle -d '{"enabled":false}'</pre>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST ${origin}/api/accounts/acc_123/toggle -d '{"enabled":false}'</pre>
               </div>
 
               <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                   <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
                   <code style="font-size:0.9rem;font-weight:600;">/api/files/share?path=/dokumen.pdf</code>
-                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menghasilkan URL streaming / share link untuk file virtual</span>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Menghasilkan URL streaming langsung / share link untuk file virtual</span>
                 </div>
-                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "http://localhost:8080/api/files/share?path=/dokumen.pdf"</pre>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s "${origin}/api/files/share?path=/dokumen.pdf"</pre>
+              </div>
+
+              <div style="background-color:var(--md-sys-color-surface-container);padding:12px 16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span class="m3-chip" style="background:#0b8043;color:#fff;font-weight:700;">GET</span>
+                  <code style="font-size:0.9rem;font-weight:600;">/api/tasks</code>
+                  <span style="font-size:0.78rem;color:var(--md-sys-color-on-surface-variant);">— Memantau antrean background tasks (transfer file, ingest URL, replikasi folder)</span>
+                </div>
+                <pre style="background:var(--md-sys-color-surface-container-lowest);padding:8px 12px;border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -s ${origin}/api/tasks | jq</pre>
               </div>
             </div>
           </div>
 
-          <!-- Comprehensive Provider Guides & Troubleshooting Handbook -->
+          <!-- Comprehensive 16 Provider Guides & Troubleshooting Handbook -->
           <div class="storage-breakdown-card" style="gap:20px;margin-top:24px;">
             <div style="border-bottom:1px solid var(--md-sys-color-outline-variant);padding-bottom:12px;">
               <h3 style="font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:10px;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--md-sys-color-primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
-                Panduan Resmi Pendaftaran Akun Cloud & Troubleshooting
+                Panduan Resmi Pendaftaran Akun Cloud & Troubleshooting (16 Provider)
               </h3>
               <div style="font-size:0.84rem;color:var(--md-sys-color-on-surface-variant);margin-top:4px;">
-                Petunjuk step-by-step terbaru sesuai ketentuan masing-masing provider dan penanganan jika terjadi kegagalan.
+                Petunjuk step-by-step terbaru sesuai ketentuan masing-masing provider dan penanganan jika terjadi kendala.
               </div>
             </div>
 
             <div style="display:flex;flex-direction:column;gap:16px;">
 
-              <!-- Google Drive -->
+              <!-- 1. Google Drive -->
               <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
                   ${getProviderIconSvg('gdrive', 26)}
@@ -4959,18 +5005,18 @@
                   <div>1. Buka <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Google Cloud Console → Google Drive API ↗</a> lalu klik tombol <strong>ENABLE (Aktifkan)</strong>.</div>
                   <div>2. Masuk ke menu <strong>OAuth consent screen</strong>, pilih jenis <strong>External</strong>, isi nama aplikasi & email kontak.</div>
                   <div>3. Masuk ke <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>OAuth client ID</strong>.</div>
-                  <div>4. Pilih jenis <strong>Web application</strong>. Pada kolom <em>Authorized redirect URIs</em>, masukkan callback Cloudgate: <code>http://localhost:8080/api/auth/google/callback</code> (atau port host aktif).</div>
+                  <div>4. Pilih jenis <strong>Web application</strong>. Pada kolom <em>Authorized redirect URIs</em>, masukkan callback Cloudgate: <code>${origin}/api/auth/google/callback</code>.</div>
                   <div>5. Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke formulir Cloudgate.</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
                     <strong>Panduan Penanganan Kegagalan (Troubleshooting):</strong><br>
-                    • <em>Error 400 redirect_uri_mismatch</em>: Redirect URI di Google Cloud Console belum identik dengan alamat gateway lokal Anda.<br>
+                    • <em>Error 400 redirect_uri_mismatch</em>: Redirect URI di Google Cloud Console belum identik dengan alamat gateway lokal Anda (perhatikan port dan skema http/https).<br>
                     • <em>Error 403 Google Drive API has not been used</em>: Klik ENABLE pada Google Drive API di Cloud Console project Anda.<br>
                     • <em>Peringatan "Google hasn't verified this app"</em>: Klik <strong>Advanced</strong> → <strong>Go to Cloudgate (unsafe)</strong> untuk melanjutkan izin akses pribadi.
                   </div>
                 </div>
               </div>
 
-              <!-- Microsoft OneDrive -->
+              <!-- 2. Microsoft OneDrive -->
               <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
                   ${getProviderIconSvg('onedrive', 26)}
@@ -4983,7 +5029,7 @@
                   <div>3. <strong>Sangat Krusial:</strong> Pada <em>Supported account types</em>, pilih opsi ke-3:<br>
                     <code>Accounts in any organizational directory and personal Microsoft accounts (e.g. Skype, Xbox)</code>.
                   </div>
-                  <div>4. Pada bagian <em>Redirect URI</em>, pilih platform <strong>Web</strong> (jangan SPA), masukkan: <code>http://localhost:8080/api/auth/onedrive/callback</code>.</div>
+                  <div>4. Pada bagian <em>Redirect URI</em>, pilih platform <strong>Web</strong> (jangan SPA), masukkan: <code>${origin}/api/auth/onedrive/callback</code>.</div>
                   <div>5. Klik <strong>Register</strong>. Salin <strong>Application (client) ID</strong> dari halaman Overview.</div>
                   <div>6. Masuk ke menu <strong>Certificates & secrets</strong> → klik <strong>New client secret</strong> → salin nilai <strong>Value</strong> (bukan Secret ID!).</div>
                   <div>7. Masuk ke <strong>API permissions</strong> → pastikan terdapat izin Microsoft Graph: <code>Files.ReadWrite</code>, <code>offline_access</code>, dan <code>User.Read</code>.</div>
@@ -4997,28 +5043,26 @@
                 </div>
               </div>
 
-              <!-- Mega -->
+              <!-- 3. Dropbox -->
               <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                  ${getProviderIconSvg('mega', 26)}
-                  <div style="font-weight:700;font-size:1rem;">3. Mega (Native Client-Side Encrypted Engine)</div>
+                  ${getProviderIconSvg('dropbox', 26)}
+                  <div style="font-weight:700;font-size:1rem;">3. Dropbox (Scoped App Access)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. Pilih Mega pada modal Tambah Penyimpanan. Masukkan Email dan Password akun Mega Anda.</div>
-                  <div>2. Cloudgate menggunakan modul native pure-Go MEGA API untuk mengautentikasi kunci enkripsi client-side secara real-time.</div>
-                  <div>3. Tekan tombol <strong>Test & Hubungkan Akun</strong>. Cloudgate akan melakukan live handshake dan menarik kuota real akun Anda.</div>
-                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-error);">
-                    <strong style="color:var(--md-sys-color-error);">🚨 Peringatan Keamanan & Penanganan Akun Terkunci (Account Locked):</strong><br>
-                    • <strong>Risiko Penguncian Akun ("Unauthorised Third Party"):</strong> MEGA tidak memiliki OAuth2 resmi dan mewajibkan Email & Password langsung. Sistem deteksi fraud MEGA dapat mengira koneksi API ini sebagai akses tidak sah dan mengunci akun Anda sementara.<br>
-                    • <strong>Larangan Keras di Server VPS:</strong> Jangan menghubungkan akun jika Cloudgate berjalan di VPS / Cloud Datacenter (AWS, DigitalOcean, Hetzner, dll.). IP datacenter 99% otomatis memicu penguncian akun.<br>
-                    • <strong>Cara Membuka Kunci:</strong> Jika akun terkunci, buka tab browser di <a href="https://mega.nz" target="_blank" style="color:var(--md-sys-color-primary);font-weight:700;text-decoration:underline;">mega.nz</a>, login manual, buat password baru untuk membuka kunci akun, dan validasi IP Anda.<br>
-                    • <strong>Gunakan Akun Sekunder:</strong> Disarankan menggunakan akun khusus untuk integrasi tools, bukan akun personal utama Anda.
+                  <div><strong>Langkah Pendaftaran:</strong></div>
+                  <div>1. Buka <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Dropbox App Console ↗</a> → Create app.</div>
+                  <div>2. Pilih <strong>Scoped access</strong> dan <strong>Full Dropbox</strong>.</div>
+                  <div>3. Di tab <strong>Permissions</strong>, centang <code>files.content.read</code>, <code>files.content.write</code>, dan <code>account_info.read</code>.</div>
+                  <div>4. Di tab <strong>Settings</strong>, tambahkan OAuth 2 Redirect URI Cloudgate: <code>${origin}/api/auth/dropbox/callback</code>.</div>
+                  <div>5. Salin <strong>App key</strong> dan <strong>App secret</strong> ke formulir Cloudgate.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Troubleshooting:</strong> Error <em>invalid_client</em> berarti App Key/Secret salah. Error <em>redirect_uri_mismatch</em> berarti URL callback belum tersimpan di tab Settings Dropbox Console.
                   </div>
                 </div>
               </div>
 
-              <!-- Filen -->
+              <!-- 4. Filen -->
               <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
                   ${getProviderIconSvg('filen', 26)}
@@ -5039,45 +5083,204 @@
                 </div>
               </div>
 
-              <!-- Dropbox -->
+              <!-- 5. Mega -->
               <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                  ${getProviderIconSvg('dropbox', 26)}
-                  <div style="font-weight:700;font-size:1rem;">5. Dropbox (Scoped App Access)</div>
+                  ${getProviderIconSvg('mega', 26)}
+                  <div style="font-weight:700;font-size:1rem;">5. Mega (Native Client-Side Encrypted Engine)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Pendaftaran:</strong></div>
-                  <div>1. Buka <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Dropbox App Console ↗</a> → Create app.</div>
-                  <div>2. Pilih <strong>Scoped access</strong> dan <strong>Full Dropbox</strong>.</div>
-                  <div>3. Di tab <strong>Permissions</strong>, centang <code>files.content.read</code>, <code>files.content.write</code>, dan <code>account_info.read</code>.</div>
-                  <div>4. Di tab <strong>Settings</strong>, tambahkan OAuth 2 Redirect URI Cloudgate: <code>http://localhost:8080/api/auth/dropbox/callback</code>.</div>
-                  <div>5. Salin <strong>App key</strong> dan <strong>App secret</strong> ke formulir Cloudgate.</div>
-                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Troubleshooting:</strong> Error <em>invalid_client</em> berarti App Key/Secret salah. Error <em>redirect_uri_mismatch</em> berarti URL callback belum tersimpan di tab Settings Dropbox Console.
+                  <div><strong>Langkah Penghubungan:</strong></div>
+                  <div>1. Pilih Mega pada modal Tambah Penyimpanan. Masukkan Email dan Password akun Mega Anda.</div>
+                  <div>2. Cloudgate menggunakan modul native pure-Go MEGA API untuk mengautentikasi kunci enkripsi client-side secara real-time.</div>
+                  <div>3. Tekan tombol <strong>Test & Hubungkan Akun</strong>. Cloudgate akan melakukan live handshake dan menarik kuota real akun Anda.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-error);">
+                    <strong style="color:var(--md-sys-color-error);">🚨 Peringatan Keamanan & Penanganan Akun Terkunci (Account Locked):</strong><br>
+                    • <strong>Risiko Penguncian Akun ("Unauthorised Third Party"):</strong> MEGA tidak memiliki OAuth2 resmi dan mewajibkan Email & Password langsung. Sistem deteksi fraud MEGA dapat mengira koneksi API ini sebagai akses tidak sah dan mengunci akun Anda sementara.<br>
+                    • <strong>Larangan Keras di Server VPS:</strong> Jangan menghubungkan akun jika Cloudgate berjalan di VPS / Cloud Datacenter (AWS, DigitalOcean, Hetzner, dll.). IP datacenter 99% otomatis memicu penguncian akun.<br>
+                    • <strong>Cara Membuka Kunci:</strong> Jika akun terkunci, buka tab browser di <a href="https://mega.nz" target="_blank" style="color:var(--md-sys-color-primary);font-weight:700;text-decoration:underline;">mega.nz</a>, login manual, buat password baru untuk membuka kunci akun, dan validasi IP Anda.<br>
+                    • <strong>Gunakan Akun Sekunder:</strong> Disarankan menggunakan akun khusus untuk integrasi tools, bukan akun personal utama Anda.
                   </div>
                 </div>
               </div>
 
-              <!-- Nextcloud / WebDAV & S3 -->
+              <!-- 6. Box -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('box', 26)}
+                  <div style="font-weight:700;font-size:1rem;">6. Box (Custom App OAuth 2.0)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Pendaftaran:</strong></div>
+                  <div>1. Buka <a href="https://app.box.com/developers/console" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Box Developer Console ↗</a> lalu klik <strong>Create New App</strong> → <strong>Custom App</strong>.</div>
+                  <div>2. Pilih metode autentikasi: <strong>User Authentication (OAuth 2.0)</strong>.</div>
+                  <div>3. Pada tab <strong>Configuration</strong>, tambahkan Redirect URI: <code>${origin}/api/auth/box/callback</code>.</div>
+                  <div>4. Di bagian <em>Application Scopes</em>, centang <strong>Read and write all files and folders stored in Box</strong>.</div>
+                  <div>5. Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke formulir Cloudgate.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Troubleshooting:</strong> Error <em>unauthorized_client</em> terjadi jika Anda memilih Server Authentication (JWT) alih-alih User Authentication (OAuth 2.0). Error <em>redirect_uri_mismatch</em> terjadi jika URL redirect berbeda dengan host aktif.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 7. pCloud -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('pcloud', 26)}
+                  <div style="font-weight:700;font-size:1rem;">7. pCloud (Developer App OAuth 2.0)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Pendaftaran:</strong></div>
+                  <div>1. Buka <a href="https://docs.pcloud.com/my_apps/" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">pCloud Developer Apps ↗</a> lalu daftarkan aplikasi baru.</div>
+                  <div>2. Masukkan Redirect URI: <code>${origin}/api/auth/pcloud/callback</code>.</div>
+                  <div>3. Salin <strong>App Key / Client ID</strong> dan <strong>App Secret</strong> ke formulir Cloudgate.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-primary);">
+                    <strong>💡 Tips:</strong> Akun pCloud di wilayah server US dan EU didukung secara otomatis melalui deteksi endpoint regional live rclone.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 8. Yandex Disk -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('yandex', 26)}
+                  <div style="font-weight:700;font-size:1rem;">8. Yandex Disk (Yandex OAuth App)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Pendaftaran:</strong></div>
+                  <div>1. Buka <a href="https://oauth.yandex.com/client/new" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Yandex OAuth App Registration ↗</a>.</div>
+                  <div>2. Beri izin pada API <em>Yandex Disk REST API</em> (cloud_api:disk.read dan cloud_api:disk.write).</div>
+                  <div>3. Masukkan Callback URL: <code>${origin}/api/auth/yandex/callback</code>.</div>
+                  <div>4. Salin <strong>ClientID</strong> dan <strong>ClientSecret</strong> ke formulir Cloudgate.</div>
+                </div>
+              </div>
+
+              <!-- 9. Koofr -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('koofr', 26)}
+                  <div style="font-weight:700;font-size:1rem;">9. Koofr (Cloud Storage via WebDAV Protocol)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Penghubungan:</strong></div>
+                  <div>1. URL default Koofr: <code>https://app.koofr.net/dav/Koofr</code>.</div>
+                  <div>2. Buka Koofr di browser → masuk ke menu <strong>Preferences → Password</strong> → buat <strong>App Password</strong> baru.</div>
+                  <div>3. Masukkan email akun Koofr dan App Password yang baru dibuat ke formulir Cloudgate.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Troubleshooting:</strong> Error 401 berarti Anda memasukkan password login web reguler. Koofr mewajibkan <em>App Password</em> terpisah untuk akses WebDAV/API.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 10. Backblaze B2 -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('b2', 26)}
+                  <div style="font-weight:700;font-size:1rem;">10. Backblaze B2 (Cloud Object Storage)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Pendaftaran & Kredensial:</strong></div>
+                  <div>1. Buka dashboard <a href="https://secure.backblaze.com/app_keys.htm" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Backblaze App Keys ↗</a>.</div>
+                  <div>2. Klik <strong>Add a New Application Key</strong>, beri nama, dan pilih akses <strong>Read and Write</strong>.</div>
+                  <div>3. Salin <strong>keyID</strong> ke kolom Key ID dan <strong>applicationKey</strong> ke kolom Application Key.</div>
+                  <div>4. <em>(Opsional)</em> Jika key dibatasi ke bucket tertentu, masukkan nama bucket di kolom Bucket Name.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Troubleshooting:</strong> Pastikan applicationKey memiliki izin <code>listBuckets</code> jika kolom bucket dikosongkan.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 11. PikPak -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('pikpak', 26)}
+                  <div style="font-weight:700;font-size:1rem;">11. PikPak (Private Cloud Drive Direct Credentials)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Penghubungan:</strong></div>
+                  <div>1. Masukkan <strong>Email</strong> atau <strong>Nomor HP</strong> (dengan kode negara, contoh: <code>+62812...</code>) yang terdaftar di PikPak.</div>
+                  <div>2. Masukkan <strong>Password</strong> akun PikPak Anda.</div>
+                  <div>3. Kredensial disimpan secara terenkripsi AES-256-GCM langsung di Cloudgate Vault.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-primary);">
+                    <strong>💡 Tips:</strong> Kuota akun PikPak (termasuk paket Free 100GB / Premium) diakses secara native oleh driver backend embedded.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 12. SFTP / SSH -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('sftp', 26)}
+                  <div style="font-weight:700;font-size:1rem;">12. SFTP / SSH (Secure Shell Server Transfer)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Penghubungan:</strong></div>
+                  <div>1. Masukkan <strong>Host / IP</strong> dan <strong>Port SSH</strong> (default: 22).</div>
+                  <div>2. Masukkan <strong>Username</strong> login server Linux / BSD / NAS Anda.</div>
+                  <div>3. Pilih metode autentikasi: isi <strong>Password SSH</strong> atau tempel teks <strong>Private Key</strong> (format OpenSSH / PEM).</div>
+                  <div>4. <em>(Opsional)</em> Tentukan <strong>Root Path</strong> untuk membatasi direktori kerja gateway pada server.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Troubleshooting:</strong> Jika menggunakan private key dengan passphrase, pastikan key dalam format tidak terenkripsi atau gunakan password authentication. Periksa firewall jika port 22 diblokir.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 13. SMB / Samba -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('smb', 26)}
+                  <div style="font-weight:700;font-size:1rem;">13. SMB / Samba (Windows Share / Network Protocol)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Penghubungan:</strong></div>
+                  <div>1. Masukkan <strong>Host / IP</strong> server SMB/NAS Anda dan <strong>Port</strong> (default: 445).</div>
+                  <div>2. Masukkan <strong>Nama Share</strong> (nama folder share di server, contoh: <code>share</code> atau <code>data</code>).</div>
+                  <div>3. Masukkan <strong>Username</strong> dan <strong>Password</strong> akun Windows / Samba.</div>
+                  <div>4. <em>(Opsional)</em> Isi <strong>Domain / Workgroup</strong> jika server berada di Active Directory.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
+                    <strong>Troubleshooting:</strong> Error <em>STATUS_ACCESS_DENIED</em> berarti user belum diberikan izin Read/Write pada pengaturan share folder di server Windows / Samba.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 14. Proton Drive -->
+              <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  ${getProviderIconSvg('protondrive', 26)}
+                  <div style="font-weight:700;font-size:1rem;">14. Proton Drive (Zero-Knowledge End-to-End Encryption)</div>
+                </div>
+                <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
+                  <div><strong>Langkah Penghubungan:</strong></div>
+                  <div>1. Masukkan <strong>Username</strong> atau <strong>Email Proton</strong> Anda (contoh: <code>user@proton.me</code>).</div>
+                  <div>2. Masukkan <strong>Password</strong> akun Proton Anda.</div>
+                  <div>3. <em>(Opsional)</em> Jika 2FA aktif pada akun Proton, masukkan kode 6-digit TOTP atau OTP Secret Key.</div>
+                  <div>4. <em>(Opsional)</em> Jika akun menggunakan two-password mode, masukkan Mailbox Password Anda.</div>
+                  <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-primary);">
+                    <strong>💡 Tips:</strong> Cloudgate melakukan live handshake enkripsi zero-knowledge Proton Drive langsung di memori gateway tanpa menyimpan file mentah di disk.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 15 & 16. S3 & Nextcloud/WebDAV Grid -->
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                   <div style="font-weight:700;font-size:0.95rem;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-                    ${getProviderIconSvg('webdav', 22)} Nextcloud / WebDAV
+                    ${getProviderIconSvg('s3', 22)} 15. Amazon S3 / S3-Compatible
                   </div>
                   <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);">
-                    • Format URL: <code>https://domain.com/remote.php/dav/files/user/</code> (wajib akhiri slash).<br>
-                    • Jika 2FA aktif, buat <strong>App Password</strong> di menu Settings → Security.<br>
-                    • <em>Troubleshooting</em>: Error 401 berarti password ditolak (gunakan App Password). Error 405 berarti URL WebDAV salah.
+                    • <strong>AWS S3</strong>: Kosongkan endpoint, isi Bucket, Access Key, Secret Key, dan Region.<br>
+                    • <strong>Cloudflare R2 / Wasabi / MinIO</strong>: Masukkan custom Endpoint lengkap.<br>
+                    • <em>Troubleshooting</em>: Error <code>NoSuchBucket</code> menandakan bucket belum dibuat di dashboard penyedia storage. Error <code>InvalidAccessKeyId</code> menandakan Access Key salah.
                   </div>
                 </div>
                 <div style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                   <div style="font-weight:700;font-size:0.95rem;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-                    ${getProviderIconSvg('s3', 22)} S3 / R2 / Wasabi
+                    ${getProviderIconSvg('webdav', 22)} 16. Nextcloud / WebDAV
                   </div>
                   <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);">
-                    • AWS S3: Kosongkan endpoint, isi Bucket, Access Key, Secret Key, dan Region.<br>
-                    • Cloudflare R2 / Wasabi: Isi custom Endpoint lengkap.<br>
-                    • <em>Troubleshooting</em>: Error <code>NoSuchBucket</code> menandakan bucket belum dibuat di dashboard penyedia storage.
+                    • <strong>Format URL</strong>: <code>https://domain.com/remote.php/dav/files/user/</code> (wajib akhiri slash <code>/</code>).<br>
+                    • Jika 2FA aktif di Nextcloud, wajib buat <strong>App Password</strong> di menu Settings → Security.<br>
+                    • <em>Troubleshooting</em>: Error 401 berarti password ditolak (gunakan App Password). Error 405 berarti URL WebDAV salah.
                   </div>
                 </div>
               </div>
