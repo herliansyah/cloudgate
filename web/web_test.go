@@ -3,6 +3,7 @@ package web_test
 import (
 	"io"
 	"os/exec"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -392,11 +393,6 @@ func TestEmbeddedAppVersionConsistency(t *testing.T) {
 	}
 	content := string(contentBytes)
 
-	// Ensure stale version strings like 0.2.0 are not present in the UI
-	if strings.Contains(content, "M3 v0.2.0") || strings.Contains(content, `id="aboutVersion">0.2.0<`) {
-		t.Errorf("embedded index.html still contains stale version 0.2.0; expected version to match config.AppVersion (%q)", config.AppVersion)
-	}
-
 	expectedBadge := "M3 v" + config.AppVersion
 	expectedAbout := `id="aboutVersion">` + config.AppVersion + `<`
 	if !strings.Contains(content, expectedBadge) {
@@ -404,6 +400,25 @@ func TestEmbeddedAppVersionConsistency(t *testing.T) {
 	}
 	if !strings.Contains(content, expectedAbout) {
 		t.Errorf("embedded index.html does not contain about version tag %q", expectedAbout)
+	}
+
+	// Verify that the actual embedded tags do not contain any stale/mismatched version
+	reBadge := regexp.MustCompile(`<span class="tag" id="appVersionTag">([^<]+)</span>`)
+	if match := reBadge.FindStringSubmatch(content); len(match) > 1 {
+		if match[1] != expectedBadge {
+			t.Errorf("embedded appVersionTag has stale version %q; expected %q", match[1], expectedBadge)
+		}
+	} else {
+		t.Errorf("embedded appVersionTag element not found in index.html")
+	}
+
+	reAbout := regexp.MustCompile(`<span id="aboutVersion">([^<]+)</span>`)
+	if match := reAbout.FindStringSubmatch(content); len(match) > 1 {
+		if match[1] != config.AppVersion {
+			t.Errorf("embedded aboutVersion has stale version %q; expected %q", match[1], config.AppVersion)
+		}
+	} else {
+		t.Errorf("embedded aboutVersion element not found in index.html")
 	}
 }
 
