@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Automated Self-Update Engine (`pkg/updater`)**: End-to-end in-place binary upgrade mechanism with strict SHA-256 integrity verification against official `checksums.txt` assets on GitHub Releases.
 - **Automated CI/CD Release Pipeline**: GitHub Actions workflow (`.github/workflows/release.yml`) compiling multi-platform standalone binaries, generating SHA-256 `checksums.txt`, extracting release notes, and publishing GitHub Releases on tag push.
+- **Docker Containerization & GHCR Releases**: Multi-stage `Dockerfile`, `docker-compose.yml`, and automated multi-architecture Docker image builds (`linux/amd64` & `linux/arm64`) published to GitHub Container Registry (`ghcr.io/herliansyah/cloudgate`) on every release.
+- **Docker Deployment Documentation**: Detailed quick-start guides for Docker Run and Docker Compose with volume mounting and remote GatewayAuth configuration in `README.md` and `README.id.md`.
 - **Cross-Platform Process Lock**: Windows-compatible instance locking implementation using `golang.org/x/sys/windows` alongside Unix `syscall.Flock`.
 - **Interactive Remote Push in Release Script**: Enhanced `scripts/release.sh` with optional interactive prompt to push commits and tags to remote origin immediately after gating passes.
 - **ProcessRestart Lifecycle**: In-process graceful socket teardown, `InstanceLock` release, and atomic `syscall.Exec` re-execution on Unix/Linux with automatic Web UI reconnect polling.

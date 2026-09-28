@@ -92,7 +92,48 @@ cd cloudgate
 go build -o bin/cloudgate cmd/cloudgate/main.go
 ```
 
-### 3. Jalankan Server
+### 3. Atau Jalankan dengan Docker / Docker Compose
+
+Cloudgate tersedia sebagai container image multi-architecture (`linux/amd64`, `linux/arm64`) yang ringan dan aman di GitHub Container Registry:
+
+#### Menggunakan Docker Run:
+```bash
+docker run -d \
+  --name cloudgate \
+  --restart unless-stopped \
+  -p 5210:5210 \
+  -v $(pwd)/data:/data \
+  ghcr.io/herliansyah/cloudgate:latest
+```
+
+#### Menggunakan Docker Compose:
+Gunakan file `docker-compose.yml` yang tersedia di repositori:
+```yaml
+services:
+  cloudgate:
+    image: ghcr.io/herliansyah/cloudgate:latest
+    container_name: cloudgate
+    restart: unless-stopped
+    ports:
+      - "5210:5210"
+    volumes:
+      - ./data:/data
+    environment:
+      - CLOUDGATE_CONFIG_DIR=/data
+```
+Jalankan:
+```bash
+docker compose up -d
+```
+
+> [!TIP]
+> **Pengaturan Server Headless / Remote**:
+> Karena inisialisasi awal GatewayAuth melalui Web UI dibatasi untuk alamat loopback, jika mengakses secara remote, inisialisasi MasterPassword melalui CLI container:
+> ```bash
+> docker exec -it cloudgate cloudgate auth setup "master-password-anda"
+> ```
+
+### 4. Jalankan Server (Binary Mandiri)
 
 ```bash
 # Menjalankan gateway server (default di 0.0.0.0:5210)
@@ -114,7 +155,7 @@ Buka antarmuka Web UI di browser Anda:
 > ./bin/cloudgate auth setup "master-password-anda"
 > ```
 
-### 4. Perintah CLI & Pembaruan Mandiri
+### 5. Perintah CLI & Pembaruan Mandiri
 
 ```bash
 # Periksa dan pasang pembaruan versi terbaru dari GitHub Releases

@@ -1,0 +1,8 @@
+.git
+.github
+bin/
+dist/
+scratch/
+.scratch/
+tmp/
+*.log

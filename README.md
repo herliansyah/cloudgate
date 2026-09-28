@@ -92,7 +92,47 @@ cd cloudgate
 go build -o bin/cloudgate cmd/cloudgate/main.go
 ```
 
-### 3. Run Server
+### 3. Or Run with Docker / Docker Compose
+
+Cloudgate is packaged as a minimal, secure multi-architecture container image (`linux/amd64`, `linux/arm64`) on GitHub Container Registry:
+
+#### Using Docker Run:
+```bash
+docker run -d \
+  --name cloudgate \
+  --restart unless-stopped \
+  -p 5210:5210 \
+  -v $(pwd)/data:/data \
+  ghcr.io/herliansyah/cloudgate:latest
+```
+
+#### Using Docker Compose:
+```yaml
+services:
+  cloudgate:
+    image: ghcr.io/herliansyah/cloudgate:latest
+    container_name: cloudgate
+    restart: unless-stopped
+    ports:
+      - "5210:5210"
+    volumes:
+      - ./data:/data
+    environment:
+      - CLOUDGATE_CONFIG_DIR=/data
+```
+Run:
+```bash
+docker compose up -d
+```
+
+> [!TIP]
+> **Headless / Remote Docker Setup**:
+> If deploying on a remote VPS or headless Docker host, initialize your MasterPassword via the container CLI:
+> ```bash
+> docker exec -it cloudgate cloudgate auth setup "your-secure-master-password"
+> ```
+
+### 4. Run Server (Native Binary)
 
 ```bash
 # Start gateway server (defaults to 0.0.0.0:5210)
@@ -114,7 +154,7 @@ Access the Web UI in your browser:
 > ./bin/cloudgate auth setup "your-secure-master-password"
 > ```
 
-### 4. CLI Utilities & Self-Update
+### 5. CLI Utilities & Self-Update
 
 ```bash
 # Check and apply latest version update from GitHub Releases

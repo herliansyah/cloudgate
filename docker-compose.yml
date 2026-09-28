@@ -1,0 +1,15 @@
+# Cloudgate - Unified Cloud Storage Gateway
+# Usage: docker compose up -d
+
+services:
+  cloudgate:
+    image: ghcr.io/herliansyah/cloudgate:latest
+    container_name: cloudgate
+    restart: unless-stopped
+    ports:
+      - "5210:5210"
+    volumes:
+      - ./data:/data
+    environment:
+      - CLOUDGATE_CONFIG_DIR=/data
+      - TZ=UTC
