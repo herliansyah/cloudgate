@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Automated Self-Update Engine (`pkg/updater`)**: End-to-end in-place binary upgrade mechanism with strict SHA-256 integrity verification against official `checksums.txt` assets on GitHub Releases.
+- **Automated CI/CD Release Pipeline**: GitHub Actions workflow (`.github/workflows/release.yml`) compiling multi-platform standalone binaries, generating SHA-256 `checksums.txt`, extracting release notes, and publishing GitHub Releases on tag push.
+- **Cross-Platform Process Lock**: Windows-compatible instance locking implementation using `golang.org/x/sys/windows` alongside Unix `syscall.Flock`.
+- **Interactive Remote Push in Release Script**: Enhanced `scripts/release.sh` with optional interactive prompt to push commits and tags to remote origin immediately after gating passes.
 - **ProcessRestart Lifecycle**: In-process graceful socket teardown, `InstanceLock` release, and atomic `syscall.Exec` re-execution on Unix/Linux with automatic Web UI reconnect polling.
 - **Embedded ReleaseChangelog**: In-app offline changelog viewing via `GET /api/changelog`, dedicated Material Design 3 changelog dialog in the Web UI, and `cloudgate changelog` CLI command.
 - **CLI Self-Update (`cloudgate update`)**: Interactive terminal command with release notes preview, SHA-256 verification, and `-y`/`--yes` non-interactive flag.

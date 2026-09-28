@@ -73,6 +73,22 @@ echo "==> All pre-release checks passed!"
 git tag -a "$TAG" -m "Release ${TAG}"
 echo "SUCCESS: Created annotated git tag '${TAG}'."
 echo ""
-echo "Next step: Push branch and tag to remote when ready:"
+
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-echo "  git push origin ${CURRENT_BRANCH} --tags"
+# ponytail: optional interactive push prompt if stdin and stdout are interactive terminals
+if [ -t 0 ] && [ -t 1 ]; then
+    read -p "Push commit and tag '${TAG}' to origin/${CURRENT_BRANCH} now? [y/N] " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "==> Pushing to origin..."
+        git push origin "${CURRENT_BRANCH}" --tags
+        echo "SUCCESS: Pushed ${TAG} to remote."
+    else
+        echo "Skipping push. Push manually when ready:"
+        echo "  git push origin ${CURRENT_BRANCH} --tags"
+    fi
+else
+    echo "Next step: Push branch and tag to remote when ready:"
+    echo "  git push origin ${CURRENT_BRANCH} --tags"
+fi
+

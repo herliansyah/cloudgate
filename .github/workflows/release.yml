@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Run test suite
+        run: go test -v ./...
+
+      - name: Build multi-platform binaries
+        run: |
+          mkdir -p dist
+          # ponytail: simple matrix loop in bash without heavy goreleaser dependencies
+          TARGETS=(
+            "linux amd64 cloudgate-linux-amd64"
+            "linux arm64 cloudgate-linux-arm64"
+            "darwin amd64 cloudgate-darwin-amd64"
+            "darwin arm64 cloudgate-darwin-arm64"
+            "windows amd64 cloudgate-windows-amd64.exe"
+          )
+          for target in "${TARGETS[@]}"; do
+            read -r os arch output <<< "$target"
+            echo "Building for $os/$arch -> dist/$output..."
+            CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -ldflags="-s -w" -o "dist/$output" ./cmd/cloudgate
+          done
+
+      - name: Generate SHA-256 Checksums
+        working-directory: dist
+        run: |
+          sha256sum cloudgate-* > checksums.txt
+          cat checksums.txt
+
+      - name: Extract Release Notes
+        id: notes
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG_NAME#v}"
+          echo "Extracting notes for version ${VERSION}..."
+          awk '/^## \['"$VERSION"'\]/{flag=1; next} /^## \[/{flag=0} flag' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "Release ${TAG_NAME}" > RELEASE_NOTES.md
+          fi
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: RELEASE_NOTES.md
+          files: |
+            dist/cloudgate-linux-amd64
+            dist/cloudgate-linux-arm64
+            dist/cloudgate-darwin-amd64
+            dist/cloudgate-darwin-arm64
+            dist/cloudgate-windows-amd64.exe
+            dist/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

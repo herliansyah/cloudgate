@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 )
 
 const (
@@ -79,7 +78,7 @@ func AcquireInstanceLock(port int) (*os.File, *LockInfo, error) {
 	}
 
 	// Try non-blocking flock
-	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+	if err := lockFile(file); err != nil {
 		file.Close()
 		return nil, nil, fmt.Errorf("failed to acquire file lock: %w", err)
 	}
@@ -100,21 +99,10 @@ func ReleaseInstanceLock(file *os.File) {
 		return
 	}
 	defer file.Close()
-	_ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+	_ = unlockFile(file)
 
 	dir, err := Dir()
 	if err == nil {
 		_ = os.Remove(filepath.Join(dir, LockFileName))
 	}
-}
-
-// isProcessRunning checks if a PID is alive on Unix/Linux.
-func isProcessRunning(pid int) bool {
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		return false
-	}
-	// On Unix, sending signal 0 checks if process exists without killing it
-	err = process.Signal(syscall.Signal(0))
-	return err == nil
 }
