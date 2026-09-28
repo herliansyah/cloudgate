@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Added
-- **Matrix-Style CLI Startup Banner**: Introduced Cyber Block ASCII art banner with High-Intensity ANSI Green styling and zero-dependency terminal capability and fallback detection (`NO_COLOR`, non-TTY, and `TERM=dumb`).
+- **CLI Startup Banner**: Introduced Cyber Block ASCII art banner with High-Intensity ANSI Cyan styling, 2-space padding, 75-column framing, and zero-dependency terminal capability and fallback detection (`NO_COLOR`, non-TTY, and `TERM=dumb`).
 
 ### Changed
 - **CLI Language Standardization**: Standardized CLI startup banners, flags, and operational prompts (`cmd/cloudgate`) to pure English, aligning with Unix command conventions while preserving bilingual Web UI capabilities.

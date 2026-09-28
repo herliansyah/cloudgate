@@ -518,32 +518,35 @@ func isColorSupported() bool {
 	return (fi.Mode() & os.ModeCharDevice) != 0
 }
 
+// ponytail: ANSI High-Intensity Cyan banner with fixed 2-space padding and 75-column framing,
+// avoiding heavy terminal-width measurement syscalls or dynamic layout libraries.
 func printStartupBanner(bindHost string, port int, localURL string, lanIPs []string, configDir string) {
-	const matrixBanner = `
- ██████╗██╗      ██████╗ ██╗   ██╗██████╗  ██████╗  █████╗ ████████╗███████╗
-██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗██╔════╝ ██╔══██╗╚══██╔══╝██╔════╝
-██║     ██║     ██║   ██║██║   ██║██║  ██║██║  ███╗███████║   ██║   █████╗  
-██║     ██║     ██║   ██║██║   ██║██║  ██║██║   ██║██╔══██║   ██║   ██╔══╝  
-╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝╚██████╔╝██║  ██║   ██║   ███████╗
- ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝`
+	const startupBanner = `
+   ██████╗██╗      ██████╗ ██╗   ██╗██████╗  ██████╗  █████╗ ████████╗███████╗
+  ██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗██╔════╝ ██╔══██╗╚══██╔══╝██╔════╝
+  ██║     ██║     ██║   ██║██║   ██║██║  ██║██║  ███╗███████║   ██║   █████╗  
+  ██║     ██║     ██║   ██║██║   ██║██║  ██║██║   ██║██╔══██║   ██║   ██╔══╝  
+  ╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝╚██████╔╝██║  ██║   ██║   ███████╗
+   ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝`
 
 	useColor := isColorSupported()
-	green := ""
+	cyan := ""
 	bold := ""
 	reset := ""
 	if useColor {
-		green = "\033[1;32m"
+		cyan = "\033[1;36m"
 		bold = "\033[1m"
 		reset = "\033[0m"
 	}
 
-	fmt.Printf("%s%s%s\n", green, strings.TrimPrefix(matrixBanner, "\n"), reset)
-	fmt.Println("==================================================================")
+	fmt.Println()
+	fmt.Printf("%s%s%s\n", cyan, strings.TrimPrefix(startupBanner, "\n"), reset)
+	fmt.Println("===========================================================================")
 	fmt.Printf("   %s Unified Cloud Storage Gateway v%s\n", config.AppName, config.AppVersion)
 	fmt.Printf("   Author     : %s\n", config.AppAuthor)
 	fmt.Printf("   Repository : %s\n", config.AppRepo)
 	fmt.Printf("   Config Dir : %s\n", configDir)
-	fmt.Println("------------------------------------------------------------------")
+	fmt.Println("---------------------------------------------------------------------------")
 	fmt.Printf("   Local URL   : %s%s%s\n", bold, localURL, reset)
 	if len(lanIPs) > 0 {
 		for _, ip := range lanIPs {
@@ -552,7 +555,7 @@ func printStartupBanner(bindHost string, port int, localURL string, lanIPs []str
 	} else {
 		fmt.Printf("   Network URL : http://%s:%d\n", bindHost, port)
 	}
-	fmt.Println("==================================================================")
+	fmt.Println("===========================================================================")
 	fmt.Println("Press Ctrl+C to shut down.")
 }
 
