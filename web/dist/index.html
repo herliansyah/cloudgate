@@ -2563,9 +2563,9 @@
         <div style="display:flex; align-items:center; gap:8px;">
           <button class="btn btn-primary" id="previewDownloadBtn" style="height:36px; padding:0 14px; font-size:0.84rem;">
             <svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            Unduh
+            <span data-i18n="files.download">Unduh</span>
           </button>
-          <button class="btn-icon" onclick="closeModal('filePreviewModal')" title="Tutup">✕</button>
+          <button class="btn-icon" onclick="closeModal('filePreviewModal')" title="Tutup" data-i18n-title="modal.close">✕</button>
         </div>
       </div>
       <div id="previewContentArea" style="flex:1; overflow:auto; margin-top:14px; background-color: var(--md-sys-color-surface-container); border: 1px solid var(--md-sys-color-outline-variant); border-radius:var(--md-sys-shape-corner-md); display:flex; align-items:center; justify-content:center; min-height:450px; position:relative;">
@@ -2826,10 +2826,10 @@
         <span id="taskDrawerActiveCount" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:0.75rem;padding:2px 7px;border-radius:10px;font-weight:700;">0</span>
       </div>
       <div style="display:flex;align-items:center;gap:4px;">
-        <button class="btn-icon" style="width:28px;height:28px;" title="Bersihkan Riwayat" onclick="event.stopPropagation();clearFinishedTasks()">
+        <button class="btn-icon" style="width:28px;height:28px;" title="Bersihkan Riwayat" data-i18n-title="tasks.clearFinished" onclick="event.stopPropagation();clearFinishedTasks()">
           <svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z"/></svg>
         </button>
-        <button class="btn-icon" style="width:28px;height:28px;" title="Tutup" onclick="event.stopPropagation();closeTaskDrawer()">✕</button>
+        <button class="btn-icon" style="width:28px;height:28px;" title="Tutup" data-i18n-title="modal.close" onclick="event.stopPropagation();closeTaskDrawer()">✕</button>
       </div>
     </div>
     <div id="taskDrawerBody" style="max-height:340px;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:8px;">
@@ -3131,6 +3131,8 @@
         'replicate.cancel': 'Cancel',
         'replicate.submit': 'Start Replication',
         'replicate.startedToast': 'Folder sync started in background',
+        'replicate.errAccountRequired': 'Source and target accounts are required',
+        'replicate.errSamePath': 'Source and target folders cannot be identical on the same account',
         'replicate.noAccount': '(No accounts)',
 
         'docs.title': 'REST API & System Documentation',
@@ -3246,6 +3248,54 @@
         'about.changelog': '📜 Changelog',
         'about.close': 'Close',
         'about.checkUpdates': 'Check for Updates',
+
+        'starred.emptyTitle': 'No Starred Files',
+        'starred.emptyDesc': 'Star your favorite files or folders to find them instantly across all your connected cloud accounts.',
+        'starred.explore': 'Explore Files',
+        'starred.loading': 'Loading starred files…',
+        'starred.added': 'Added to starred ⭐',
+        'starred.removed': 'Removed from starred',
+
+        'recent.emptyTitle': 'No Recent File Activity',
+        'recent.emptyDesc': 'Recently uploaded, modified, or accessed files will appear here automatically.',
+        'recent.explore': 'Explore Files',
+        'recent.loading': 'Loading recent files…',
+
+        'share.copied': 'Link copied to clipboard! 📋',
+        'share.failed': 'Failed to generate share link',
+
+        'acc.disconnected': 'Storage account "{name}" disconnected successfully.',
+        'acc.errDisconnect': 'Failed to disconnect account',
+        'acc.errNameEmpty': 'Account name cannot be empty',
+        'acc.errQuotaNegative': 'Quota cannot be negative',
+        'acc.updated': 'Storage account "{name}" updated successfully.',
+        'acc.errUpdate': 'Failed to update account',
+
+        'hub.syncFleet': 'Starting cloud storage fleet sync...',
+        'hub.syncSuccess': 'Sync successful! {count} cloud accounts synchronized.',
+        'hub.syncFailed': 'Failed to sync storage',
+        'hub.testingConn': 'Testing account connectivity...',
+        'hub.connHealthy': 'Connection healthy! Verified in {ms}ms.',
+        'hub.connFailed': 'Connection test failed: {err}',
+        'hub.integrationToggled': 'Account integration {status}.',
+        'hub.integrationEnabled': 'enabled',
+        'hub.integrationDisabled': 'disabled',
+        'hub.errToggle': 'Failed to toggle integration status',
+
+        'tasks.errCancel': 'Failed to cancel task',
+        'tasks.requeued': 'Task requeued successfully',
+        'tasks.errRetry': 'Failed to retry task',
+        'tasks.cleared': 'Task history cleared',
+        'tasks.errClear': 'Failed to clear task history',
+
+        'changelog.title': 'Cloudgate Release Changelog',
+        'changelog.loading': 'Loading release notes...',
+        'changelog.empty': 'No release notes available.',
+        'changelog.error': 'Failed to load changelog',
+
+        'updater.restartingTitle': 'Applying Update & Restarting...',
+        'updater.restartingDesc': 'Cloudgate is verifying SHA-256 checksum integrity, replacing binary executable, and gracefully restarting the server. This page will reload automatically once the server is back online.',
+        'modal.close': 'Close',
       },
       id: {
         'topbar.search': 'Cari file di semua akun cloud…',
@@ -3452,6 +3502,8 @@
         'replicate.cancel': 'Batal',
         'replicate.submit': 'Mulai Replikasi',
         'replicate.startedToast': 'Sinkronisasi folder dimulai di latar belakang',
+        'replicate.errAccountRequired': 'Akun sumber dan akun tujuan wajib dipilih',
+        'replicate.errSamePath': 'Folder sumber dan tujuan tidak boleh identik pada akun yang sama',
         'replicate.noAccount': '(Tidak ada akun)',
 
         'docs.title': 'REST API & System Documentation',
@@ -3567,6 +3619,54 @@
         'about.changelog': '📜 Changelog',
         'about.close': 'Tutup',
         'about.checkUpdates': 'Periksa Pembaruan',
+
+        'starred.emptyTitle': 'Belum Ada File Berbintang',
+        'starred.emptyDesc': 'Tandai file atau folder favorit Anda dengan ikon bintang untuk menemukannya kembali secara instan lintas semua cloud account.',
+        'starred.explore': 'Jelajahi File',
+        'starred.loading': 'Memuat file berbintang…',
+        'starred.added': 'Ditambahkan ke berbintang ⭐',
+        'starred.removed': 'Dihapus dari berbintang',
+
+        'recent.emptyTitle': 'Belum Ada Aktivitas File Terbaru',
+        'recent.emptyDesc': 'File yang baru saja diunggah, dimodifikasi, atau diakses akan muncul di sini secara otomatis.',
+        'recent.explore': 'Jelajahi File',
+        'recent.loading': 'Memuat file terbaru…',
+
+        'share.copied': 'Link berhasil disalin ke clipboard! 📋',
+        'share.failed': 'Gagal membuat share link',
+
+        'acc.disconnected': 'RemoteAccount "{name}" berhasil diputuskan.',
+        'acc.errDisconnect': 'Gagal memutuskan akun',
+        'acc.errNameEmpty': 'Nama akun tidak boleh kosong',
+        'acc.errQuotaNegative': 'Quota tidak boleh negatif',
+        'acc.updated': 'RemoteAccount "{name}" berhasil diperbarui.',
+        'acc.errUpdate': 'Gagal memperbarui akun',
+
+        'hub.syncFleet': 'Memulai sinkronisasi armada akun cloud...',
+        'hub.syncSuccess': 'Sinkronisasi berhasil! {count} akun cloud diselaraskan.',
+        'hub.syncFailed': 'Gagal melakukan sinkronisasi storage',
+        'hub.testingConn': 'Menguji konektivitas akun...',
+        'hub.connHealthy': 'Koneksi sehat! Terverifikasi dalam {ms}ms.',
+        'hub.connFailed': 'Uji koneksi gagal: {err}',
+        'hub.integrationToggled': 'Integrasi akun {status}.',
+        'hub.integrationEnabled': 'diaktifkan',
+        'hub.integrationDisabled': 'dinonaktifkan',
+        'hub.errToggle': 'Gagal mengubah status integrasi',
+
+        'tasks.errCancel': 'Gagal membatalkan task',
+        'tasks.requeued': 'Task dimasukkan kembali ke antrean',
+        'tasks.errRetry': 'Gagal mengulang task',
+        'tasks.cleared': 'Riwayat task dibersihkan',
+        'tasks.errClear': 'Gagal membersihkan riwayat task',
+
+        'changelog.title': 'Catatan Rilis Cloudgate',
+        'changelog.loading': 'Memuat catatan rilis...',
+        'changelog.empty': 'Tidak ada catatan rilis.',
+        'changelog.error': 'Gagal memuat changelog',
+
+        'updater.restartingTitle': 'Memasang Pembaruan & Memulai Ulang...',
+        'updater.restartingDesc': 'Cloudgate sedang memverifikasi integritas SHA-256 checksums, mengganti biner eksekutabel, dan me-restart server secara mulus. Halaman ini akan dimuat ulang secara otomatis begitu server kembali online.',
+        'modal.close': 'Tutup',
       }
     };
 
@@ -5092,7 +5192,7 @@
     }
 
     async function syncStorageNow() {
-      showToast('Memulai sinkronisasi armada akun cloud...');
+      showToast(t('hub.syncFleet'));
       try {
         const res = await fetch('/api/storage/sync', { method: 'POST' });
         if (res.ok) {
@@ -5104,9 +5204,9 @@
           } else if (currentMode === 'dashboard') {
             renderDashboard();
           }
-          showToast(`Sinkronisasi berhasil! ${data.accounts_count || 0} akun cloud diselaraskan.`);
+          showToast(t('hub.syncSuccess').replace('{count}', data.accounts_count || 0));
         } else {
-          showToast('Gagal melakukan sinkronisasi storage', 'error');
+          showToast(t('hub.syncFailed'), 'error');
         }
       } catch (err) {
         showToast(err.message, 'error');
@@ -5114,14 +5214,14 @@
     }
 
     async function testAccountConnection(id) {
-      showToast('Menguji konektivitas akun...');
+      showToast(t('hub.testingConn'));
       try {
         const res = await fetch(`/api/accounts/${encodeURIComponent(id)}/test`, { method: 'POST' });
         const data = await res.json();
         if (data.success) {
-          showToast(`Koneksi sehat! Terverifikasi dalam ${data.duration_ms}ms.`);
+          showToast(t('hub.connHealthy').replace('{ms}', data.duration_ms));
         } else {
-          showToast(`Uji koneksi gagal: ${data.error || 'Timeout'}`, 'error');
+          showToast(t('hub.connFailed').replace('{err}', data.error || 'Timeout'), 'error');
         }
       } catch (err) {
         showToast(err.message, 'error');
@@ -5136,12 +5236,13 @@
           body: JSON.stringify({ enabled })
         });
         if (res.ok) {
-          showToast(`Integrasi akun ${enabled ? 'diaktifkan' : 'dinonaktifkan'}.`);
+          const statusText = enabled ? t('hub.integrationEnabled') : t('hub.integrationDisabled');
+          showToast(t('hub.integrationToggled').replace('{status}', statusText));
           await loadAccounts();
           await loadStats();
           if (currentMode === 'storage') renderStorageHub();
         } else {
-          showToast('Gagal mengubah status integrasi', 'error');
+          showToast(t('hub.errToggle'), 'error');
         }
       } catch (err) {
         showToast(err.message, 'error');
@@ -5150,7 +5251,7 @@
 
     async function loadStarredFiles() {
       const area = document.getElementById('contentArea');
-      area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--md-sys-color-on-surface-variant);"><div class="spinner"></div>&nbsp;&nbsp;Memuat file berbintang…</div>';
+      area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--md-sys-color-on-surface-variant);"><div class="spinner"></div>&nbsp;&nbsp;${t('starred.loading')}</div>`;
       try {
         const res = await fetch('/api/files/starred');
         const list = await res.json();
@@ -5169,9 +5270,9 @@
                 <div class="file-icon" style="width:64px;height:64px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-primary-container);color:#ffba00;font-size:1.8rem;display:flex;align-items:center;justify-content:center;">
                   ★
                 </div>
-                <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">Belum Ada File Berbintang</h3>
-                <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">Tandai file atau folder favorit Anda dengan ikon bintang untuk menemukannya kembali secara instan lintas semua cloud account.</p>
-                <button class="btn btn-primary" onclick="selectFiles()" style="margin-top:8px;">Jelajahi File</button>
+                <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">${t('starred.emptyTitle')}</h3>
+                <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">${t('starred.emptyDesc')}</p>
+                <button class="btn btn-primary" onclick="selectFiles()" style="margin-top:8px;">${t('starred.explore')}</button>
               </div>
             </div>
           `;
@@ -5185,7 +5286,7 @@
 
     async function loadRecentFiles() {
       const area = document.getElementById('contentArea');
-      area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--md-sys-color-on-surface-variant);"><div class="spinner"></div>&nbsp;&nbsp;Memuat file terbaru…</div>';
+      area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--md-sys-color-on-surface-variant);"><div class="spinner"></div>&nbsp;&nbsp;${t('recent.loading')}</div>`;
       try {
         const res = await fetch('/api/files/recent');
         const list = await res.json();
@@ -5197,9 +5298,9 @@
                 <div class="file-icon" style="width:64px;height:64px;border-radius:var(--md-sys-shape-corner-md);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-primary);font-size:1.8rem;display:flex;align-items:center;justify-content:center;">
                   🕒
                 </div>
-                <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">Belum Ada Aktivitas File Terbaru</h3>
-                <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">File yang baru saja diunggah, dimodifikasi, atau diakses akan muncul di sini secara otomatis.</p>
-                <button class="btn btn-primary" onclick="selectFiles()" style="margin-top:8px;">Jelajahi File</button>
+                <h3 style="font-size:1.1rem;font-weight:700;margin:4px 0 0 0;">${t('recent.emptyTitle')}</h3>
+                <p style="font-size:0.85rem;color:var(--md-sys-color-on-surface-variant);line-height:1.5;">${t('recent.emptyDesc')}</p>
+                <button class="btn btn-primary" onclick="selectFiles()" style="margin-top:8px;">${t('recent.explore')}</button>
               </div>
             </div>
           `;
@@ -5218,7 +5319,7 @@
         try {
           await fetch(`/api/files/starred?account_id=${encodeURIComponent(accountID)}&path=${encodeURIComponent(filePath)}`, { method: 'DELETE' });
           if (btnEl) btnEl.classList.remove('starred');
-          showToast('Dihapus dari berbintang');
+          showToast(t('starred.removed'));
           if (currentMode === 'starred') loadStarredFiles();
         } catch (e) {}
       } else {
@@ -5229,7 +5330,7 @@
             body: JSON.stringify({ account_id: accountID, path: filePath, name: fileName, size: size || 0, is_dir: isDir || false })
           });
           if (btnEl) btnEl.classList.add('starred');
-          showToast('Ditambahkan ke berbintang ⭐');
+          showToast(t('starred.added'));
         } catch (e) {}
       }
     }
@@ -5237,7 +5338,7 @@
     async function openShareModal(filePath, accountID) {
       try {
         const res = await fetch(`/api/files/share?path=${encodeURIComponent(filePath)}&account_id=${encodeURIComponent(accountID || activeAccountID || '')}`);
-        if (!res.ok) throw new Error('Gagal membuat share link');
+        if (!res.ok) throw new Error(t('share.failed'));
         const data = await res.json();
         const input = document.getElementById('shareUrlInput');
         const nameEl = document.getElementById('shareModalFileName');
@@ -5253,7 +5354,7 @@
       const input = document.getElementById('shareUrlInput');
       if (!input) return;
       navigator.clipboard.writeText(input.value);
-      showToast('Link berhasil disalin ke clipboard! 📋');
+      showToast(t('share.copied'));
     }
 
     function renderDocs() {
@@ -5396,7 +5497,27 @@
             </div>
 
             <div style="display:flex;flex-direction:column;gap:16px;">
+              ${renderHandbookCards(origin, currentLang)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
+    function renderHandbookCards(origin, lang) {
+      // ponytail: single declarative cards generator for bilingual handbook documentation (16 providers)
+      const isEn = lang === 'en';
+      const stepReg = isEn ? 'Registration Steps:' : 'Langkah Pendaftaran:';
+      const stepRegLatest = isEn ? 'Latest Registration Steps:' : 'Langkah Pendaftaran Terbaru:';
+      const stepConn = isEn ? 'Connection Steps:' : 'Langkah Penghubungan:';
+      const stepCred = isEn ? 'Registration & Credential Steps:' : 'Langkah Pendaftaran & Kredensial:';
+      const tbGuide = isEn ? 'Troubleshooting Guide:' : 'Panduan Penanganan Kegagalan (Troubleshooting):';
+      const tbTitle = isEn ? 'Troubleshooting:' : 'Troubleshooting:';
+      const tipsTbFilen = isEn ? '💡 Filen Tips & Troubleshooting:' : '💡 Tips & Troubleshooting Filen:';
+      const tipsLabel = isEn ? '💡 Tips:' : '💡 Tips:';
+      const secMega = isEn ? '🚨 Security Warning & Handling Locked Accounts (Account Locked):' : '🚨 Peringatan Keamanan & Penanganan Akun Terkunci (Account Locked):';
+
+      return `
               <!-- 1. Google Drive -->
               <div style="background-color:var(--md-sys-color-surface-container);padding:16px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
@@ -5404,17 +5525,17 @@
                   <div style="font-weight:700;font-size:1rem;">1. Google Drive (OAuth 2.0 Web Application)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Pendaftaran:</strong></div>
-                  <div>1. Buka <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Google Cloud Console → Google Drive API ↗</a> lalu klik tombol <strong>ENABLE (Aktifkan)</strong>.</div>
-                  <div>2. Masuk ke menu <strong>OAuth consent screen</strong>, pilih jenis <strong>External</strong>, isi nama aplikasi & email kontak.</div>
-                  <div>3. Masuk ke <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>OAuth client ID</strong>.</div>
-                  <div>4. Pilih jenis <strong>Web application</strong>. Pada kolom <em>Authorized redirect URIs</em>, masukkan callback Cloudgate: <code>${origin}/api/auth/google/callback</code>.</div>
-                  <div>5. Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke formulir Cloudgate.</div>
+                  <div><strong>${stepReg}</strong></div>
+                  <div>1. ${isEn ? 'Open' : 'Buka'} <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Google Cloud Console → Google Drive API ↗</a> ${isEn ? 'and click the <strong>ENABLE</strong> button.' : 'lalu klik tombol <strong>ENABLE (Aktifkan)</strong>.'}</div>
+                  <div>2. ${isEn ? 'Go to <strong>OAuth consent screen</strong>, select user type <strong>External</strong>, and fill in app name & contact email.' : 'Masuk ke menu <strong>OAuth consent screen</strong>, pilih jenis <strong>External</strong>, isi nama aplikasi & email kontak.'}</div>
+                  <div>3. ${isEn ? 'Go to <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>OAuth client ID</strong>.' : 'Masuk ke <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>OAuth client ID</strong>.'}</div>
+                  <div>4. ${isEn ? 'Select application type <strong>Web application</strong>. In the <em>Authorized redirect URIs</em> field, enter Cloudgate callback:' : 'Pilih jenis <strong>Web application</strong>. Pada kolom <em>Authorized redirect URIs</em>, masukkan callback Cloudgate:'} <code>${origin}/api/auth/google/callback</code>.</div>
+                  <div>5. ${isEn ? 'Copy <strong>Client ID</strong> and <strong>Client Secret</strong> into Cloudgate form.' : 'Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke formulir Cloudgate.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Panduan Penanganan Kegagalan (Troubleshooting):</strong><br>
-                    • <em>Error 400 redirect_uri_mismatch</em>: Redirect URI di Google Cloud Console belum identik dengan alamat gateway lokal Anda (perhatikan port dan skema http/https).<br>
-                    • <em>Error 403 Google Drive API has not been used</em>: Klik ENABLE pada Google Drive API di Cloud Console project Anda.<br>
-                    • <em>Peringatan "Google hasn't verified this app"</em>: Klik <strong>Advanced</strong> → <strong>Go to Cloudgate (unsafe)</strong> untuk melanjutkan izin akses pribadi.
+                    <strong>${tbGuide}</strong><br>
+                    • <em>Error 400 redirect_uri_mismatch</em>: ${isEn ? 'Redirect URI in Google Cloud Console is not identical to your local gateway address (check port and http/https scheme).' : 'Redirect URI di Google Cloud Console belum identik dengan alamat gateway lokal Anda (perhatikan port dan skema http/https).'}<br>
+                    • <em>Error 403 Google Drive API has not been used</em>: ${isEn ? 'Click ENABLE on Google Drive API in your Cloud Console project.' : 'Klik ENABLE pada Google Drive API di Cloud Console project Anda.'}<br>
+                    • <em>${isEn ? "Warning \"Google hasn't verified this app\"" : "Peringatan \"Google hasn't verified this app\""}</em>: ${isEn ? 'Click <strong>Advanced</strong> → <strong>Go to Cloudgate (unsafe)</strong> to proceed with personal access permission.' : 'Klik <strong>Advanced</strong> → <strong>Go to Cloudgate (unsafe)</strong> untuk melanjutkan izin akses pribadi.'}
                   </div>
                 </div>
               </div>
@@ -5426,22 +5547,22 @@
                   <div style="font-weight:700;font-size:1rem;">2. Microsoft OneDrive (Microsoft Entra ID / Azure Portal)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Pendaftaran Terbaru:</strong></div>
-                  <div>1. Buka <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Azure Portal → App registrations ↗</a> dan klik <strong>New registration</strong>.</div>
-                  <div>2. Masukkan nama aplikasi (misal: <code>Cloudgate Gateway</code>).</div>
-                  <div>3. <strong>Sangat Krusial:</strong> Pada <em>Supported account types</em>, pilih opsi ke-3:<br>
+                  <div><strong>${stepRegLatest}</strong></div>
+                  <div>1. ${isEn ? 'Open' : 'Buka'} <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Azure Portal → App registrations ↗</a> ${isEn ? 'and click <strong>New registration</strong>.' : 'dan klik <strong>New registration</strong>.'}</div>
+                  <div>2. ${isEn ? 'Enter application name (e.g.:' : 'Masukkan nama aplikasi (misal:'} <code>Cloudgate Gateway</code>).</div>
+                  <div>3. <strong>${isEn ? 'Crucial:' : 'Sangat Krusial:'}</strong> ${isEn ? 'Under <em>Supported account types</em>, select the 3rd option:' : 'Pada <em>Supported account types</em>, pilih opsi ke-3:'}<br>
                     <code>Accounts in any organizational directory and personal Microsoft accounts (e.g. Skype, Xbox)</code>.
                   </div>
-                  <div>4. Pada bagian <em>Redirect URI</em>, pilih platform <strong>Web</strong> (jangan SPA), masukkan: <code>${origin}/api/auth/onedrive/callback</code>.</div>
-                  <div>5. Klik <strong>Register</strong>. Salin <strong>Application (client) ID</strong> dari halaman Overview.</div>
-                  <div>6. Masuk ke menu <strong>Certificates & secrets</strong> → klik <strong>New client secret</strong> → salin nilai <strong>Value</strong> (bukan Secret ID!).</div>
-                  <div>7. Masuk ke <strong>API permissions</strong> → pastikan terdapat izin Microsoft Graph: <code>Files.ReadWrite</code>, <code>offline_access</code>, dan <code>User.Read</code>.</div>
+                  <div>4. ${isEn ? 'Under <em>Redirect URI</em>, select platform <strong>Web</strong> (do not select SPA), enter:' : 'Pada bagian <em>Redirect URI</em>, pilih platform <strong>Web</strong> (jangan SPA), masukkan:'} <code>${origin}/api/auth/onedrive/callback</code>.</div>
+                  <div>5. ${isEn ? 'Click <strong>Register</strong>. Copy <strong>Application (client) ID</strong> from Overview page.' : 'Klik <strong>Register</strong>. Salin <strong>Application (client) ID</strong> dari halaman Overview.'}</div>
+                  <div>6. ${isEn ? 'Go to <strong>Certificates & secrets</strong> → click <strong>New client secret</strong> → copy the secret <strong>Value</strong> (not Secret ID!).' : 'Masuk ke menu <strong>Certificates & secrets</strong> → klik <strong>New client secret</strong> → salin nilai <strong>Value</strong> (bukan Secret ID!).'}</div>
+                  <div>7. ${isEn ? 'Go to <strong>API permissions</strong> → ensure Microsoft Graph permissions exist:' : 'Masuk ke <strong>API permissions</strong> → pastikan terdapat izin Microsoft Graph:'} <code>Files.ReadWrite</code>, <code>offline_access</code>, ${isEn ? 'and' : 'dan'} <code>User.Read</code>.</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Panduan Penanganan Kegagalan (Troubleshooting):</strong><br>
-                    • <em>Error AADSTS700016 (Application not found)</em>: Client ID salah atau belum tersimpan. Pastikan Anda menyalin Application (client) ID.<br>
-                    • <em>Error AADSTS50011 (The reply URL does not match)</em>: Periksa platform redirect URI di Azure. Pastikan terdaftar sebagai platform <strong>Web</strong> dan URL sama persis.<br>
-                    • <em>Error AADSTS7000215 (Invalid client secret)</em>: Anda menyalin <em>Secret ID</em> alih-alih <em>Secret Value</em>. Buka menu Certificates & secrets untuk menyalin Value.<br>
-                    • <em>Error AADSTS50194</em>: Anda salah memilih Supported Account Types (memilih Single Tenant). Buat registrasi baru dengan opsi Personal & Multi-tenant.
+                    <strong>${tbGuide}</strong><br>
+                    • <em>Error AADSTS700016 (Application not found)</em>: ${isEn ? 'Client ID is invalid or not yet saved. Ensure you copied Application (client) ID.' : 'Client ID salah atau belum tersimpan. Pastikan Anda menyalin Application (client) ID.'}<br>
+                    • <em>Error AADSTS50011 (The reply URL does not match)</em>: ${isEn ? 'Check redirect URI platform in Azure. Ensure it is registered as platform <strong>Web</strong> and URL matches exactly.' : 'Periksa platform redirect URI di Azure. Pastikan terdaftar sebagai platform <strong>Web</strong> dan URL sama persis.'}<br>
+                    • <em>Error AADSTS7000215 (Invalid client secret)</em>: ${isEn ? 'You copied <em>Secret ID</em> instead of <em>Secret Value</em>. Open Certificates & secrets to copy Value.' : 'Anda menyalin <em>Secret ID</em> alih-alih <em>Secret Value</em>. Buka menu Certificates & secrets untuk menyalin Value.'}<br>
+                    • <em>Error AADSTS50194</em>: ${isEn ? 'Incorrect Supported Account Types chosen (Single Tenant selected). Create new registration with Personal & Multi-tenant option.' : 'Anda salah memilih Supported Account Types (memilih Single Tenant). Buat registrasi baru dengan opsi Personal & Multi-tenant.'}
                   </div>
                 </div>
               </div>
@@ -5453,14 +5574,14 @@
                   <div style="font-weight:700;font-size:1rem;">3. Dropbox (Scoped App Access)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Pendaftaran:</strong></div>
-                  <div>1. Buka <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Dropbox App Console ↗</a> → Create app.</div>
-                  <div>2. Pilih <strong>Scoped access</strong> dan <strong>Full Dropbox</strong>.</div>
-                  <div>3. Di tab <strong>Permissions</strong>, centang <code>files.content.read</code>, <code>files.content.write</code>, dan <code>account_info.read</code>.</div>
-                  <div>4. Di tab <strong>Settings</strong>, tambahkan OAuth 2 Redirect URI Cloudgate: <code>${origin}/api/auth/dropbox/callback</code>.</div>
-                  <div>5. Salin <strong>App key</strong> dan <strong>App secret</strong> ke formulir Cloudgate.</div>
+                  <div><strong>${stepReg}</strong></div>
+                  <div>1. ${isEn ? 'Open' : 'Buka'} <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Dropbox App Console ↗</a> → Create app.</div>
+                  <div>2. ${isEn ? 'Select <strong>Scoped access</strong> and <strong>Full Dropbox</strong>.' : 'Pilih <strong>Scoped access</strong> dan <strong>Full Dropbox</strong>.'}</div>
+                  <div>3. ${isEn ? 'In the <strong>Permissions</strong> tab, check' : 'Di tab <strong>Permissions</strong>, centang'} <code>files.content.read</code>, <code>files.content.write</code>, ${isEn ? 'and' : 'dan'} <code>account_info.read</code>.</div>
+                  <div>4. ${isEn ? 'In the <strong>Settings</strong> tab, add Cloudgate OAuth 2 Redirect URI:' : 'Di tab <strong>Settings</strong>, tambahkan OAuth 2 Redirect URI Cloudgate:'} <code>${origin}/api/auth/dropbox/callback</code>.</div>
+                  <div>5. ${isEn ? 'Copy <strong>App key</strong> and <strong>App secret</strong> into Cloudgate form.' : 'Salin <strong>App key</strong> dan <strong>App secret</strong> ke formulir Cloudgate.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Troubleshooting:</strong> Error <em>invalid_client</em> berarti App Key/Secret salah. Error <em>redirect_uri_mismatch</em> berarti URL callback belum tersimpan di tab Settings Dropbox Console.
+                    <strong>${tbTitle}</strong> ${isEn ? 'Error <em>invalid_client</em> means App Key or Secret is invalid. Error <em>redirect_uri_mismatch</em> means callback URL is not yet saved in Dropbox Console Settings tab.' : 'Error <em>invalid_client</em> berarti App Key/Secret salah. Error <em>redirect_uri_mismatch</em> berarti URL callback belum tersimpan di tab Settings Dropbox Console.'}
                   </div>
                 </div>
               </div>
@@ -5472,16 +5593,16 @@
                   <div style="font-weight:700;font-size:1rem;">4. Filen (Zero-Knowledge End-to-End Encrypted Cloud)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. Pilih Filen pada modal Tambah Penyimpanan. Masukkan Email dan Master Password akun Filen Anda.</div>
-                  <div>2. Ekspor <strong>Master API Key</strong> dengan menjalankan script resmi Filen pada terminal komputer Anda:</div>
+                  <div><strong>${stepConn}</strong></div>
+                  <div>1. ${isEn ? 'Select Filen in Add Storage modal. Enter your Filen Email and Master Password.' : 'Pilih Filen pada modal Tambah Penyimpanan. Masukkan Email dan Master Password akun Filen Anda.'}</div>
+                  <div>2. ${isEn ? 'Export your <strong>Master API Key</strong> by running the official Filen script in your terminal:' : 'Ekspor <strong>Master API Key</strong> dengan menjalankan script resmi Filen pada terminal komputer Anda:'}</div>
                   <pre style="background:var(--md-sys-color-surface-container-high);padding:8px 12px;border-radius:6px;font-family:monospace;font-size:0.75rem;overflow-x:auto;">curl -sL https://raw.githubusercontent.com/FilenCloudDienste/filen-rs/refs/heads/main/filen-cli/export-api-key.sh | bash</pre>
-                  <div>3. Salin seluruh string API key ke formulir Cloudgate dan tekan <strong>Test & Hubungkan Akun</strong>.</div>
-                  <div>4. Cloudgate menggunakan embedded native Rclone v1.73 Filen engine untuk mendekripsi dan menyinkronkan file secara real-time.</div>
+                  <div>3. ${isEn ? 'Copy the entire API key string into Cloudgate form and click <strong>Test & Connect Account</strong>.' : 'Salin seluruh string API key ke formulir Cloudgate dan tekan <strong>Test & Hubungkan Akun</strong>.'}</div>
+                  <div>4. ${isEn ? 'Cloudgate uses embedded native Rclone v1.73 Filen engine to decrypt and synchronize files in real-time.' : 'Cloudgate menggunakan embedded native Rclone v1.73 Filen engine untuk mendekripsi dan menyinkronkan file secara real-time.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-primary);">
-                    <strong>💡 Tips & Troubleshooting Filen:</strong><br>
-                    • <strong>Password Berubah:</strong> Mengubah kata sandi akun Filen di browser otomatis membatalkan API key lama. Pastikan untuk mengekspor ulang API key jika kata sandi diubah.<br>
-                    • <strong>Zero-Knowledge Isolation:</strong> Seluruh file yang diunggah ke Filen melalui Cloudgate tetap terenkripsi client-side sebelum dikirimkan ke server remote Filen.
+                    <strong>${tipsTbFilen}</strong><br>
+                    • <strong>${isEn ? 'Password Changed:' : 'Password Berubah:'}</strong> ${isEn ? 'Changing Filen account password in browser automatically invalidates the old API key. Re-export the API key if you change your password.' : 'Mengubah kata sandi akun Filen di browser otomatis membatalkan API key lama. Pastikan untuk mengekspor ulang API key jika kata sandi diubah.'}<br>
+                    • <strong>${isEn ? 'Zero-Knowledge Isolation:' : 'Zero-Knowledge Isolation:'}</strong> ${isEn ? 'All files uploaded to Filen via Cloudgate remain client-side encrypted before being transmitted to Filen remote servers.' : 'Seluruh file yang diunggah ke Filen melalui Cloudgate tetap terenkripsi client-side sebelum dikirimkan ke server remote Filen.'}
                   </div>
                 </div>
               </div>
@@ -5493,16 +5614,16 @@
                   <div style="font-weight:700;font-size:1rem;">5. Mega (Native Client-Side Encrypted Engine)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. Pilih Mega pada modal Tambah Penyimpanan. Masukkan Email dan Password akun Mega Anda.</div>
-                  <div>2. Cloudgate menggunakan modul native pure-Go MEGA API untuk mengautentikasi kunci enkripsi client-side secara real-time.</div>
-                  <div>3. Tekan tombol <strong>Test & Hubungkan Akun</strong>. Cloudgate akan melakukan live handshake dan menarik kuota real akun Anda.</div>
+                  <div><strong>${stepConn}</strong></div>
+                  <div>1. ${isEn ? 'Select Mega in Add Storage modal. Enter your Mega Email and Password.' : 'Pilih Mega pada modal Tambah Penyimpanan. Masukkan Email dan Password akun Mega Anda.'}</div>
+                  <div>2. ${isEn ? 'Cloudgate uses native pure-Go MEGA API module to authenticate client-side encryption keys in real-time.' : 'Cloudgate menggunakan modul native pure-Go MEGA API untuk mengautentikasi kunci enkripsi client-side secara real-time.'}</div>
+                  <div>3. ${isEn ? 'Click <strong>Test & Connect Account</strong>. Cloudgate performs live handshake and retrieves your real account quota.' : 'Tekan tombol <strong>Test & Hubungkan Akun</strong>. Cloudgate akan melakukan live handshake dan menarik kuota real akun Anda.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-error);">
-                    <strong style="color:var(--md-sys-color-error);">🚨 Peringatan Keamanan & Penanganan Akun Terkunci (Account Locked):</strong><br>
-                    • <strong>Risiko Penguncian Akun ("Unauthorised Third Party"):</strong> MEGA tidak memiliki OAuth2 resmi dan mewajibkan Email & Password langsung. Sistem deteksi fraud MEGA dapat mengira koneksi API ini sebagai akses tidak sah dan mengunci akun Anda sementara.<br>
-                    • <strong>Larangan Keras di Server VPS:</strong> Jangan menghubungkan akun jika Cloudgate berjalan di VPS / Cloud Datacenter (AWS, DigitalOcean, Hetzner, dll.). IP datacenter 99% otomatis memicu penguncian akun.<br>
-                    • <strong>Cara Membuka Kunci:</strong> Jika akun terkunci, buka tab browser di <a href="https://mega.nz" target="_blank" style="color:var(--md-sys-color-primary);font-weight:700;text-decoration:underline;">mega.nz</a>, login manual, buat password baru untuk membuka kunci akun, dan validasi IP Anda.<br>
-                    • <strong>Gunakan Akun Sekunder:</strong> Disarankan menggunakan akun khusus untuk integrasi tools, bukan akun personal utama Anda.
+                    <strong style="color:var(--md-sys-color-error);">${secMega}</strong><br>
+                    • <strong>${isEn ? 'Risk of Account Lock ("Unauthorised Third Party"):' : 'Risiko Penguncian Akun ("Unauthorised Third Party"): '}</strong>${isEn ? 'MEGA does not provide official OAuth2 and requires direct Email & Password. MEGA fraud detection systems may view this API connection as unauthorized access and temporarily lock your account.' : 'MEGA tidak memiliki OAuth2 resmi dan mewajibkan Email & Password langsung. Sistem deteksi fraud MEGA dapat mengira koneksi API ini sebagai akses tidak sah dan mengunci akun Anda sementara.'}<br>
+                    • <strong>${isEn ? 'Strict Prohibition on VPS Servers:' : 'Larangan Keras di Server VPS:'}</strong> ${isEn ? 'Do not connect accounts if Cloudgate runs on a VPS or Cloud Datacenter (AWS, DigitalOcean, Hetzner, etc.). Datacenter IPs trigger automatic account lockouts 99% of the time.' : 'Jangan menghubungkan akun jika Cloudgate berjalan di VPS / Cloud Datacenter (AWS, DigitalOcean, Hetzner, dll.). IP datacenter 99% otomatis memicu penguncian akun.'}<br>
+                    • <strong>${isEn ? 'How to Unlock:' : 'Cara Membuka Kunci:'}</strong> ${isEn ? 'If your account is locked, open a browser tab at' : 'Jika akun terkunci, buka tab browser di'} <a href="https://mega.nz" target="_blank" style="color:var(--md-sys-color-primary);font-weight:700;text-decoration:underline;">mega.nz</a>${isEn ? ', log in manually, create a new password to unlock the account, and validate your IP.' : ', login manual, buat password baru untuk membuka kunci akun, dan validasi IP Anda.'}<br>
+                    • <strong>${isEn ? 'Use Secondary Account:' : 'Gunakan Akun Sekunder:'}</strong> ${isEn ? 'It is strongly recommended to use a dedicated account for tools integration, not your primary personal account.' : 'Disarankan menggunakan akun khusus untuk integrasi tools, bukan akun personal utama Anda.'}
                   </div>
                 </div>
               </div>
@@ -5514,14 +5635,14 @@
                   <div style="font-weight:700;font-size:1rem;">6. Box (Custom App OAuth 2.0)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Pendaftaran:</strong></div>
-                  <div>1. Buka <a href="https://app.box.com/developers/console" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Box Developer Console ↗</a> lalu klik <strong>Create New App</strong> → <strong>Custom App</strong>.</div>
-                  <div>2. Pilih metode autentikasi: <strong>User Authentication (OAuth 2.0)</strong>.</div>
-                  <div>3. Pada tab <strong>Configuration</strong>, tambahkan Redirect URI: <code>${origin}/api/auth/box/callback</code>.</div>
-                  <div>4. Di bagian <em>Application Scopes</em>, centang <strong>Read and write all files and folders stored in Box</strong>.</div>
-                  <div>5. Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke formulir Cloudgate.</div>
+                  <div><strong>${stepReg}</strong></div>
+                  <div>1. ${isEn ? 'Open' : 'Buka'} <a href="https://app.box.com/developers/console" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Box Developer Console ↗</a> ${isEn ? 'and click <strong>Create New App</strong> → <strong>Custom App</strong>.' : 'lalu klik <strong>Create New App</strong> → <strong>Custom App</strong>.'}</div>
+                  <div>2. ${isEn ? 'Select authentication method: <strong>User Authentication (OAuth 2.0)</strong>.' : 'Pilih metode autentikasi: <strong>User Authentication (OAuth 2.0)</strong>.'}</div>
+                  <div>3. ${isEn ? 'In the <strong>Configuration</strong> tab, add Redirect URI:' : 'Pada tab <strong>Configuration</strong>, tambahkan Redirect URI:'} <code>${origin}/api/auth/box/callback</code>.</div>
+                  <div>4. ${isEn ? 'Under <em>Application Scopes</em>, check <strong>Read and write all files and folders stored in Box</strong>.' : 'Di bagian <em>Application Scopes</em>, centang <strong>Read and write all files and folders stored in Box</strong>.'}</div>
+                  <div>5. ${isEn ? 'Copy <strong>Client ID</strong> and <strong>Client Secret</strong> into Cloudgate form.' : 'Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke formulir Cloudgate.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Troubleshooting:</strong> Error <em>unauthorized_client</em> terjadi jika Anda memilih Server Authentication (JWT) alih-alih User Authentication (OAuth 2.0). Error <em>redirect_uri_mismatch</em> terjadi jika URL redirect berbeda dengan host aktif.
+                    <strong>${tbTitle}</strong> ${isEn ? 'Error <em>unauthorized_client</em> occurs if you selected Server Authentication (JWT) instead of User Authentication (OAuth 2.0). Error <em>redirect_uri_mismatch</em> occurs if redirect URL does not match active host.' : 'Error <em>unauthorized_client</em> terjadi jika Anda memilih Server Authentication (JWT) alih-alih User Authentication (OAuth 2.0). Error <em>redirect_uri_mismatch</em> terjadi jika URL redirect berbeda dengan host aktif.'}
                   </div>
                 </div>
               </div>
@@ -5533,12 +5654,12 @@
                   <div style="font-weight:700;font-size:1rem;">7. pCloud (Developer App OAuth 2.0)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Pendaftaran:</strong></div>
-                  <div>1. Buka <a href="https://docs.pcloud.com/my_apps/" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">pCloud Developer Apps ↗</a> lalu daftarkan aplikasi baru.</div>
-                  <div>2. Masukkan Redirect URI: <code>${origin}/api/auth/pcloud/callback</code>.</div>
-                  <div>3. Salin <strong>App Key / Client ID</strong> dan <strong>App Secret</strong> ke formulir Cloudgate.</div>
+                  <div><strong>${stepReg}</strong></div>
+                  <div>1. ${isEn ? 'Open' : 'Buka'} <a href="https://docs.pcloud.com/my_apps/" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">pCloud Developer Apps ↗</a> ${isEn ? 'and register a new application.' : 'lalu daftarkan aplikasi baru.'}</div>
+                  <div>2. ${isEn ? 'Enter Redirect URI:' : 'Masukkan Redirect URI:'} <code>${origin}/api/auth/pcloud/callback</code>.</div>
+                  <div>3. ${isEn ? 'Copy <strong>App Key / Client ID</strong> and <strong>App Secret</strong> into Cloudgate form.' : 'Salin <strong>App Key / Client ID</strong> dan <strong>App Secret</strong> ke formulir Cloudgate.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-primary);">
-                    <strong>💡 Tips:</strong> Akun pCloud di wilayah server US dan EU didukung secara otomatis melalui deteksi endpoint regional live rclone.
+                    <strong>${tipsLabel}</strong> ${isEn ? 'pCloud accounts in US and EU server regions are supported automatically via live rclone regional endpoint detection.' : 'Akun pCloud di wilayah server US dan EU didukung secara otomatis melalui deteksi endpoint regional live rclone.'}
                   </div>
                 </div>
               </div>
@@ -5550,11 +5671,11 @@
                   <div style="font-weight:700;font-size:1rem;">8. Yandex Disk (Yandex OAuth App)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Pendaftaran:</strong></div>
-                  <div>1. Buka <a href="https://oauth.yandex.com/client/new" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Yandex OAuth App Registration ↗</a>.</div>
-                  <div>2. Beri izin pada API <em>Yandex Disk REST API</em> (cloud_api:disk.read dan cloud_api:disk.write).</div>
-                  <div>3. Masukkan Callback URL: <code>${origin}/api/auth/yandex/callback</code>.</div>
-                  <div>4. Salin <strong>ClientID</strong> dan <strong>ClientSecret</strong> ke formulir Cloudgate.</div>
+                  <div><strong>${stepReg}</strong></div>
+                  <div>1. ${isEn ? 'Open' : 'Buka'} <a href="https://oauth.yandex.com/client/new" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Yandex OAuth App Registration ↗</a>.</div>
+                  <div>2. ${isEn ? 'Grant permissions for <em>Yandex Disk REST API</em> (cloud_api:disk.read and cloud_api:disk.write).' : 'Beri izin pada API <em>Yandex Disk REST API</em> (cloud_api:disk.read dan cloud_api:disk.write).'}</div>
+                  <div>3. ${isEn ? 'Enter Callback URL:' : 'Masukkan Callback URL:'} <code>${origin}/api/auth/yandex/callback</code>.</div>
+                  <div>4. ${isEn ? 'Copy <strong>ClientID</strong> and <strong>ClientSecret</strong> into Cloudgate form.' : 'Salin <strong>ClientID</strong> dan <strong>ClientSecret</strong> ke formulir Cloudgate.'}</div>
                 </div>
               </div>
 
@@ -5565,12 +5686,12 @@
                   <div style="font-weight:700;font-size:1rem;">9. Koofr (Cloud Storage via WebDAV Protocol)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. URL default Koofr: <code>https://app.koofr.net/dav/Koofr</code>.</div>
-                  <div>2. Buka Koofr di browser → masuk ke menu <strong>Preferences → Password</strong> → buat <strong>App Password</strong> baru.</div>
-                  <div>3. Masukkan email akun Koofr dan App Password yang baru dibuat ke formulir Cloudgate.</div>
+                  <div><strong>${stepConn}</strong></div>
+                  <div>1. ${isEn ? 'Default Koofr URL:' : 'URL default Koofr:'} <code>https://app.koofr.net/dav/Koofr</code>.</div>
+                  <div>2. ${isEn ? 'Open Koofr in browser → go to <strong>Preferences → Password</strong> → create a new <strong>App Password</strong>.' : 'Buka Koofr di browser → masuk ke menu <strong>Preferences → Password</strong> → buat <strong>App Password</strong> baru.'}</div>
+                  <div>3. ${isEn ? 'Enter Koofr account email and newly created App Password into Cloudgate form.' : 'Masukkan email akun Koofr dan App Password yang baru dibuat ke formulir Cloudgate.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Troubleshooting:</strong> Error 401 berarti Anda memasukkan password login web reguler. Koofr mewajibkan <em>App Password</em> terpisah untuk akses WebDAV/API.
+                    <strong>${tbTitle}</strong> ${isEn ? 'Error 401 means regular web login password was entered. Koofr requires a separate <em>App Password</em> for WebDAV/API access.' : 'Error 401 berarti Anda memasukkan password login web reguler. Koofr mewajibkan <em>App Password</em> terpisah untuk akses WebDAV/API.'}
                   </div>
                 </div>
               </div>
@@ -5582,13 +5703,13 @@
                   <div style="font-weight:700;font-size:1rem;">10. Backblaze B2 (Cloud Object Storage)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Pendaftaran & Kredensial:</strong></div>
-                  <div>1. Buka dashboard <a href="https://secure.backblaze.com/app_keys.htm" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Backblaze App Keys ↗</a>.</div>
-                  <div>2. Klik <strong>Add a New Application Key</strong>, beri nama, dan pilih akses <strong>Read and Write</strong>.</div>
-                  <div>3. Salin <strong>keyID</strong> ke kolom Key ID dan <strong>applicationKey</strong> ke kolom Application Key.</div>
-                  <div>4. <em>(Opsional)</em> Jika key dibatasi ke bucket tertentu, masukkan nama bucket di kolom Bucket Name.</div>
+                  <div><strong>${stepCred}</strong></div>
+                  <div>1. ${isEn ? 'Open' : 'Buka dashboard'} <a href="https://secure.backblaze.com/app_keys.htm" target="_blank" style="color:var(--md-sys-color-primary);font-weight:600;">Backblaze App Keys ↗</a>.</div>
+                  <div>2. ${isEn ? 'Click <strong>Add a New Application Key</strong>, enter name, and select <strong>Read and Write</strong> access.' : 'Klik <strong>Add a New Application Key</strong>, beri nama, dan pilih akses <strong>Read and Write</strong>.'}</div>
+                  <div>3. ${isEn ? 'Copy <strong>keyID</strong> to Key ID field and <strong>applicationKey</strong> to Application Key field.' : 'Salin <strong>keyID</strong> ke kolom Key ID dan <strong>applicationKey</strong> ke kolom Application Key.'}</div>
+                  <div>4. <em>(${isEn ? 'Optional' : 'Opsional'})</em> ${isEn ? 'If key is restricted to a specific bucket, enter bucket name in Bucket Name field.' : 'Jika key dibatasi ke bucket tertentu, masukkan nama bucket di kolom Bucket Name.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Troubleshooting:</strong> Pastikan applicationKey memiliki izin <code>listBuckets</code> jika kolom bucket dikosongkan.
+                    <strong>${tbTitle}</strong> ${isEn ? 'Ensure applicationKey has <code>listBuckets</code> permission if the bucket field is left empty.' : 'Pastikan applicationKey memiliki izin <code>listBuckets</code> jika kolom bucket dikosongkan.'}
                   </div>
                 </div>
               </div>
@@ -5600,12 +5721,12 @@
                   <div style="font-weight:700;font-size:1rem;">11. PikPak (Private Cloud Drive Direct Credentials)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. Masukkan <strong>Email</strong> atau <strong>Nomor HP</strong> (dengan kode negara, contoh: <code>+62812...</code>) yang terdaftar di PikPak.</div>
-                  <div>2. Masukkan <strong>Password</strong> akun PikPak Anda.</div>
-                  <div>3. Kredensial disimpan secara terenkripsi AES-256-GCM langsung di Cloudgate Vault.</div>
+                  <div><strong>${stepConn}</strong></div>
+                  <div>1. ${isEn ? 'Enter registered <strong>Email</strong> or <strong>Phone Number</strong> (with country code, e.g.:' : 'Masukkan <strong>Email</strong> atau <strong>Nomor HP</strong> (dengan kode negara, contoh:'} <code>+62812...</code>)${isEn ? ' in PikPak.' : ' yang terdaftar di PikPak.'}</div>
+                  <div>2. ${isEn ? 'Enter your PikPak account <strong>Password</strong>.' : 'Masukkan <strong>Password</strong> akun PikPak Anda.'}</div>
+                  <div>3. ${isEn ? 'Credentials are saved AES-256-GCM encrypted directly in Cloudgate Vault.' : 'Kredensial disimpan secara terenkripsi AES-256-GCM langsung di Cloudgate Vault.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-primary);">
-                    <strong>💡 Tips:</strong> Kuota akun PikPak (termasuk paket Free 100GB / Premium) diakses secara native oleh driver backend embedded.
+                    <strong>${tipsLabel}</strong> ${isEn ? 'PikPak account quotas (including Free 100GB / Premium) are natively accessed by the embedded backend driver.' : 'Kuota akun PikPak (termasuk paket Free 100GB / Premium) diakses secara native oleh driver backend embedded.'}
                   </div>
                 </div>
               </div>
@@ -5617,13 +5738,13 @@
                   <div style="font-weight:700;font-size:1rem;">12. SFTP / SSH (Secure Shell Server Transfer)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. Masukkan <strong>Host / IP</strong> dan <strong>Port SSH</strong> (default: 22).</div>
-                  <div>2. Masukkan <strong>Username</strong> login server Linux / BSD / NAS Anda.</div>
-                  <div>3. Pilih metode autentikasi: isi <strong>Password SSH</strong> atau tempel teks <strong>Private Key</strong> (format OpenSSH / PEM).</div>
-                  <div>4. <em>(Opsional)</em> Tentukan <strong>Root Path</strong> untuk membatasi direktori kerja gateway pada server.</div>
+                  <div><strong>${stepConn}</strong></div>
+                  <div>1. ${isEn ? 'Enter <strong>Host / IP</strong> and <strong>SSH Port</strong> (default: 22).' : 'Masukkan <strong>Host / IP</strong> dan <strong>Port SSH</strong> (default: 22).'}</div>
+                  <div>2. ${isEn ? 'Enter login <strong>Username</strong> of your Linux / BSD / NAS server.' : 'Masukkan <strong>Username</strong> login server Linux / BSD / NAS Anda.'}</div>
+                  <div>3. ${isEn ? 'Select authentication method: enter <strong>SSH Password</strong> or paste <strong>Private Key</strong> text (OpenSSH / PEM format).' : 'Pilih metode autentikasi: isi <strong>Password SSH</strong> atau tempel teks <strong>Private Key</strong> (format OpenSSH / PEM).'}</div>
+                  <div>4. <em>(${isEn ? 'Optional' : 'Opsional'})</em> ${isEn ? 'Specify <strong>Root Path</strong> to restrict gateway working directory on the server.' : 'Tentukan <strong>Root Path</strong> untuk membatasi direktori kerja gateway pada server.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Troubleshooting:</strong> Jika menggunakan private key dengan passphrase, pastikan key dalam format tidak terenkripsi atau gunakan password authentication. Periksa firewall jika port 22 diblokir.
+                    <strong>${tbTitle}</strong> ${isEn ? 'If using private key with passphrase, ensure key is in unencrypted format or use password authentication. Verify firewall if port 22 is blocked.' : 'Jika menggunakan private key dengan passphrase, pastikan key dalam format tidak terenkripsi atau gunakan password authentication. Periksa firewall jika port 22 diblokir.'}
                   </div>
                 </div>
               </div>
@@ -5635,13 +5756,13 @@
                   <div style="font-weight:700;font-size:1rem;">13. SMB / Samba (Windows Share / Network Protocol)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. Masukkan <strong>Host / IP</strong> server SMB/NAS Anda dan <strong>Port</strong> (default: 445).</div>
-                  <div>2. Masukkan <strong>Nama Share</strong> (nama folder share di server, contoh: <code>share</code> atau <code>data</code>).</div>
-                  <div>3. Masukkan <strong>Username</strong> dan <strong>Password</strong> akun Windows / Samba.</div>
-                  <div>4. <em>(Opsional)</em> Isi <strong>Domain / Workgroup</strong> jika server berada di Active Directory.</div>
+                  <div><strong>${stepConn}</strong></div>
+                  <div>1. ${isEn ? 'Enter SMB/NAS server <strong>Host / IP</strong> and <strong>Port</strong> (default: 445).' : 'Masukkan <strong>Host / IP</strong> server SMB/NAS Anda dan <strong>Port</strong> (default: 445).'}</div>
+                  <div>2. ${isEn ? 'Enter <strong>Share Name</strong> (folder share name on server, e.g.:' : 'Masukkan <strong>Nama Share</strong> (nama folder share di server, contoh:'} <code>share</code> ${isEn ? 'or' : 'atau'} <code>data</code>).</div>
+                  <div>3. ${isEn ? 'Enter Windows / Samba account <strong>Username</strong> and <strong>Password</strong>.' : 'Masukkan <strong>Username</strong> dan <strong>Password</strong> akun Windows / Samba.'}</div>
+                  <div>4. <em>(${isEn ? 'Optional' : 'Opsional'})</em> ${isEn ? 'Enter <strong>Domain / Workgroup</strong> if server is in Active Directory.' : 'Isi <strong>Domain / Workgroup</strong> jika server berada di Active Directory.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--status-warning);">
-                    <strong>Troubleshooting:</strong> Error <em>STATUS_ACCESS_DENIED</em> berarti user belum diberikan izin Read/Write pada pengaturan share folder di server Windows / Samba.
+                    <strong>${tbTitle}</strong> ${isEn ? 'Error <em>STATUS_ACCESS_DENIED</em> means user has not been granted Read/Write permissions in Windows / Samba share settings.' : 'Error <em>STATUS_ACCESS_DENIED</em> berarti user belum diberikan izin Read/Write pada pengaturan share folder di server Windows / Samba.'}
                   </div>
                 </div>
               </div>
@@ -5653,13 +5774,13 @@
                   <div style="font-weight:700;font-size:1rem;">14. Proton Drive (Zero-Knowledge End-to-End Encryption)</div>
                 </div>
                 <div style="font-size:0.82rem;line-height:1.5;color:var(--md-sys-color-on-surface-variant);display:flex;flex-direction:column;gap:6px;">
-                  <div><strong>Langkah Penghubungan:</strong></div>
-                  <div>1. Masukkan <strong>Username</strong> atau <strong>Email Proton</strong> Anda (contoh: <code>user@proton.me</code>).</div>
-                  <div>2. Masukkan <strong>Password</strong> akun Proton Anda.</div>
-                  <div>3. <em>(Opsional)</em> Jika 2FA aktif pada akun Proton, masukkan kode 6-digit TOTP atau OTP Secret Key.</div>
-                  <div>4. <em>(Opsional)</em> Jika akun menggunakan two-password mode, masukkan Mailbox Password Anda.</div>
+                  <div><strong>${stepConn}</strong></div>
+                  <div>1. ${isEn ? 'Enter your Proton <strong>Username</strong> or <strong>Email</strong> (e.g.:' : 'Masukkan <strong>Username</strong> atau <strong>Email Proton</strong> Anda (contoh:'} <code>user@proton.me</code>).</div>
+                  <div>2. ${isEn ? 'Enter your Proton account <strong>Password</strong>.' : 'Masukkan <strong>Password</strong> akun Proton Anda.'}</div>
+                  <div>3. <em>(${isEn ? 'Optional' : 'Opsional'})</em> ${isEn ? 'If 2FA is active, enter 6-digit TOTP code or OTP Secret Key.' : 'Jika 2FA aktif pada akun Proton, masukkan kode 6-digit TOTP atau OTP Secret Key.'}</div>
+                  <div>4. <em>(${isEn ? 'Optional' : 'Opsional'})</em> ${isEn ? 'If account uses two-password mode, enter your Mailbox Password.' : 'Jika akun menggunakan two-password mode, masukkan Mailbox Password Anda.'}</div>
                   <div style="margin-top:6px;background:var(--md-sys-color-surface-container-high);padding:10px;border-radius:6px;border-left:3px solid var(--md-sys-color-primary);">
-                    <strong>💡 Tips:</strong> Cloudgate melakukan live handshake enkripsi zero-knowledge Proton Drive langsung di memori gateway tanpa menyimpan file mentah di disk.
+                    <strong>${tipsLabel}</strong> ${isEn ? 'Cloudgate performs zero-knowledge Proton Drive live encryption handshakes directly in gateway memory without writing raw files to disk.' : 'Cloudgate melakukan live handshake enkripsi zero-knowledge Proton Drive langsung di memori gateway tanpa menyimpan file mentah di disk.'}
                   </div>
                 </div>
               </div>
@@ -5671,9 +5792,11 @@
                     ${getProviderIconSvg('s3', 22)} 15. Amazon S3 / S3-Compatible
                   </div>
                   <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);">
-                    • <strong>AWS S3</strong>: Kosongkan endpoint, isi Bucket, Access Key, Secret Key, dan Region.<br>
+                    ${isEn ? `• <strong>AWS S3</strong>: Leave endpoint blank, fill in Bucket, Access Key, Secret Key, and Region.<br>
+                    • <strong>Cloudflare R2 / Wasabi / MinIO</strong>: Enter full custom Endpoint.<br>
+                    • <em>Troubleshooting</em>: Error <code>NoSuchBucket</code> indicates bucket has not been created in storage provider dashboard. Error <code>InvalidAccessKeyId</code> indicates Access Key is incorrect.` : `• <strong>AWS S3</strong>: Kosongkan endpoint, isi Bucket, Access Key, Secret Key, dan Region.<br>
                     • <strong>Cloudflare R2 / Wasabi / MinIO</strong>: Masukkan custom Endpoint lengkap.<br>
-                    • <em>Troubleshooting</em>: Error <code>NoSuchBucket</code> menandakan bucket belum dibuat di dashboard penyedia storage. Error <code>InvalidAccessKeyId</code> menandakan Access Key salah.
+                    • <em>Troubleshooting</em>: Error <code>NoSuchBucket</code> menandakan bucket belum dibuat di dashboard penyedia storage. Error <code>InvalidAccessKeyId</code> menandakan Access Key salah.`}
                   </div>
                 </div>
                 <div style="background-color:var(--md-sys-color-surface-container);padding:14px;border-radius:var(--md-sys-shape-corner-md);border:1px solid var(--md-sys-color-outline-variant);">
@@ -5681,17 +5804,14 @@
                     ${getProviderIconSvg('webdav', 22)} 16. Nextcloud / WebDAV
                   </div>
                   <div style="font-size:0.8rem;line-height:1.45;color:var(--md-sys-color-on-surface-variant);">
-                    • <strong>Format URL</strong>: <code>https://domain.com/remote.php/dav/files/user/</code> (wajib akhiri slash <code>/</code>).<br>
+                    ${isEn ? `• <strong>URL Format</strong>: <code>https://domain.com/remote.php/dav/files/user/</code> (must end with trailing slash <code>/</code>).<br>
+                    • If 2FA is active on Nextcloud, generating an <strong>App Password</strong> in Settings → Security is required.<br>
+                    • <em>Troubleshooting</em>: Error 401 indicates rejected password (use App Password). Error 405 indicates invalid WebDAV URL.` : `• <strong>Format URL</strong>: <code>https://domain.com/remote.php/dav/files/user/</code> (wajib akhiri slash <code>/</code>).<br>
                     • Jika 2FA aktif di Nextcloud, wajib buat <strong>App Password</strong> di menu Settings → Security.<br>
-                    • <em>Troubleshooting</em>: Error 401 berarti password ditolak (gunakan App Password). Error 405 berarti URL WebDAV salah.
+                    • <em>Troubleshooting</em>: Error 401 berarti password ditolak (gunakan App Password). Error 405 berarti URL WebDAV salah.`}
                   </div>
                 </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      `;
+              </div>`;
     }
 
 
@@ -5727,12 +5847,12 @@
       try {
         const res = await fetch(`/api/accounts/${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (res.ok) {
-          showToast(`RemoteAccount "${name}" berhasil diputuskan.`);
+          showToast(t('acc.disconnected').replace('{name}', name));
           await loadAccounts();
           await loadStats();
           selectDashboard();
         } else {
-          showToast('Gagal memutuskan akun', 'error');
+          showToast(t('acc.errDisconnect'), 'error');
         }
       } catch (err) {
         showToast(err.message, 'error');
@@ -5763,11 +5883,11 @@
       const quotaTotal = Math.round(quotaGB * 1024 * 1024 * 1024);
 
       if (!name) {
-        showToast('Nama akun tidak boleh kosong', 'error');
+        showToast(t('acc.errNameEmpty'), 'error');
         return;
       }
       if (quotaTotal < 0) {
-        showToast('Quota tidak boleh negatif', 'error');
+        showToast(t('acc.errQuotaNegative'), 'error');
         return;
       }
 
@@ -5785,7 +5905,7 @@
         });
         if (res.ok) {
           const updated = await res.json();
-          showToast(`RemoteAccount "${updated.name}" berhasil diperbarui.`);
+          showToast(t('acc.updated').replace('{name}', updated.name));
           if (activeAccountID === id) {
             activeAccountName = updated.name;
           }
@@ -5799,7 +5919,7 @@
           }
         } else {
           const err = await res.json().catch(() => ({}));
-          showToast(err.error || 'Gagal memperbarui akun', 'error');
+          showToast(err.error || t('acc.errUpdate'), 'error');
         }
       } catch (err) {
         showToast(err.message, 'error');
@@ -6486,7 +6606,7 @@
       } else {
         await loadCurrentView();
       }
-      showToast('Data berhasil dimuat ulang');
+      showToast(currentLang === 'id' ? 'Data berhasil dimuat ulang' : 'Data refreshed successfully');
     }
 
     function showContextMenu(e, file) {
@@ -7206,7 +7326,7 @@
         if (smbExtra) smbExtra.style.display = 'none';
         if (protondriveExtra) protondriveExtra.style.display = 'none';
 
-        btnOAuthText.innerText = `Masuk dengan Akun ${meta.name}`;
+        btnOAuthText.innerText = currentLang === 'id' ? `Masuk dengan Akun ${meta.name}` : `Sign in with ${meta.name} Account`;
         if (clientIdInput) clientIdInput.placeholder = meta.clientIdPlaceholder || 'OAuth Client ID';
         if (clientSecretInput) clientSecretInput.placeholder = meta.clientSecretPlaceholder || 'OAuth Client Secret';
 
@@ -7679,14 +7799,14 @@
       openModal('changelogModal');
       const container = document.getElementById('changelogContent');
       if (!container) return;
-      container.innerText = 'Memuat riwayat perubahan...';
+      container.innerText = t('changelog.loading', 'Memuat riwayat perubahan...');
       try {
         const res = await fetch('/api/changelog');
         if (!res.ok) throw new Error('Gagal mengambil changelog');
         const data = await res.json();
-        container.innerText = data.changelog || 'Tidak ada catatan rilis.';
+        container.innerText = data.changelog || t('changelog.empty', 'Tidak ada catatan rilis.');
       } catch (err) {
-        container.innerText = 'Gagal memuat changelog: ' + err.message;
+        container.innerText = (t('changelog.error', 'Gagal memuat changelog')) + ': ' + err.message;
       }
     }
 
@@ -7812,12 +7932,12 @@
       const errBox = document.getElementById('ingestError');
 
       if (!url) {
-        errBox.textContent = 'URL wajib diisi';
+        errBox.textContent = t('ingest.errUrlRequired', 'URL wajib diisi');
         errBox.style.display = 'block';
         return;
       }
       if (!targetAccountID) {
-        errBox.textContent = 'Pilih akun cloud tujuan';
+        errBox.textContent = t('ingest.errAccountRequired', 'Pilih akun cloud tujuan');
         errBox.style.display = 'block';
         return;
       }
@@ -7839,7 +7959,7 @@
           throw new Error(data.error || 'Gagal memulai unduhan');
         }
         closeModal('remoteIngestModal');
-        showToast('Unduhan URL dimulai di latar belakang');
+        showToast(t('ingest.startedToast', 'Unduhan URL dimulai di latar belakang'));
         openTaskDrawer();
         fetchTasks();
       } catch (err) {
@@ -7857,12 +7977,12 @@
       const errBox = document.getElementById('repError');
 
       if (!srcAcc || !dstAcc) {
-        errBox.textContent = 'Akun sumber dan akun tujuan wajib dipilih';
+        errBox.textContent = t('replicate.errAccountRequired', 'Akun sumber dan akun tujuan wajib dipilih');
         errBox.style.display = 'block';
         return;
       }
       if (srcAcc === dstAcc && srcPath === dstPath) {
-        errBox.textContent = 'Folder sumber dan tujuan tidak boleh identik pada akun yang sama';
+        errBox.textContent = t('replicate.errSamePath', 'Folder sumber dan tujuan tidak boleh identik pada akun yang sama');
         errBox.style.display = 'block';
         return;
       }
@@ -7885,7 +8005,7 @@
           throw new Error(data.error || 'Gagal memulai replikasi');
         }
         closeModal('replicateFolderModal');
-        showToast('Sinkronisasi folder dimulai di latar belakang');
+        showToast(t('replicate.startedToast', 'Sinkronisasi folder dimulai di latar belakang'));
         openTaskDrawer();
         fetchTasks();
       } catch (err) {
@@ -8025,27 +8145,27 @@
         await fetch(`/api/tasks/${id}/cancel`, { method: 'POST' });
         fetchTasks();
       } catch (e) {
-        showToast('Gagal membatalkan task', 'error');
+        showToast(t('tasks.errCancel'), 'error');
       }
     }
 
     async function retryTask(id) {
       try {
         await fetch(`/api/tasks/${id}/retry`, { method: 'POST' });
-        showToast('Task dimasukkan kembali ke antrean');
+        showToast(t('tasks.requeued'));
         fetchTasks();
       } catch (e) {
-        showToast('Gagal mengulang task', 'error');
+        showToast(t('tasks.errRetry'), 'error');
       }
     }
 
     async function clearFinishedTasks() {
       try {
         await fetch('/api/tasks/finished', { method: 'DELETE' });
-        showToast('Riwayat task dibersihkan');
+        showToast(t('tasks.cleared'));
         fetchTasks();
       } catch (e) {
-        showToast('Gagal membersihkan riwayat task', 'error');
+        showToast(t('tasks.errClear'), 'error');
       }
     }
 
