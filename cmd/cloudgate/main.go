@@ -202,22 +202,7 @@ func runServer(rawArgs []string) {
 	localURL := fmt.Sprintf("http://127.0.0.1:%d", port)
 	lanIPs := getLocalIPv4s()
 
-	fmt.Println("==================================================================")
-	fmt.Printf("   %s Unified Cloud Storage Gateway v%s\n", config.AppName, config.AppVersion)
-	fmt.Printf("   Author     : %s\n", config.AppAuthor)
-	fmt.Printf("   Repository : %s\n", config.AppRepo)
-	fmt.Printf("   Config Dir : %s\n", configDir)
-	fmt.Println("==================================================================")
-	fmt.Printf("   Local URL   : %s\n", localURL)
-	if len(lanIPs) > 0 {
-		for _, ip := range lanIPs {
-			fmt.Printf("   Network URL : http://%s:%d  (Akses dari IP / perangkat lain)\n", ip, port)
-		}
-	} else {
-		fmt.Printf("   Network URL : http://%s:%d\n", bindHost, port)
-	}
-	fmt.Println("==================================================================")
-	fmt.Println("Press Ctrl+C to shut down.")
+	printStartupBanner(bindHost, port, localURL, lanIPs, configDir)
 
 	// Auto launch browser to local URL
 	go func() {
@@ -409,12 +394,12 @@ func handleAuthCLI(subArgs []string) {
 		if len(subArgs) > 1 {
 			password = subArgs[1]
 		} else {
-			fmt.Print("Masukkan MasterPassword baru (minimal 4 karakter): ")
+			fmt.Print("Enter new MasterPassword (min 4 characters): ")
 			fmt.Scanln(&password)
 		}
 
 		if len(password) < 4 {
-			fmt.Fprintf(os.Stderr, "Error: Kata sandi minimal 4 karakter.\n")
+			fmt.Fprintf(os.Stderr, "Error: Password must be at least 4 characters.\n")
 			os.Exit(1)
 		}
 
@@ -429,16 +414,16 @@ func handleAuthCLI(subArgs []string) {
 			os.Exit(1)
 		}
 
-		_ = database.RecordAudit("auth", "gateway", "cli", "MasterPassword diinisialisasi via CLI", "success", 0)
-		fmt.Println("Berhasil: MasterPassword telah disetel. GatewayAuth aktif.")
+		_ = database.RecordAudit("auth", "gateway", "cli", "MasterPassword initialized via CLI", "success", 0)
+		fmt.Println("Success: MasterPassword has been set. GatewayAuth is active.")
 
 	case "reset":
 		if err := database.ClearMasterPassword(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error resetting MasterPassword: %v\n", err)
 			os.Exit(1)
 		}
-		_ = database.RecordAudit("auth", "gateway", "cli", "MasterPassword di-reset via CLI", "success", 0)
-		fmt.Println("Berhasil: MasterPassword telah dihapus. Cloudgate kembali ke status inisialisasi awal (SETUP_REQUIRED).")
+		_ = database.RecordAudit("auth", "gateway", "cli", "MasterPassword reset via CLI", "success", 0)
+		fmt.Println("Success: MasterPassword removed. Cloudgate reset to initial setup state (SETUP_REQUIRED).")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown auth command: %s. Use 'status', 'setup <password>', or 'reset'.\n", subArgs[0])
 		os.Exit(1)
@@ -451,26 +436,26 @@ func handleChangelogCLI() {
 
 func handleUpdateCLI(subArgs []string) {
 	fs := flag.NewFlagSet("update", flag.ExitOnError)
-	yesFlag := fs.Bool("y", false, "Otomatis setujui pembaruan tanpa konfirmasi interaktif")
-	fs.BoolVar(yesFlag, "yes", false, "Otomatis setujui pembaruan tanpa konfirmasi interaktif")
+	yesFlag := fs.Bool("y", false, "Automatically accept update without interactive confirmation")
+	fs.BoolVar(yesFlag, "yes", false, "Automatically accept update without interactive confirmation")
 	_ = fs.Parse(subArgs)
 
-	fmt.Printf("Memeriksa rilis terbaru di GitHub (versi saat ini: v%s)...\n", config.AppVersion)
+	fmt.Printf("Checking for latest release on GitHub (current version: v%s)...\n", config.AppVersion)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	res, err := updater.CheckUpdate(ctx, true)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Gagal memeriksa pembaruan: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to check update: %v\n", err)
 		os.Exit(1)
 	}
 
 	if !res.UpdateAvailable {
-		fmt.Printf("Cloudgate sudah versi terbaru (v%s).\n", config.AppVersion)
+		fmt.Printf("Cloudgate is already up to date (v%s).\n", config.AppVersion)
 		return
 	}
 
-	fmt.Printf("\nVersi baru tersedia: %s (versi saat ini: v%s)\n", res.LatestVersion, config.AppVersion)
+	fmt.Printf("\nNew version available: %s (current: v%s)\n", res.LatestVersion, config.AppVersion)
 	if res.ReleaseURL != "" {
 		fmt.Printf("Release URL: %s\n", res.ReleaseURL)
 	}
@@ -481,39 +466,95 @@ func handleUpdateCLI(subArgs []string) {
 	}
 
 	if res.DownloadURL == "" {
-		fmt.Fprintf(os.Stderr, "\nError: Biner untuk platform ini (%s_%s) tidak ditemukan di aset rilis.\n", runtime.GOOS, runtime.GOARCH)
+		fmt.Fprintf(os.Stderr, "\nError: Binary for platform (%s_%s) not found in release assets.\n", runtime.GOOS, runtime.GOARCH)
 		os.Exit(1)
 	}
 	if res.ChecksumURL == "" {
-		fmt.Fprintf(os.Stderr, "\nError: Berkas checksums.txt tidak ditemukan di aset rilis. Pembaruan dibatalkan demi keamanan.\n")
+		fmt.Fprintf(os.Stderr, "\nError: File checksums.txt not found in release assets. Update aborted for security.\n")
 		os.Exit(1)
 	}
 
 	if !*yesFlag {
-		fmt.Print("\nPasang pembaruan sekarang? [y/N]: ")
+		fmt.Print("\nInstall update now? [y/N]: ")
 		var reply string
 		_, _ = fmt.Scanln(&reply)
 		reply = strings.ToLower(strings.TrimSpace(reply))
 		if reply != "y" && reply != "yes" {
-			fmt.Println("Pembaruan dibatalkan.")
+			fmt.Println("Update canceled.")
 			return
 		}
 	}
 
-	fmt.Println("\nMengunduh dan memverifikasi SHA-256 checksums...")
+	fmt.Println("\nDownloading and verifying SHA-256 checksums...")
 	applyCtx, applyCancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer applyCancel()
 
 	if err := updater.ApplyUpdate(applyCtx, res.DownloadURL, res.ChecksumURL); err != nil {
-		fmt.Fprintf(os.Stderr, "Pembaruan gagal: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Update failed: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("Pembaruan berhasil diterapkan!")
-	fmt.Println("Memulai ulang Cloudgate...")
+	fmt.Println("Update applied successfully!")
+	fmt.Println("Restarting Cloudgate...")
 	if err := updater.RestartProcess(); err != nil {
-		fmt.Fprintf(os.Stderr, "Gagal memulai ulang secara otomatis: %v\nSilakan jalankan ulang biner secara manual.\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to restart automatically: %v\nPlease restart the binary manually.\n", err)
 	}
 }
+
+// ponytail: Stdlib-only terminal ANSI capability check without external dependencies.
+// Respects standard NO_COLOR (https://no-color.org/), TERM=dumb, and verifies whether
+// stdout is a character device (TTY).
+func isColorSupported() bool {
+	if os.Getenv("NO_COLOR") != "" {
+		return false
+	}
+	if os.Getenv("TERM") == "dumb" {
+		return false
+	}
+	fi, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) != 0
+}
+
+func printStartupBanner(bindHost string, port int, localURL string, lanIPs []string, configDir string) {
+	const matrixBanner = `
+ ██████╗██╗      ██████╗ ██╗   ██╗██████╗  ██████╗  █████╗ ████████╗███████╗
+██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗██╔════╝ ██╔══██╗╚══██╔══╝██╔════╝
+██║     ██║     ██║   ██║██║   ██║██║  ██║██║  ███╗███████║   ██║   █████╗  
+██║     ██║     ██║   ██║██║   ██║██║  ██║██║   ██║██╔══██║   ██║   ██╔══╝  
+╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝╚██████╔╝██║  ██║   ██║   ███████╗
+ ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝`
+
+	useColor := isColorSupported()
+	green := ""
+	bold := ""
+	reset := ""
+	if useColor {
+		green = "\033[1;32m"
+		bold = "\033[1m"
+		reset = "\033[0m"
+	}
+
+	fmt.Printf("%s%s%s\n", green, strings.TrimPrefix(matrixBanner, "\n"), reset)
+	fmt.Println("==================================================================")
+	fmt.Printf("   %s Unified Cloud Storage Gateway v%s\n", config.AppName, config.AppVersion)
+	fmt.Printf("   Author     : %s\n", config.AppAuthor)
+	fmt.Printf("   Repository : %s\n", config.AppRepo)
+	fmt.Printf("   Config Dir : %s\n", configDir)
+	fmt.Println("------------------------------------------------------------------")
+	fmt.Printf("   Local URL   : %s%s%s\n", bold, localURL, reset)
+	if len(lanIPs) > 0 {
+		for _, ip := range lanIPs {
+			fmt.Printf("   Network URL : http://%s:%d  (Access from other devices / LAN)\n", ip, port)
+		}
+	} else {
+		fmt.Printf("   Network URL : http://%s:%d\n", bindHost, port)
+	}
+	fmt.Println("==================================================================")
+	fmt.Println("Press Ctrl+C to shut down.")
+}
+
 
 
