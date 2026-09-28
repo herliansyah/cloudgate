@@ -1,6 +1,6 @@
 <div align="center">
 
-# ☁️ Cloudgate
+<img src="docs/assets/logo-horizontal.svg" alt="Cloudgate Logo" width="380">
 
 ### Gateway Penyimpanan Cloud Terpadu & Agregator Multi-Akun
 

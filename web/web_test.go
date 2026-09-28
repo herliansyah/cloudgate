@@ -747,5 +747,42 @@ func TestBilingualSupportForHandbookStarredAndRecent(t *testing.T) {
 	}
 }
 
+func TestEmbeddedFaviconAndBranding(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	// Verify favicon.svg exists
+	if _, err := fsys.Open("favicon.svg"); err != nil {
+		t.Errorf("expected favicon.svg to be present in embedded filesystem, got: %v", err)
+	}
+
+	// Verify favicon.ico exists
+	if _, err := fsys.Open("favicon.ico"); err != nil {
+		t.Errorf("expected favicon.ico to be present in embedded filesystem, got: %v", err)
+	}
+
+	// Verify index.html contains favicon link and branding
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	b, _ := io.ReadAll(f)
+	html := string(b)
+
+	if !strings.Contains(html, `rel="icon" type="image/svg+xml" href="/favicon.svg"`) {
+		t.Errorf("index.html missing SVG favicon link tag")
+	}
+	if !strings.Contains(html, `rel="alternate icon" href="/favicon.ico"`) {
+		t.Errorf("index.html missing ICO favicon fallback link tag")
+	}
+	if !strings.Contains(html, `nav-cloud-grad`) {
+		t.Errorf("index.html missing Cloudgate vector brand mark gradient")
+	}
+}
+
 
 
