@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-28
+
 ### Added
 - **Windows Executable Icon & Resource Embedding**: Added Windows PE COFF resource files (`cmd/cloudgate/rsrc_windows_amd64.syso` and `cmd/cloudgate/rsrc_windows_arm64.syso`) containing high-resolution multi-scale Cloudgate app launcher icons (up to 256x256 RGBA) and application metadata, enabling native icon display in Windows File Explorer and taskbars without external build dependencies; added `scripts/generate_winres.sh` helper and unit verification test in `cmd/cloudgate/windows_res_test.go`.
+
+### Fixed
+- **Bilingual Add Provider Modal Onboarding Guides & Metadata**: Resolved hardcoded Indonesian guides, troubleshooting instructions, input placeholders, and credential labels in the Add Storage Provider modal (`addAccountModal`) across all 16 storage providers (Google Drive, Microsoft OneDrive, Dropbox, Box, pCloud, Yandex, Mega, Filen, Backblaze B2, PikPak, SFTP/SSH, SMB/Samba, Proton Drive, S3, Nextcloud/WebDAV, and Koofr) when English (`en`) mode is active.
 
 ## [0.3.0] - 2026-09-28
 
