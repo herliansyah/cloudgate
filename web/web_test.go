@@ -487,3 +487,84 @@ func TestDocumentationProvidersAndApiSync(t *testing.T) {
 		t.Errorf("embedded index.html renderDocs contains hardcoded port 8080 redirect URI")
 	}
 }
+
+func TestEmbeddedEscapeHtmlAndUpdaterCheck(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	if !strings.Contains(content, "function escapeHtml(") {
+		t.Errorf("expected embedded index.html to declare function escapeHtml")
+	}
+
+	nodePath, err := exec.LookPath("node")
+	if err != nil {
+		t.Skip("node executable not found in PATH, skipping runtime check")
+		return
+	}
+
+	startIdx := strings.Index(content, "<script>")
+	endIdx := strings.LastIndex(content, "</script>")
+	if startIdx == -1 || endIdx == -1 || startIdx >= endIdx {
+		t.Fatalf("unable to find <script> tags in embedded index.html")
+	}
+	scriptContent := content[startIdx+len("<script>") : endIdx]
+
+	harness := `
+const fs = require("fs");
+const script = fs.readFileSync(0, "utf-8");
+const vm = require("vm");
+const textElem = {};
+const ctx = {
+  setInterval: () => {},
+  window: { addEventListener: () => {}, location: {}, localStorage: { getItem: () => null } },
+  document: { getElementById: (id) => id === "updateStatusText" ? textElem : null },
+  fetch: async () => ({ ok: true, json: async () => ({ update_available: true, latest_version: "v1.2.0", current_version: "v1.1.0" }) })
+};
+vm.createContext(ctx);
+vm.runInContext(script, ctx);
+
+if (typeof ctx.escapeHtml !== 'function') {
+  console.error("escapeHtml is not defined as a function");
+  process.exit(1);
+}
+
+const escaped = ctx.escapeHtml('<script>alert("x & y")</script>');
+const expected = '&lt;script&gt;alert(&quot;x &amp; y&quot;)&lt;/script&gt;';
+if (escaped !== expected) {
+  console.error("escapeHtml mismatch. Got: " + escaped + " expected: " + expected);
+  process.exit(2);
+}
+
+ctx.checkAppUpdates().then(() => {
+  if (textElem.innerText && textElem.innerText.includes("escapeHtml is not defined")) {
+    console.error("checkAppUpdates failed: " + textElem.innerText);
+    process.exit(3);
+  }
+  process.exit(0);
+}).catch(err => {
+  console.error(err);
+  process.exit(4);
+});
+`
+	cmd := exec.Command(nodePath, "-e", harness)
+	cmd.Stdin = strings.NewReader(scriptContent)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("runtime check failed: %v\nOutput: %s", err, string(out))
+	}
+}
+
