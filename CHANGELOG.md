@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-28
+
 ### Added
 - **Visual Identity, Vector Branding & Embedded Favicon**: Designed and introduced official Cloudgate branding assets featuring an electric cyber-indigo gradient cloud integrated with an ingress portal and data beam. Added scalable vector marks (`docs/assets/logo.svg`, `docs/assets/logo-horizontal.svg`), squircle app launcher icon (`docs/assets/app-icon.svg`, `docs/assets/app-icon.png`), dual favicon assets (`web/dist/favicon.svg`, `web/dist/favicon.ico`), upgraded embedded Web UI navbar brand mark, and integrated high-contrast horizontal logo banners across `README.md` and `README.id.md`.
 

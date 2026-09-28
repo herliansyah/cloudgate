@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-28
+
+### Added
+- **Visual Identity, Vector Branding & Embedded Favicon**: Designed and introduced official Cloudgate branding assets featuring an electric cyber-indigo gradient cloud integrated with an ingress portal and data beam. Added scalable vector marks (`docs/assets/logo.svg`, `docs/assets/logo-horizontal.svg`), squircle app launcher icon (`docs/assets/app-icon.svg`, `docs/assets/app-icon.png`), dual favicon assets (`web/dist/favicon.svg`, `web/dist/favicon.ico`), upgraded embedded Web UI navbar brand mark, and integrated high-contrast horizontal logo banners across `README.md` and `README.id.md`.
+
+### Fixed
+- **Bilingual Localization for Provider Handbook, Starred & Recent Views**: Resolved hardcoded Indonesian text in the 16-provider registration & troubleshooting handbook (`renderHandbookCards`), dynamic empty states for Starred (`starred.emptyTitle`, `starred.emptyDesc`, `starred.explore`) and Recent views (`recent.emptyTitle`, `recent.emptyDesc`, `recent.explore`), star/unstar toasts, StorageHub sync & testing notifications, account editing & disconnect alerts, task management actions, and OAuth sign-in controls when English (`en`) mode is active.
+
 ## [0.2.3] - 2026-09-28
 
 ### Fixed
