@@ -695,5 +695,57 @@ func TestEnglishLocalizationCoverage(t *testing.T) {
 	}
 }
 
+func TestBilingualSupportForHandbookStarredAndRecent(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
+
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
+
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	// 1. Starred and Recent empty states must not hardcode Indonesian text
+	if strings.Contains(content, `>Belum Ada File Berbintang</h3>`) {
+		t.Errorf("loadStarredFiles hardcodes Indonesian empty state title: 'Belum Ada File Berbintang'")
+	}
+	if strings.Contains(content, `>Belum Ada Aktivitas File Terbaru</h3>`) {
+		t.Errorf("loadRecentFiles hardcodes Indonesian empty state title: 'Belum Ada Aktivitas File Terbaru'")
+	}
+
+	// 2. Starred and Recent empty states must have i18n keys
+	requiredEmptyStateKeys := []string{
+		"starred.emptyTitle",
+		"starred.emptyDesc",
+		"starred.explore",
+		"starred.loading",
+		"recent.emptyTitle",
+		"recent.emptyDesc",
+		"recent.explore",
+		"recent.loading",
+	}
+	for _, key := range requiredEmptyStateKeys {
+		if !strings.Contains(content, "'"+key+"':") {
+			t.Errorf("expected I18N dictionary to contain key %q, but was not found", key)
+		}
+	}
+
+	// 3. Handbook must support English language rendering (not only hardcoded Indonesian steps)
+	if strings.Contains(content, `<div><strong>Langkah Pendaftaran:</strong></div>`) {
+		t.Errorf("renderDocs handbook hardcodes Indonesian guide step: 'Langkah Pendaftaran:'")
+	}
+	if strings.Contains(content, `<strong>Panduan Penanganan Kegagalan (Troubleshooting):</strong>`) {
+		t.Errorf("renderDocs handbook hardcodes Indonesian troubleshooting title: 'Panduan Penanganan Kegagalan (Troubleshooting):'")
+	}
+}
+
 
 

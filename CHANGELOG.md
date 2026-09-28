@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Bilingual Localization for Provider Handbook, Starred & Recent Views**: Resolved hardcoded Indonesian text in the 16-provider registration & troubleshooting handbook (`renderHandbookCards`), dynamic empty states for Starred (`starred.emptyTitle`, `starred.emptyDesc`, `starred.explore`) and Recent views (`recent.emptyTitle`, `recent.emptyDesc`, `recent.explore`), star/unstar toasts, StorageHub sync & testing notifications, account editing & disconnect alerts, task management actions, and OAuth sign-in controls when English (`en`) mode is active.
+
 ## [0.2.3] - 2026-09-28
 
 ### Fixed
