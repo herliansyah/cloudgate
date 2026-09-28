@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Web UI HTML Escaping (`escapeHtml`)**: Defined missing client-side `escapeHtml` utility in embedded `index.html` preventing `ReferenceError: escapeHtml is not defined` during updater checks, task options population, and task status drawer rendering.
+
 ## [0.2.0] - 2026-09-28
 
 ### Added
