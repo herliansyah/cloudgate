@@ -407,5 +407,68 @@ func TestEmbeddedAppVersionConsistency(t *testing.T) {
 	}
 }
 
+func TestDocumentationProvidersAndApiSync(t *testing.T) {
+	fsys, err := web.GetFS()
+	if err != nil {
+		t.Fatalf("web.GetFS() failed: %v", err)
+	}
 
+	f, err := fsys.Open("index.html")
+	if err != nil {
+		t.Fatalf("failed to open embedded index.html: %v", err)
+	}
+	defer f.Close()
 
+	contentBytes, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("failed to read embedded index.html: %v", err)
+	}
+	content := string(contentBytes)
+
+	// Extract renderDocs function body
+	startDocs := strings.Index(content, "function renderDocs()")
+	if startDocs == -1 {
+		t.Fatalf("function renderDocs() not found in index.html")
+	}
+	endDocs := strings.Index(content[startDocs:], "function promptDisconnectAccount")
+	if endDocs == -1 {
+		t.Fatalf("end of renderDocs not found in index.html")
+	}
+	docsContent := content[startDocs : startDocs+endDocs]
+
+	// Ensure renderDocs includes guides for all 16 supported providers
+	expectedProviderGuides := []string{
+		"Google Drive",
+		"Microsoft OneDrive",
+		"Dropbox",
+		"Box",
+		"pCloud",
+		"Yandex Disk",
+		"Koofr",
+		"Mega",
+		"Filen",
+		"Backblaze B2",
+		"PikPak",
+		"SFTP",
+		"SMB",
+		"Proton Drive",
+		"S3",
+		"WebDAV",
+	}
+
+	for _, p := range expectedProviderGuides {
+		if !strings.Contains(docsContent, p) {
+			t.Errorf("expected renderDocs in index.html to contain documentation for provider %q, but was not found", p)
+		}
+	}
+
+	// Ensure renderDocs contains reference to /api/providers endpoint
+	if !strings.Contains(docsContent, "/api/providers") {
+		t.Errorf("expected renderDocs in index.html to contain /api/providers endpoint reference")
+	}
+
+	// Ensure hardcoded localhost:8080 is NOT present in renderDocs OAuth callbacks
+	if strings.Contains(docsContent, "http://localhost:8080/api/auth/") {
+		t.Errorf("embedded index.html renderDocs contains hardcoded port 8080 redirect URI")
+	}
+}
