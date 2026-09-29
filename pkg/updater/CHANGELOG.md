@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-29
+
+### Changed
+- **All 16 providers now run on embedded rclone v1.73 backends** (ADR-0027): Google Drive, OneDrive, Dropbox, Box, pCloud, Yandex Disk, Koofr, S3, WebDAV and MEGA join Filen, B2, PikPak, SFTP, SMB and Proton Drive. The hand-written REST drivers and `pkg/storage/gdrive.go` were removed; pagination, chunked/resumable uploads, cross-folder moves, recursive deletes and token refresh are handled by rclone.
+- **Verified onboarding**: `POST /api/accounts` validates required fields, tests the connection against the real provider and returns `422` without saving when it fails; account IDs are generated server-side; OAuth providers must use the sign-in flow.
+- **Koofr** uses the native `koofr` backend with an app password; the unused Koofr OAuth flow was removed.
+- **Share links**: `/api/files/share` reports `requires_auth` for gateway links; `?public=1` creates a native provider public link where supported. The share dialog explains the difference.
+- **Onboarding UI & guides**: all form labels and messages are bilingual; new fields for S3 provider, WebDAV server type, MEGA/Proton OTP secret, SFTP key passphrase and SMB sub-folder; the Docs handbook is generated from the same guides as the Add Storage dialog. Guides were updated for Google Auth Platform (test users, 7-day testing tokens), Entra ID secrets, Dropbox metadata scopes, Box/Entra/Dropbox HTTPS rules, pCloud EU, Yandex `disk.info`, Nextcloud app passwords and the Filen CLI `export-api-key`.
+- README, README.id and ADR-0011/0012/0016 updated to describe the actual provider architecture.
+- **Dialogs**: long dialogs now scroll inside the viewport with the header and action buttons pinned, using thin themed scrollbars. The Add Storage Provider step shows the setup guide and the credential form side by side on wide screens (≥960px) and as "Setup guide / Credentials" tabs on narrow screens. The provider picker uses the same wide dialog with compact, keyboard-accessible cards (4 per row on desktop), so all 16 providers fit without scrolling.
+
+### Fixed
+- **Silent data loss**: failed uploads, moves and folder creation no longer fall back to an in-memory store that reported success; "mock" substrings in credentials no longer switch accounts to fake storage.
+- **S3**: requests are signed with SigV4 using the access key, secret and region; bucket-based listing with folders, pagination, copy+delete moves and multipart uploads (R2, Wasabi, MinIO, ...).
+- **Box**: correct ID-based API and upload host; rotated refresh tokens are persisted.
+- **Dropbox**: requests `token_access_type=offline` so accounts keep working after 4 hours.
+- **pCloud**: EU accounts (`eapi.pcloud.com`) are supported via the `hostname` returned by pCloud.
+- **Backblaze B2**: the application key is no longer obscured (authentication always failed); moves work via server-side copy.
+- **Proton Drive**: uploads to sub-folders no longer land in the root; the OTP secret is passed as `otp_secret_key`; the Proton session is persisted so 2FA accounts survive restarts.
+- **PikPak**: `root_folder_id` is passed as an option; the account now actually signs in with email/password (rclone's config-time login step is run once), and the session token and device ID are persisted.
+- **MEGA**: 2FA accounts are supported through an OTP secret; overwrites no longer delete the old file before the upload finishes.
+- **WebDAV**: successful moves no longer report "file not found"; percent-encoded names are decoded.
+- **SMB**: the share name is required and the sub-folder path is applied.
+- **SFTP**: server host keys are pinned on first connection and verified afterwards (previously any host key was accepted).
+- **Google Drive / OneDrive**: moves across folders no longer only rename the file; name-based fallbacks that could delete a different file are gone.
+- **Token rotation**: refreshed OAuth tokens, OneDrive drive IDs and backend session state are written back to the database.
+- **Connection tests**: S3/WebDAV no longer always succeed and Koofr no longer always fails; quotas come from the provider, and the quota you enter is only used when the provider reports none.
+- **Accounts without valid credentials** are shown as unavailable instead of connected.
+- **Trash, cross-account move and transfers** no longer open (and leak) a download stream just to read file metadata; on SMB this kept the file locked so moving it to trash failed. A shared `storage.Stat` helper is used instead.
+- **Connection timeouts** now explain the likely cause (network/firewall or provider rate limiting) instead of a bare "context deadline exceeded".
+- Guides: Box scope names, Yandex `disk.app_folder` warning, and where to find the MEGA/Proton OTP secret key.
+
+### Security
+- OAuth `state` is now a random single-use server-side nonce; client secrets no longer travel through the browser, and the login endpoint accepts `POST`.
+- PKCE (S256) for Google, Microsoft and Dropbox; Google-only authorize parameters are no longer sent to other providers.
+- The OAuth callback page is rendered with `html/template` (fixes reflected XSS) and posts its result only to the dashboard origin; the dashboard verifies the message origin.
+- Account API responses no longer include stored credentials (passwords, tokens, keys); they stay in the database and the encrypted vault export.
+- Custom `redirect_uri` values must point to the provider's Cloudgate callback path; redirect URIs behind a reverse proxy honour `X-Forwarded-Host`.
+
 ## [0.3.1] - 2026-09-28
 
 ### Added

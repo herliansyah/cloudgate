@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-29
+
 ### Changed
 - **All 16 providers now run on embedded rclone v1.73 backends** (ADR-0027): Google Drive, OneDrive, Dropbox, Box, pCloud, Yandex Disk, Koofr, S3, WebDAV and MEGA join Filen, B2, PikPak, SFTP, SMB and Proton Drive. The hand-written REST drivers and `pkg/storage/gdrive.go` were removed; pagination, chunked/resumable uploads, cross-folder moves, recursive deletes and token refresh are handled by rclone.
 - **Verified onboarding**: `POST /api/accounts` validates required fields, tests the connection against the real provider and returns `422` without saving when it fails; account IDs are generated server-side; OAuth providers must use the sign-in flow.
