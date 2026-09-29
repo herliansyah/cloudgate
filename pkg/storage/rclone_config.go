@@ -24,7 +24,8 @@ type backendSpec struct {
 	cfg     map[string]string // rclone option values (passwords already obscured)
 }
 
-func providerLabel(p Provider) string {
+// ProviderLabel returns the human-readable display label for a provider.
+func ProviderLabel(p Provider) string {
 	switch p {
 	case ProviderGDrive:
 		return "Google Drive"
@@ -41,7 +42,7 @@ func providerLabel(p Provider) string {
 	case ProviderKoofr:
 		return "Koofr"
 	case ProviderS3:
-		return "S3"
+		return "Amazon S3"
 	case ProviderWebDAV:
 		return "WebDAV"
 	case ProviderMega:
@@ -53,13 +54,17 @@ func providerLabel(p Provider) string {
 	case ProviderPikPak:
 		return "PikPak"
 	case ProviderSFTP:
-		return "SFTP"
+		return "SFTP / SSH"
 	case ProviderSMB:
-		return "SMB"
+		return "SMB / Samba"
 	case ProviderProtonDrive:
 		return "Proton Drive"
 	}
 	return string(p)
+}
+
+func providerLabel(p Provider) string {
+	return ProviderLabel(p)
 }
 
 // first returns the first non-empty (trimmed) value among keys.

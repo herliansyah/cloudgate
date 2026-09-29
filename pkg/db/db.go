@@ -114,14 +114,6 @@ func (d *DB) migrate() error {
 		updated_at DATETIME NOT NULL
 	);
 
-	CREATE TABLE IF NOT EXISTS pools (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		account_ids TEXT NOT NULL,
-		strategy TEXT NOT NULL,
-		created_at DATETIME NOT NULL
-	);
-
 	CREATE TABLE IF NOT EXISTS trash_records (
 		id TEXT PRIMARY KEY,
 		account_id TEXT NOT NULL,
@@ -455,9 +447,54 @@ func (d *DB) GetTrashRecords() ([]TrashRecord, error) {
 	return list, rows.Err()
 }
 
+// GetTrashRecord retrieves a single trash record by ID.
+func (d *DB) GetTrashRecord(id string) (*TrashRecord, error) {
+	row := d.conn.QueryRow(`
+		SELECT id, account_id, original_path, remote_trash_path, file_name, size, deleted_at
+		FROM trash_records WHERE id = ?
+	`, id)
+	var rec TrashRecord
+	if err := row.Scan(&rec.ID, &rec.AccountID, &rec.OriginalPath, &rec.RemoteTrashPath, &rec.FileName, &rec.Size, &rec.DeletedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &rec, nil
+}
+
+// GetTrashRecordsByAccount lists all trash records for a specific account.
+func (d *DB) GetTrashRecordsByAccount(accountID string) ([]TrashRecord, error) {
+	rows, err := d.conn.Query(`
+		SELECT id, account_id, original_path, remote_trash_path, file_name, size, deleted_at
+		FROM trash_records WHERE account_id = ?
+		ORDER BY deleted_at DESC
+	`, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []TrashRecord
+	for rows.Next() {
+		var rec TrashRecord
+		if err := rows.Scan(&rec.ID, &rec.AccountID, &rec.OriginalPath, &rec.RemoteTrashPath, &rec.FileName, &rec.Size, &rec.DeletedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, rec)
+	}
+	return list, rows.Err()
+}
+
 // DeleteTrashRecord removes a record from the trash table upon permanent purge or restore.
 func (d *DB) DeleteTrashRecord(id string) error {
 	_, err := d.conn.Exec(`DELETE FROM trash_records WHERE id = ?`, id)
+	return err
+}
+
+// DeleteTrashRecordsByAccount removes all trash records for an account.
+func (d *DB) DeleteTrashRecordsByAccount(accountID string) error {
+	_, err := d.conn.Exec(`DELETE FROM trash_records WHERE account_id = ?`, accountID)
 	return err
 }
 

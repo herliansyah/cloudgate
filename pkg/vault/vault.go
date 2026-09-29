@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 )
 
 const (
@@ -92,22 +91,4 @@ func Decrypt(data []byte, password string) ([]byte, error) {
 	}
 
 	return plaintext, nil
-}
-
-// SaveToFile encrypts and saves data to a destination file.
-func SaveToFile(filePath string, plaintext []byte, password string) error {
-	encrypted, err := Encrypt(plaintext, password)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filePath, encrypted, 0600)
-}
-
-// ReadFromFile reads and decrypts data from a vault file.
-func ReadFromFile(filePath string, password string) ([]byte, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-	return Decrypt(data, password)
 }
