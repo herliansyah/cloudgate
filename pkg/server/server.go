@@ -1471,8 +1471,10 @@ func (s *Server) handleCreateIngestTask(w http.ResponseWriter, r *http.Request) 
 	if targetPath == "" {
 		targetPath = "/"
 	}
+	isDir := true
 	if req.CustomName != "" {
 		targetPath = path.Join(targetPath, req.CustomName)
+		isDir = false
 	}
 
 	taskID := fmt.Sprintf("ingest_%d", time.Now().UnixNano())
@@ -1482,6 +1484,7 @@ func (s *Server) handleCreateIngestTask(w http.ResponseWriter, r *http.Request) 
 		SourcePath:      req.URL,
 		TargetAccountID: req.TargetAccountID,
 		TargetPath:      targetPath,
+		IsDir:           isDir,
 		Status:          "pending",
 	}
 
@@ -1509,6 +1512,20 @@ func (s *Server) handleCreateReplicateTask(w http.ResponseWriter, r *http.Reques
 	if req.SourceAccountID == "" || req.SourcePath == "" || req.TargetAccountID == "" || req.TargetPath == "" {
 		writeError(w, http.StatusBadRequest, "source_account_id, source_path, target_account_id, and target_path are required")
 		return
+	}
+
+	// Validate same-account replicate constraints to avoid loops
+	if req.SourceAccountID == req.TargetAccountID {
+		srcClean := path.Clean("/" + req.SourcePath)
+		dstClean := path.Clean("/" + req.TargetPath)
+		if srcClean == dstClean {
+			writeError(w, http.StatusBadRequest, "source and target folder cannot be identical on the same account")
+			return
+		}
+		if srcClean == "/" || strings.HasPrefix(dstClean, srcClean+"/") {
+			writeError(w, http.StatusBadRequest, "target folder cannot be inside the source folder on the same account")
+			return
+		}
 	}
 
 	taskID := fmt.Sprintf("rep_%d", time.Now().UnixNano())

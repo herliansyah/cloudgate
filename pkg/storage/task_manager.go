@@ -182,7 +182,11 @@ func (tm *TaskManager) executeTask(task *db.StorageTask) {
 
 	if len(summaryErrors) > 0 {
 		errMsg := fmt.Sprintf("Completed with %d error(s): %s", len(summaryErrors), strings.Join(summaryErrors, "; "))
-		_ = tm.database.UpdateTaskStatus(task.ID, "completed", errMsg)
+		status := "completed"
+		if task.TotalItems > 0 && task.ItemsProcessed == 0 {
+			status = "failed"
+		}
+		_ = tm.database.UpdateTaskStatus(task.ID, status, errMsg)
 	} else {
 		_ = tm.database.UpdateTaskStatus(task.ID, "completed", "")
 	}
@@ -259,10 +263,12 @@ func (tm *TaskManager) handleIngest(ctx context.Context, task *db.StorageTask) e
 		return fmt.Errorf("target driver error: %w", err)
 	}
 
-	// For ingest: SourcePath is the URL, TargetPath is destination folder (or file path)
+	// For ingest: SourcePath is the URL.
+	// If task.IsDir is true: TargetPath is the destination folder, customName is empty.
+	// If task.IsDir is false: TargetPath contains the full destination path with customName.
 	targetDir := task.TargetPath
 	customName := ""
-	if !task.IsDir && path.Ext(task.TargetPath) != "" {
+	if !task.IsDir {
 		targetDir = path.Dir(task.TargetPath)
 		customName = path.Base(task.TargetPath)
 	}
@@ -278,5 +284,6 @@ func (tm *TaskManager) handleIngest(ctx context.Context, task *db.StorageTask) e
 
 	_ = tm.database.UpdateTaskProgress(task.ID, readBytes, readBytes, 1, 1)
 	task.TargetPath = finalPath
+	_ = tm.database.UpdateTaskTarget(task.ID, finalPath)
 	return nil
 }

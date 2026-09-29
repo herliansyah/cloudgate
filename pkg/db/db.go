@@ -754,6 +754,16 @@ func (d *DB) UpdateTaskStatus(id, status, errMsg string) error {
 	return err
 }
 
+// UpdateTaskTarget updates the target path of a task (e.g. after resolving ingest filename).
+func (d *DB) UpdateTaskTarget(id, targetPath string) error {
+	_, err := d.conn.Exec(`
+		UPDATE storage_tasks
+		SET target_path = ?, updated_at = ?
+		WHERE id = ?
+	`, targetPath, time.Now().UTC(), id)
+	return err
+}
+
 // UpdateTaskProgress updates byte and item progress counters for a running task.
 func (d *DB) UpdateTaskProgress(id string, progressBytes, totalBytes int64, itemsProcessed, totalItems int) error {
 	_, err := d.conn.Exec(`

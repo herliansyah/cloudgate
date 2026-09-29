@@ -14,8 +14,14 @@ import (
 	"time"
 )
 
+// AllowLocalForTesting allows testing against local httptest servers when set to true.
+var AllowLocalForTesting = false
+
 // isBlockedIP checks if an IP is loopback, private, link-local, unspecified, or cloud metadata.
 func isBlockedIP(ip net.IP) bool {
+	if AllowLocalForTesting {
+		return false
+	}
 	if ip == nil {
 		return true
 	}
@@ -46,7 +52,7 @@ func ValidateSSRF(rawURL string) (*url.URL, error) {
 	}
 
 	hLower := strings.ToLower(host)
-	if hLower == "localhost" || strings.HasSuffix(hLower, ".localhost") || strings.HasSuffix(hLower, ".local") {
+	if !AllowLocalForTesting && (hLower == "localhost" || strings.HasSuffix(hLower, ".localhost") || strings.HasSuffix(hLower, ".local")) {
 		return nil, fmt.Errorf("connection to localhost or local domain is prohibited")
 	}
 
@@ -106,12 +112,22 @@ func newSSRFSafeClient() *http.Client {
 
 	return &http.Client{
 		Transport: transport,
-		Timeout:   0, // No global timeout for long streaming downloads; context handles cancellation
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
+			if _, err := ValidateSSRF(req.URL.String()); err != nil {
+				return fmt.Errorf("redirect blocked: %w", err)
+			}
+			return nil
+		},
+		Timeout: 0, // No global timeout for long streaming downloads; context handles cancellation
 	}
 }
 
-// ResolveIngestFilename resolves the destination filename using the 4-tier hierarchy.
+// ResolveIngestFilename resolves the destination filename using the 5-tier hierarchy.
 func ResolveIngestFilename(resp *http.Response, parsedURL *url.URL, customName string) string {
+	// 1. Explicit user custom name
 	if customName != "" {
 		clean := filepath.Base(filepath.Clean(customName))
 		if clean != "." && clean != "/" && clean != "" {
@@ -119,11 +135,35 @@ func ResolveIngestFilename(resp *http.Response, parsedURL *url.URL, customName s
 		}
 	}
 
+	// Prefer effective redirected URL when available
+	effectiveURL := parsedURL
+	if resp != nil && resp.Request != nil && resp.Request.URL != nil {
+		effectiveURL = resp.Request.URL
+	}
+
+	// 2. Content-Disposition header (RFC 6266 / RFC 5987)
 	if resp != nil {
 		cd := resp.Header.Get("Content-Disposition")
 		if cd != "" {
 			if _, params, err := mime.ParseMediaType(cd); err == nil {
+				// 2a. RFC 5987 filename* (e.g. UTF-8''my%20report.pdf)
+				if fnStar, ok := params["filename*"]; ok && fnStar != "" {
+					val := fnStar
+					if parts := strings.SplitN(fnStar, "''", 2); len(parts) == 2 {
+						val = parts[1]
+					}
+					if unescaped, err := url.QueryUnescape(val); err == nil && unescaped != "" {
+						clean := filepath.Base(filepath.Clean(unescaped))
+						if clean != "." && clean != "/" && clean != "" {
+							return clean
+						}
+					}
+				}
+				// 2b. Standard filename
 				if fn, ok := params["filename"]; ok && fn != "" {
+					if unescaped, err := url.QueryUnescape(fn); err == nil && strings.Contains(fn, "%") {
+						fn = unescaped
+					}
 					clean := filepath.Base(filepath.Clean(fn))
 					if clean != "." && clean != "/" && clean != "" {
 						return clean
@@ -133,20 +173,56 @@ func ResolveIngestFilename(resp *http.Response, parsedURL *url.URL, customName s
 		}
 	}
 
-	if parsedURL != nil && parsedURL.Path != "" {
-		base := path.Base(parsedURL.Path)
+	// 3. URL path base
+	var candidateBase string
+	if effectiveURL != nil && effectiveURL.Path != "" {
+		base := path.Base(effectiveURL.Path)
 		if base != "." && base != "/" && base != "" {
-			// ponytail: Strip query-like trailing artifacts if any
 			if idx := strings.IndexAny(base, "?#"); idx != -1 {
 				base = base[:idx]
 			}
-			if base != "" {
-				return base
+			if unescaped, err := url.PathUnescape(base); err == nil && unescaped != "" {
+				base = unescaped
+			}
+			if base != "." && base != "/" && base != "" {
+				candidateBase = base
 			}
 		}
 	}
 
-	return fmt.Sprintf("download-%d", time.Now().Unix())
+	// If candidateBase has an explicit extension and is not a generic stub, use it
+	if candidateBase != "" && candidateBase != "download" && candidateBase != "file" && path.Ext(candidateBase) != "" {
+		return candidateBase
+	}
+
+	// 4. Content-Type extension deduction
+	var mimeExt string
+	if resp != nil {
+		ct := resp.Header.Get("Content-Type")
+		if ct != "" {
+			if mediaType, _, err := mime.ParseMediaType(ct); err == nil && mediaType != "application/octet-stream" {
+				if exts, err := mime.ExtensionsByType(mediaType); err == nil && len(exts) > 0 {
+					mimeExt = exts[0]
+					for _, e := range exts {
+						switch e {
+						case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf", ".zip", ".tar", ".gz", ".csv", ".json", ".txt", ".mp4", ".mp3":
+							mimeExt = e
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if candidateBase != "" && candidateBase != "download" && candidateBase != "file" {
+		if path.Ext(candidateBase) == "" && mimeExt != "" {
+			return candidateBase + mimeExt
+		}
+		return candidateBase
+	}
+
+	// 5. Fallback timestamped filename
+	return fmt.Sprintf("download-%d%s", time.Now().Unix(), mimeExt)
 }
 
 // countingReader wraps an io.Reader and periodically reports progress.
@@ -204,6 +280,12 @@ func RemoteIngestStream(
 	finalFilename := ResolveIngestFilename(resp, parsedURL, customName)
 	targetFilePath := path.Join(dstDir, finalFilename)
 
+	// Ensure parent destination directory exists before upload
+	targetDir := path.Dir(targetFilePath)
+	if targetDir != "" && targetDir != "." && targetDir != "/" {
+		_ = dstDriver.Mkdir(ctx, targetDir)
+	}
+
 	contentLength := resp.ContentLength
 	if contentLength < 0 {
 		contentLength = -1 // Unknown length for chunked transfers
@@ -218,6 +300,11 @@ func RemoteIngestStream(
 
 	if err := dstDriver.Put(ctx, targetFilePath, reader, contentLength); err != nil {
 		return "", 0, fmt.Errorf("failed to store ingested file into remote account: %w", err)
+	}
+
+	// Verify complete transfer when Content-Length was advertised
+	if contentLength > 0 && reader.readBytes < contentLength {
+		return "", reader.readBytes, fmt.Errorf("download incomplete: received %d of %d expected bytes", reader.readBytes, contentLength)
 	}
 
 	if onProgress != nil {
