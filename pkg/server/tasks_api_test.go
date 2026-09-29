@@ -107,14 +107,35 @@ func TestTasksAPI(t *testing.T) {
 	if ingestTask.Type != "ingest" {
 		t.Errorf("expected ingest type, got %s", ingestTask.Type)
 	}
+	if ingestTask.IsDir {
+		t.Errorf("expected is_dir to be false when custom_name is provided")
+	}
 
-	// 5. POST /api/tasks/replicate
+	// 5. POST /api/tasks/replicate - same account loop should fail with 400
+	loopReq := map[string]any{
+		"source_account_id": "acc-1",
+		"source_path":       "/",
+		"target_account_id": "acc-1",
+		"target_path":       "/backup",
+		"mirror":            true,
+	}
+	loopBody, _ := json.Marshal(loopReq)
+	resp, err = http.Post(ts.URL+"/api/tasks/replicate", "application/json", bytes.NewReader(loopBody))
+	if err != nil {
+		t.Fatalf("POST loop /api/tasks/replicate failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for same-account recursive replication, got %d", resp.StatusCode)
+	}
+	resp.Body.Close()
+
+	// 5b. POST /api/tasks/replicate - cross-account replication should succeed
 	repReq := map[string]any{
 		"source_account_id": "acc-1",
-		"source_path":      "/photos",
+		"source_path":       "/photos",
 		"target_account_id": "acc-2",
-		"target_path":      "/photos_mirror",
-		"mirror":           true,
+		"target_path":       "/photos_mirror",
+		"mirror":            true,
 	}
 	repBody, _ := json.Marshal(repReq)
 	resp, err = http.Post(ts.URL+"/api/tasks/replicate", "application/json", bytes.NewReader(repBody))

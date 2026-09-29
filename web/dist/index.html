@@ -3283,6 +3283,7 @@
         'replicate.startedToast': 'Folder sync started in background',
         'replicate.errAccountRequired': 'Source and target accounts are required',
         'replicate.errSamePath': 'Source and target folders cannot be identical on the same account',
+        'replicate.errSubdir': 'Target folder cannot be inside the source folder on the same account',
         'replicate.noAccount': '(No accounts)',
 
         'docs.title': 'REST API & System Documentation',
@@ -3738,6 +3739,7 @@
         'replicate.startedToast': 'Sinkronisasi folder dimulai di latar belakang',
         'replicate.errAccountRequired': 'Akun sumber dan akun tujuan wajib dipilih',
         'replicate.errSamePath': 'Folder sumber dan tujuan tidak boleh identik pada akun yang sama',
+        'replicate.errSubdir': 'Folder tujuan tidak boleh berada di dalam folder sumber pada akun yang sama',
         'replicate.noAccount': '(Tidak ada akun)',
 
         'docs.title': 'REST API & System Documentation',
@@ -6633,6 +6635,8 @@
       if (isDir) {
         menu.innerHTML = `
           <div class="context-menu-item" onclick="openFolder(selectedFile)"><svg width="18" height="18" viewBox="0 0 24 24" fill="#ffb955"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>${t('files.openFolder')}</div>
+          <div class="context-menu-item" onclick="hideContextMenu(); openReplicateModal(selectedFile.path, selectedFile.account_id)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>${t('nav.syncFolder', 'Sync Folder')}</div>
+          <div class="context-menu-item" onclick="hideContextMenu(); openRemoteIngestModal(selectedFile.path, selectedFile.account_id)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>${t('nav.urlIngest', 'URL Ingest')}</div>
           <div class="context-menu-item danger" onclick="contextTrash()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>${t('files.moveToTrash')}</div>
         `;
       } else {
@@ -7847,27 +7851,38 @@
       repDst.innerHTML = opts || `<option value="">${t('replicate.noAccount')}</option>`;
     }
 
-    function openRemoteIngestModal() {
+    function openRemoteIngestModal(initialDir, initialAccount) {
       document.getElementById('ingestUrlInput').value = '';
       document.getElementById('ingestNameInput').value = '';
-      document.getElementById('ingestDirInput').value = (currentPath && currentPath !== '') ? currentPath : '/';
+      const dir = (initialDir !== undefined && initialDir !== '') ? initialDir : ((currentPath && currentPath !== '') ? currentPath : '/');
+      document.getElementById('ingestDirInput').value = dir;
       document.getElementById('ingestError').style.display = 'none';
       openModal('remoteIngestModal');
       populateTaskAccountOptions();
-      if (activeAccountID && document.getElementById('ingestAccountSelect')) {
-        document.getElementById('ingestAccountSelect').value = activeAccountID;
+      const targetAcc = initialAccount || activeAccountID;
+      if (targetAcc && document.getElementById('ingestAccountSelect')) {
+        document.getElementById('ingestAccountSelect').value = targetAcc;
       }
     }
 
-    function openReplicateModal() {
-      document.getElementById('repSourcePath').value = (currentPath && currentPath !== '') ? currentPath : '/';
-      document.getElementById('repTargetPath').value = '/sync_backup';
+    function openReplicateModal(initialPath, initialAccount) {
+      const p = (initialPath !== undefined && initialPath !== '') ? initialPath : ((currentPath && currentPath !== '') ? currentPath : '/');
+      document.getElementById('repSourcePath').value = p;
+      document.getElementById('repTargetPath').value = p === '/' ? '/sync_backup' : p;
       document.getElementById('repMirrorCheckbox').checked = false;
       document.getElementById('repError').style.display = 'none';
       openModal('replicateFolderModal');
       populateTaskAccountOptions();
-      if (activeAccountID && document.getElementById('repSourceAccount')) {
-        document.getElementById('repSourceAccount').value = activeAccountID;
+      const srcAcc = initialAccount || activeAccountID;
+      if (srcAcc && document.getElementById('repSourceAccount')) {
+        document.getElementById('repSourceAccount').value = srcAcc;
+      }
+      // If multiple accounts are connected, pick a different account for target by default
+      if (document.getElementById('repTargetAccount') && cachedAccounts && cachedAccounts.length > 1) {
+        const other = cachedAccounts.find(a => a.id !== srcAcc);
+        if (other) {
+          document.getElementById('repTargetAccount').value = other.id;
+        }
       }
     }
 
@@ -7928,10 +7943,19 @@
         errBox.style.display = 'block';
         return;
       }
-      if (srcAcc === dstAcc && srcPath === dstPath) {
-        errBox.textContent = t('replicate.errSamePath', 'Folder sumber dan tujuan tidak boleh identik pada akun yang sama');
-        errBox.style.display = 'block';
-        return;
+      if (srcAcc === dstAcc) {
+        const cleanSrc = srcPath.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
+        const cleanDst = dstPath.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
+        if (cleanSrc === cleanDst) {
+          errBox.textContent = t('replicate.errSamePath', 'Folder sumber dan tujuan tidak boleh identik pada akun yang sama');
+          errBox.style.display = 'block';
+          return;
+        }
+        if (cleanSrc === '/' || cleanDst.startsWith(cleanSrc + '/')) {
+          errBox.textContent = t('replicate.errSubdir', 'Folder tujuan tidak boleh berada di dalam folder sumber pada akun yang sama');
+          errBox.style.display = 'block';
+          return;
+        }
       }
 
       errBox.style.display = 'none';
@@ -8057,15 +8081,26 @@
           actionBtn = `<button class="btn-icon" style="width:24px;height:24px;color:var(--md-sys-color-primary);" title="${t('tasks.retry')}" onclick="retryTask('${t.id}')">↻</button>`;
         }
 
-        const targetDisplay = t.target_path ? escapeHtml(t.target_path) : '';
-        const sourceDisplay = t.source_path ? escapeHtml(t.source_path) : '';
+        let titleDisplay = '';
+        let titleTooltip = '';
+        if (t.type === 'ingest') {
+          const fn = t.target_path ? t.target_path.split('/').filter(Boolean).pop() : '';
+          titleDisplay = `${typeLabel}: ${fn || escapeHtml(t.source_path)}`;
+          titleTooltip = `${escapeHtml(t.source_path)} → ${escapeHtml(t.target_path || '/')}`;
+        } else if (t.type === 'replicate' || t.type === 'transfer') {
+          titleDisplay = `${typeLabel}: ${escapeHtml(t.source_path)} → ${escapeHtml(t.target_path)}`;
+          titleTooltip = titleDisplay;
+        } else {
+          titleDisplay = `${typeLabel}: ${escapeHtml(t.target_path || t.source_path)}`;
+          titleTooltip = titleDisplay;
+        }
 
         return `
           <div style="background:var(--md-sys-color-surface);border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-md);padding:8px 10px;display:flex;flex-direction:column;gap:6px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
               <div style="display:flex;align-items:center;gap:6px;overflow:hidden;">
                 <span>${typeIcon}</span>
-                <span style="font-weight:600;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${typeLabel}: ${targetDisplay || sourceDisplay}</span>
+                <span style="font-weight:600;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${titleTooltip}">${titleDisplay}</span>
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:0.7rem;font-weight:700;color:${statusColor};text-transform:uppercase;">${statusBadge}</span>
@@ -8117,6 +8152,7 @@
     }
 
     // Auto-polling for background tasks
+    fetchTasks();
     setInterval(fetchTasks, 3000);
   </script>
 </body>

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **URL Ingest & Background Tasks**:
+  - Support RFC 5987 / RFC 6266 `filename*` parsing and URL unescaping in `ResolveIngestFilename`.
+  - Prefer effective redirected request URL and detect extension from `Content-Type` for extensionless URLs.
+  - Fix target path parsing so directory targets with dots (e.g. `/v1.0`) and custom names without extensions (e.g. `binary`) are correctly distinguished.
+  - Automatically pre-create destination directory before downloading remote resources.
+  - Detect and fail on truncated downloads when `Content-Length` is advertised.
+  - Re-validate SSRF rules on every HTTP redirect hop in safe client.
+  - Persist final resolved target path to SQLite `storage_tasks` table so TaskDrawer shows downloaded file names.
+- **Folder Sync & Replication**:
+  - Check file `ModTime` in addition to size during replication so content updates with identical file lengths are copied.
+  - Prevent recursive loops and self-replication when syncing a folder to itself or its subdirectory on the same account.
+  - Fix `cleanRelPath` false prefix matching for sibling directories starting with identical characters.
+  - Clean up orphaned destination directories from deepest to root in Mirror mode.
+  - Fallback to direct deletion in Mirror mode when `trashManager` is nil.
+  - Added folder context menu options for instant "Sync Folder" and "URL Ingest".
+  - Improved TaskDrawer item labeling and immediate task polling on page load.
+
 ### Changed
 - **Codebase Simplification (Ponytail Audit)**:
   - Replaced 50-line custom MIME switch in `pkg/server/server.go` with stdlib `mime.TypeByExtension` and compact fallback.

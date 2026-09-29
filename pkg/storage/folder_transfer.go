@@ -14,8 +14,15 @@ func cleanRelPath(base, full string) string {
 	if b == "/" {
 		return strings.TrimPrefix(f, "/")
 	}
-	rel := strings.TrimPrefix(f, b)
-	return strings.TrimPrefix(rel, "/")
+	if f == b {
+		return ""
+	}
+	prefix := b + "/"
+	if strings.HasPrefix(f, prefix) {
+		return strings.TrimPrefix(f, prefix)
+	}
+	// ponytail: If f is outside base, return its base name to avoid false prefix match
+	return path.Base(f)
 }
 
 // WalkDriver recursively traverses a folder on a Driver and collects all files and subdirectories.
