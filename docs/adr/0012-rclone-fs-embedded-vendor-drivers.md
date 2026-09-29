@@ -1,5 +1,7 @@
 # Embed rclone/fs as VendorDriver Engine for All Providers
 
+> **Update (2026-09-28):** Fully implemented by [ADR-0027](0027-full-rclone-backend-drivers-and-verified-onboarding.md). All 16 providers, including Google Drive, now use embedded rclone backends; `gdrive.go` has been removed.
+
 We will re-anchor Cloudgate on the original ADR-0001 decision: embed `rclone/fs` as a Go library inside the single static binary and implement every VendorDriver as a thin adapter over `rclone/fs.Fs`, superseding the one-off native REST approach of ADR-0011.
 
 ## Context

@@ -1,618 +1,540 @@
-package storage_test
+package storage
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sort"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
-	"github.com/herliansyah/cloudgate/pkg/storage"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/oauth2"
 )
 
-func TestRcloneAdapter_Factory(t *testing.T) {
+func TestRcloneDriverFactory(t *testing.T) {
 	creds := `{"client_id":"cid","client_secret":"cs","access_token":"at","refresh_token":"rt"}`
-	for _, prov := range []string{"onedrive", "dropbox"} {
-		drv, err := storage.NewRcloneDriver(prov, "acc_"+prov, creds)
+	for _, prov := range []string{"onedrive", "dropbox", "google"} {
+		drv, err := NewRcloneDriver(prov, "acc_"+prov, creds)
 		if err != nil {
 			t.Fatalf("factory failed for %s: %v", prov, err)
 		}
-		if drv.Provider() != prov {
-			t.Errorf("expected provider %s got %s", prov, drv.Provider())
-		}
-		if drv.ID() != "acc_"+prov {
-			t.Errorf("expected id acc_%s got %s", prov, drv.ID())
+		want := string(NormalizeProvider(prov))
+		if drv.Provider() != want || drv.ID() != "acc_"+prov {
+			t.Errorf("unexpected provider/id %s/%s", drv.Provider(), drv.ID())
 		}
 	}
-	if _, err := storage.NewRcloneDriver("", "id", creds); err == nil {
+	if _, err := NewRcloneDriver("", "id", creds); err == nil {
 		t.Error("expected error for empty provider")
 	}
-}
-
-func TestRcloneAdapter_OneDrive_AboutAndList(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch r.URL.Path {
-		case "/v1.0/me/drive":
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"quota": map[string]any{"total": 10737418240, "used": 2147483648, "remaining": 8589934592},
-			})
-		case "/v1.0/me/drive/root/children":
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"value": []any{
-					map[string]any{"name": "doc.odt", "size": 1234, "file": map[string]any{}, "lastModifiedDateTime": "2026-09-24T10:00:00Z"},
-					map[string]any{"name": "pics", "folder": map[string]any{}, "lastModifiedDateTime": "2026-09-24T10:01:00Z"},
-				},
-			})
-		default:
-			w.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "not found: " + r.URL.Path})
-		}
-	}))
-	defer ts.Close()
-
-	drv := storage.NewRcloneAdapter("onedrive", "acc_od", "cid", "cs", "dummy_token", "", "user@outlook.com", "Outlook User")
-	drv.SetBaseURL(ts.URL)
-	ctx := context.Background()
-
-	quota, err := drv.About(ctx)
-	if err != nil {
-		t.Fatalf("About failed: %v", err)
+	if _, err := NewRcloneDriver("nosuch", "id", creds); err == nil {
+		t.Error("expected error for unsupported provider")
 	}
-	if quota.Total != 10737418240 || quota.Used != 2147483648 {
-		t.Errorf("unexpected quota %+v", quota)
-	}
-
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("List failed: %v", err)
-	}
-	if len(files) != 2 {
-		t.Fatalf("expected 2 files, got %d", len(files))
-	}
-	if files[0].Name != "doc.odt" || files[0].IsDir {
-		t.Errorf("expected doc.odt file, got %+v", files[0])
-	}
-	if !files[1].IsDir || files[1].Name != "pics" {
-		t.Errorf("expected pics folder, got %+v", files[1])
+	if _, err := NewRcloneDriver("s3", "id", "{not json"); err == nil {
+		t.Error("expected error for invalid JSON")
 	}
 }
 
-func TestRcloneAdapter_OneDrive_PutGetDelete(t *testing.T) {
-	var putPath, delPath string
-	var putBody []byte
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.Method == "PUT" && r.URL.Path == "/v1.0/me/drive/root:/hello.txt:/content":
-			putPath = r.URL.Path
-			b, _ := io.ReadAll(r.Body)
-			putBody = b
-			w.WriteHeader(http.StatusCreated)
-			_ = json.NewEncoder(w).Encode(map[string]any{"name": "hello.txt"})
-		case r.Method == "GET" && r.URL.Path == "/v1.0/me/drive/root:/hello.txt:/content":
-			w.Header().Set("Content-Length", "5")
-			_, _ = w.Write([]byte("hello"))
-		case r.Method == "DELETE" && r.URL.Path == "/v1.0/me/drive/root:/hello.txt":
-			delPath = r.URL.Path
-			w.WriteHeader(http.StatusNoContent)
-		default:
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}))
-	defer ts.Close()
-	drv := storage.NewRcloneAdapter("onedrive", "acc_od", "cid", "cs", "tok", "", "", "")
-	drv.SetBaseURL(ts.URL)
-	ctx := context.Background()
-	if err := drv.Put(ctx, "/hello.txt", bytes.NewReader([]byte("hello")), 5); err != nil {
-		t.Fatalf("Put failed: %v", err)
-	}
-	if putPath != "/v1.0/me/drive/root:/hello.txt:/content" || string(putBody) != "hello" {
-		t.Errorf("unexpected put %s %s", putPath, string(putBody))
-	}
-	rc, info, err := drv.Get(ctx, "/hello.txt")
-	if err != nil {
-		t.Fatalf("Get failed: %v", err)
-	}
-	defer rc.Close()
-	b, _ := io.ReadAll(rc)
-	if string(b) != "hello" || info.Name != "hello.txt" {
-		t.Errorf("unexpected get %+v %s", info, string(b))
-	}
-	if err := drv.Delete(ctx, "/hello.txt"); err != nil {
-		t.Fatalf("Delete failed: %v", err)
-	}
-	if delPath == "" {
-		t.Error("expected delete to be called")
-	}
-}
-
-func TestRcloneAdapter_Dropbox_AboutAndList(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch r.URL.Path {
-		case "/2/users/get_space_usage":
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"used": 5000000,
-				"allocation": map[string]any{"allocated": 21474836480},
-			})
-		case "/2/files/list_folder":
-			var req map[string]string
-			_ = json.NewDecoder(r.Body).Decode(&req)
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"entries": []any{
-					map[string]any{".tag": "file", "name": "a.txt", "path_display": "/a.txt", "size": 42, "client_modified": "2026-09-24T10:00:00Z"},
-					map[string]any{".tag": "folder", "name": "fld", "path_display": "/fld", "client_modified": "2026-09-24T10:00:00Z"},
-				},
-			})
-		default:
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}))
-	defer ts.Close()
-	drv := storage.NewRcloneAdapter("dropbox", "acc_db", "cid", "cs", "tok", "", "user@dropbox.com", "DB User")
-	drv.SetBaseURL(ts.URL)
-	ctx := context.Background()
-	q, err := drv.About(ctx)
-	if err != nil {
-		t.Fatalf("About failed: %v", err)
-	}
-	if q.Total != 21474836480 || q.Used != 5000000 {
-		t.Errorf("unexpected quota %+v", q)
-	}
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("List failed: %v", err)
-	}
-	if len(files) != 2 {
-		t.Fatalf("expected 2, got %d", len(files))
-	}
-	if files[0].Name != "a.txt" || files[0].IsDir {
-		t.Errorf("expected file a.txt, got %+v", files[0])
-	}
-	if !files[1].IsDir {
-		t.Errorf("expected folder, got %+v", files[1])
-	}
-}
-
-func TestRcloneAdapter_Dropbox_PutGetMoveMkdir(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch r.URL.Path {
-		case "/2/files/upload":
-			// content server — check Dropbox-API-Arg
-			arg := r.Header.Get("Dropbox-API-Arg")
-			var m map[string]any
-			_ = json.Unmarshal([]byte(arg), &m)
-			if m["path"] != "/b.txt" {
-				t.Errorf("unexpected upload path %v", m["path"])
+// TestMemoryBackendOperations exercises the generic Driver implementation for
+// every provider through rclone's memory backend.
+func TestMemoryBackendOperations(t *testing.T) {
+	for _, p := range SupportedProviders {
+		p := p
+		t.Run(string(p), func(t *testing.T) {
+			ctx := context.Background()
+			drv, err := NewRcloneDriverFromCreds(string(p), "acc_mem_"+string(p), nil, WithMemoryBackend())
+			if err != nil {
+				t.Fatal(err)
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"name": "b.txt"})
-		case "/2/files/download":
-			arg := r.Header.Get("Dropbox-API-Arg")
-			if arg != `{"path":"/b.txt"}` {
-				t.Errorf("unexpected download arg %s", arg)
+			q, err := drv.About(ctx)
+			if err != nil || q.Total <= 0 {
+				t.Fatalf("about: %+v %v", q, err)
 			}
-			w.Header().Set("Dropbox-Api-Result", `{"name":"b.txt","size":3}`)
-			_, _ = w.Write([]byte("hi!"))
-		case "/2/files/move_v2":
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(map[string]any{})
-		case "/2/files/create_folder_v2":
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(map[string]any{})
-		case "/2/files/delete_v2":
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(map[string]any{})
-		default:
-			w.WriteHeader(http.StatusNotFound)
-			_, _ = w.Write([]byte(r.URL.Path))
-		}
+			if err := drv.Put(ctx, "/docs/a.txt", bytes.NewReader([]byte("hello")), 5); err != nil {
+				t.Fatalf("put: %v", err)
+			}
+			// Unknown-size upload.
+			if err := drv.Put(ctx, "/docs/sub/b.txt", strings.NewReader("streamed"), -1); err != nil {
+				t.Fatalf("put stream: %v", err)
+			}
+			// Overwrite existing object.
+			if err := drv.Put(ctx, "/docs/a.txt", bytes.NewReader([]byte("hello2")), 6); err != nil {
+				t.Fatalf("overwrite: %v", err)
+			}
+			files, err := drv.List(ctx, "/docs")
+			if err != nil {
+				t.Fatalf("list: %v", err)
+			}
+			names := map[string]FileInfo{}
+			for _, f := range files {
+				names[f.Name] = f
+			}
+			if fa, ok := names["a.txt"]; !ok || fa.IsDir || fa.Size != 6 || fa.Path != "/docs/a.txt" {
+				t.Fatalf("unexpected a.txt entry: %+v (all: %+v)", fa, files)
+			}
+			if fs, ok := names["sub"]; !ok || !fs.IsDir {
+				t.Fatalf("expected sub folder, got %+v", files)
+			}
+			rc, info, err := drv.Get(ctx, "/docs/a.txt")
+			if err != nil {
+				t.Fatalf("get: %v", err)
+			}
+			b, _ := io.ReadAll(rc)
+			rc.Close()
+			if string(b) != "hello2" || info.Name != "a.txt" || info.Size != 6 {
+				t.Fatalf("unexpected get %q %+v", b, info)
+			}
+			if _, _, err := drv.Get(ctx, "/docs/missing.txt"); !errors.Is(err, ErrFileNotFound) {
+				t.Fatalf("expected ErrFileNotFound, got %v", err)
+			}
+			// File move across folders (not just rename).
+			if err := drv.Move(ctx, "/docs/a.txt", "/archive/a-moved.txt"); err != nil {
+				t.Fatalf("move file: %v", err)
+			}
+			if _, _, err := drv.Get(ctx, "/archive/a-moved.txt"); err != nil {
+				t.Fatalf("moved file missing: %v", err)
+			}
+			if _, _, err := drv.Get(ctx, "/docs/a.txt"); !errors.Is(err, ErrFileNotFound) {
+				t.Fatalf("source should be gone, got %v", err)
+			}
+			// Folder move.
+			if err := drv.Move(ctx, "/docs/sub", "/archive/sub2"); err != nil {
+				t.Fatalf("move dir: %v", err)
+			}
+			if _, _, err := drv.Get(ctx, "/archive/sub2/b.txt"); err != nil {
+				t.Fatalf("moved dir content missing: %v", err)
+			}
+			if err := drv.Move(ctx, "/nope", "/nope2"); !errors.Is(err, ErrFileNotFound) {
+				t.Fatalf("expected not found on move, got %v", err)
+			}
+			if err := drv.Mkdir(ctx, "/new/nested"); err != nil {
+				t.Fatalf("mkdir: %v", err)
+			}
+			// Recursive folder delete.
+			if err := drv.Delete(ctx, "/archive"); err != nil {
+				t.Fatalf("delete dir: %v", err)
+			}
+			if _, err := drv.List(ctx, "/archive"); !errors.Is(err, ErrFileNotFound) {
+				t.Fatalf("expected archive gone, got %v", err)
+			}
+			if err := drv.Delete(ctx, "/archive"); !errors.Is(err, ErrFileNotFound) {
+				t.Fatalf("expected not found on second delete, got %v", err)
+			}
+			if err := drv.Delete(ctx, "/"); err == nil {
+				t.Fatal("deleting root must be refused")
+			}
+			if err := drv.TestConnection(ctx); err != nil {
+				t.Fatalf("test connection: %v", err)
+			}
+			link, _ := drv.GetShareLink(ctx, "/x y.txt")
+			if !strings.Contains(link, "account_id=acc_mem_") || !strings.Contains(link, "x+y.txt") {
+				t.Fatalf("unexpected share link %s", link)
+			}
+		})
+	}
+}
+
+// TestNoSilentFallbackOnAuthFailure verifies that real backend errors surface
+// instead of being swallowed into an in-memory store.
+func TestNoSilentFallbackOnAuthFailure(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("WWW-Authenticate", `Basic realm="test"`)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 	}))
 	defer ts.Close()
-	drv := storage.NewRcloneAdapter("dropbox", "acc_db", "cid", "cs", "tok", "", "", "")
-	drv.SetBaseURL(ts.URL)
-	ctx := context.Background()
-	if err := drv.Put(ctx, "/b.txt", bytes.NewReader([]byte("hi!")), 3); err != nil {
-		t.Fatalf("Put %v", err)
-	}
-	rc, info, err := drv.Get(ctx, "/b.txt")
+	drv, err := NewRcloneDriverFromCreds("webdav", "acc_dav_bad", map[string]string{"url": ts.URL, "username": "u", "password": "mockingbird"})
 	if err != nil {
-		t.Fatalf("Get %v", err)
+		t.Fatal(err)
 	}
-	b, _ := io.ReadAll(rc)
-	rc.Close()
-	if string(b) != "hi!" || info.Size != 3 {
-		t.Errorf("unexpected get %s %+v", string(b), info)
-	}
-	if err := drv.Move(ctx, "/b.txt", "/c.txt"); err != nil {
-		t.Fatalf("Move %v", err)
-	}
-	if err := drv.Mkdir(ctx, "/newfld"); err != nil {
-		t.Fatalf("Mkdir %v", err)
-	}
-	if err := drv.Delete(ctx, "/b.txt"); err != nil {
-		t.Fatalf("Delete %v", err)
-	}
-}
-
-func TestRcloneAdapter_Mega_Basic(t *testing.T) {
-	creds := `{"username":"user@example.com","password":"secretpassword"}`
-	drv, err := storage.NewRcloneDriver("mega", "acc_mega_test", creds)
-	if err != nil {
-		t.Fatalf("failed to create mega driver: %v", err)
-	}
-	if drv.Provider() != "mega" {
-		t.Errorf("expected mega, got %s", drv.Provider())
-	}
-	ctx := context.Background()
-	// Test put/get in fallback/in-memory mode for offline test
-	drv.SetBaseURL("http://127.0.0.1:9999")
-	if err := drv.Put(ctx, "/test.txt", bytes.NewReader([]byte("megadata")), 8); err != nil {
-		t.Fatalf("put failed: %v", err)
-	}
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("list failed: %v", err)
-	}
-	if len(files) == 0 {
-		t.Fatalf("expected at least 1 file, got 0")
-	}
-	rc, info, err := drv.Get(ctx, "/test.txt")
-	if err != nil {
-		t.Fatalf("get failed: %v", err)
-	}
-	defer rc.Close()
-	data, _ := io.ReadAll(rc)
-	if string(data) != "megadata" || info.Name != "test.txt" {
-		t.Errorf("unexpected content: %s", string(data))
-	}
-}
-
-func TestRcloneAdapter_Mega_DirectDispatchWithoutBaseURL(t *testing.T) {
-	// Without baseURL set, provider mega routes to megaList and returns empty slice when in-memory is fallback
-	creds := `{"username":"fake@example.com","password":"bad"}`
-	drv, err := storage.NewRcloneDriver("mega", "acc_mega_nobase", creds)
-	if err != nil {
-		t.Fatalf("failed to create driver: %v", err)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	// Should not panic, should route directly to megaList
-	files, err := drv.List(ctx, "/")
-	if err == nil && files == nil {
-		t.Errorf("expected non-nil slice, got nil")
+	if err := drv.Put(ctx, "/a.txt", strings.NewReader("x"), 1); err == nil {
+		t.Fatal("expected Put to fail against 401 server")
+	}
+	if _, err := drv.List(ctx, "/"); err == nil {
+		t.Fatal("expected List to fail against 401 server")
+	}
+	if err := drv.TestConnection(ctx); err == nil {
+		t.Fatal("expected TestConnection to fail against 401 server")
 	}
 }
 
-func TestRcloneAdapter_Filen_Basic(t *testing.T) {
-	creds := `{"email":"user@filen.io","password":"secretpassword","api_key":"mock_api_key"}`
-	drv, err := storage.NewRcloneDriver("filen", "acc_filen_test", creds)
+func TestWebDAVLiveAgainstFakeServer(t *testing.T) {
+	var mu sync.Mutex
+	var methods []string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		methods = append(methods, r.Method+" "+r.URL.Path)
+		mu.Unlock()
+		if u, p, ok := r.BasicAuth(); !ok || u != "alice" || p != "s3cret" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		switch r.Method {
+		case "PROPFIND":
+			w.Header().Set("Content-Type", "application/xml")
+			w.WriteHeader(207)
+			_, _ = io.WriteString(w, `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">
+<d:response><d:href>/dav/</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>
+<d:response><d:href>/dav/My%20File.txt</d:href><d:propstat><d:prop><d:getcontentlength>3</d:getcontentlength><d:getlastmodified>Mon, 28 Sep 2026 10:00:00 GMT</d:getlastmodified><d:resourcetype/></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>
+</d:multistatus>`)
+		default:
+			w.WriteHeader(http.StatusNotImplemented)
+		}
+	}))
+	defer ts.Close()
+	drv, _ := NewRcloneDriverFromCreds("webdav", "acc_dav", map[string]string{"url": ts.URL + "/dav/", "username": "alice", "password": "s3cret"})
+	files, err := drv.List(context.Background(), "/")
 	if err != nil {
-		t.Fatalf("failed to create filen driver: %v", err)
+		t.Fatalf("list: %v", err)
 	}
-	if drv.Provider() != "filen" {
-		t.Errorf("expected filen, got %s", drv.Provider())
-	}
-	ctx := context.Background()
-	// Set mock mode for offline test
-	drv.SetBaseURL("http://127.0.0.1:9999")
-
-	quota, err := drv.About(ctx)
-	if err != nil {
-		t.Fatalf("about failed: %v", err)
-	}
-	if quota.Total <= 0 {
-		t.Errorf("expected positive total quota, got %d", quota.Total)
-	}
-
-	if err := drv.Put(ctx, "/filen_doc.txt", bytes.NewReader([]byte("filendata")), 9); err != nil {
-		t.Fatalf("put failed: %v", err)
-	}
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("list failed: %v", err)
-	}
-	if len(files) == 0 {
-		t.Fatalf("expected at least 1 file, got 0")
-	}
-	rc, info, err := drv.Get(ctx, "/filen_doc.txt")
-	if err != nil {
-		t.Fatalf("get failed: %v", err)
-	}
-	defer rc.Close()
-	data, _ := io.ReadAll(rc)
-	if string(data) != "filendata" || info.Name != "filen_doc.txt" {
-		t.Errorf("unexpected content: %s", string(data))
-	}
-
-	if err := drv.Move(ctx, "/filen_doc.txt", "/filen_moved.txt"); err != nil {
-		t.Fatalf("move failed: %v", err)
-	}
-	if err := drv.Mkdir(ctx, "/filen_folder"); err != nil {
-		t.Fatalf("mkdir failed: %v", err)
-	}
-	if err := drv.Delete(ctx, "/filen_moved.txt"); err != nil {
-		t.Fatalf("delete failed: %v", err)
-	}
-	if err := drv.TestConnection(ctx); err != nil {
-		t.Fatalf("test connection failed: %v", err)
+	if len(files) != 1 || files[0].Name != "My File.txt" || files[0].Size != 3 {
+		t.Fatalf("expected decoded href entry, got %+v", files)
 	}
 }
 
-func TestRcloneAdapter_B2_Basic(t *testing.T) {
-	creds := `{"account":"mock_key_id","key":"mock_app_key","bucket":"cloudgate-test"}`
-	drv, err := storage.NewRcloneDriver("b2", "acc_b2_test", creds)
+func TestS3SignsRequests(t *testing.T) {
+	var sawAuth string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sawAuth = r.Header.Get("Authorization")
+		if !strings.HasPrefix(sawAuth, "AWS4-HMAC-SHA256 Credential=AKTEST/") {
+			http.Error(w, "<Error><Code>AccessDenied</Code></Error>", 403)
+			return
+		}
+		if r.URL.Path != "/bk" && r.URL.Path != "/bk/" {
+			http.Error(w, "<Error><Code>NoSuchKey</Code></Error>", 404)
+			return
+		}
+		w.Header().Set("Content-Type", "application/xml")
+		_, _ = io.WriteString(w, `<?xml version="1.0" encoding="UTF-8"?><ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>bk</Name><Prefix></Prefix><KeyCount>1</KeyCount><MaxKeys>1000</MaxKeys><Delimiter>/</Delimiter><IsTruncated>false</IsTruncated><Contents><Key>x.txt</Key><LastModified>2026-09-28T10:00:00.000Z</LastModified><ETag>"abc"</ETag><Size>3</Size><StorageClass>STANDARD</StorageClass></Contents><CommonPrefixes><Prefix>photos/</Prefix></CommonPrefixes></ListBucketResult>`)
+	}))
+	defer ts.Close()
+	drv, _ := NewRcloneDriverFromCreds("s3", "acc_s3", map[string]string{"endpoint": ts.URL, "s3_provider": "Minio", "bucket": "bk", "access_key_id": "AKTEST", "secret_access_key": "SECRET", "region": "us-east-1"})
+	files, err := drv.List(context.Background(), "/")
 	if err != nil {
-		t.Fatalf("failed to create b2 driver: %v", err)
+		t.Fatalf("list: %v (auth header %q)", err, sawAuth)
 	}
-	if drv.Provider() != "b2" {
-		t.Errorf("expected b2, got %s", drv.Provider())
+	got := map[string]bool{}
+	for _, f := range files {
+		got[f.Name] = f.IsDir
 	}
-	ctx := context.Background()
-	drv.SetBaseURL("http://127.0.0.1:9999")
-
-	quota, err := drv.About(ctx)
-	if err != nil {
-		t.Fatalf("about failed: %v", err)
+	if isDir, ok := got["x.txt"]; !ok || isDir {
+		t.Fatalf("missing object: %+v", files)
 	}
-	if quota.Total <= 0 {
-		t.Errorf("expected positive total quota, got %d", quota.Total)
-	}
-
-	if err := drv.Put(ctx, "/b2_doc.txt", bytes.NewReader([]byte("b2data")), 6); err != nil {
-		t.Fatalf("put failed: %v", err)
-	}
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("list failed: %v", err)
-	}
-	if len(files) == 0 {
-		t.Fatalf("expected at least 1 file, got 0")
-	}
-	rc, info, err := drv.Get(ctx, "/b2_doc.txt")
-	if err != nil {
-		t.Fatalf("get failed: %v", err)
-	}
-	defer rc.Close()
-	data, _ := io.ReadAll(rc)
-	if string(data) != "b2data" || info.Name != "b2_doc.txt" {
-		t.Errorf("unexpected content: %s", string(data))
-	}
-
-	if err := drv.Move(ctx, "/b2_doc.txt", "/b2_moved.txt"); err != nil {
-		t.Fatalf("move failed: %v", err)
-	}
-	if err := drv.Mkdir(ctx, "/b2_folder"); err != nil {
-		t.Fatalf("mkdir failed: %v", err)
-	}
-	if err := drv.Delete(ctx, "/b2_moved.txt"); err != nil {
-		t.Fatalf("delete failed: %v", err)
-	}
-	if err := drv.TestConnection(ctx); err != nil {
-		t.Fatalf("test connection failed: %v", err)
+	if isDir, ok := got["photos"]; !ok || !isDir {
+		t.Fatalf("common prefix not mapped to folder: %+v", files)
 	}
 }
 
-func TestRcloneAdapter_PikPak_Basic(t *testing.T) {
-	creds := `{"user":"mock_pikpak_user@example.com","pass":"mock_pikpak_password"}`
-	drv, err := storage.NewRcloneDriver("pikpak", "acc_pikpak_test", creds)
+func reveal(t *testing.T, s string) string {
+	t.Helper()
+	v, err := obscure.Reveal(s)
 	if err != nil {
-		t.Fatalf("failed to create pikpak driver: %v", err)
+		t.Fatalf("value %q is not obscured: %v", s, err)
 	}
-	if drv.Provider() != "pikpak" {
-		t.Errorf("expected pikpak, got %s", drv.Provider())
-	}
-	ctx := context.Background()
-	drv.SetBaseURL("http://127.0.0.1:9999")
+	return v
+}
 
-	quota, err := drv.About(ctx)
-	if err != nil {
-		t.Fatalf("about failed: %v", err)
-	}
-	if quota.Total <= 0 {
-		t.Errorf("expected positive total quota, got %d", quota.Total)
-	}
+func TestBuildBackendConfig(t *testing.T) {
+	now := time.Unix(59, 0)
+	t.Run("b2 key is not obscured", func(t *testing.T) {
+		s, err := buildBackendConfig(ProviderB2, map[string]string{"key_id": "K1", "application_key": "APPKEY", "bucket": "bk"}, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.backend != "b2" || s.cfg["account"] != "K1" || s.cfg["key"] != "APPKEY" || s.root != "bk" || s.cfg["hard_delete"] != "false" {
+			t.Fatalf("unexpected %+v", s)
+		}
+	})
+	t.Run("s3 signs with keys, bucket root, provider inference", func(t *testing.T) {
+		s, err := buildBackendConfig(ProviderS3, map[string]string{"endpoint": "https://abc.r2.cloudflarestorage.com", "bucket": "media", "access_key_id": "AK", "secret_access_key": "SK"}, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.cfg["provider"] != "Cloudflare" || s.cfg["region"] != "auto" || s.cfg["access_key_id"] != "AK" || s.cfg["secret_access_key"] != "SK" || s.root != "media" || s.cfg["no_check_bucket"] != "true" {
+			t.Fatalf("unexpected %+v", s)
+		}
+		s, _ = buildBackendConfig(ProviderS3, map[string]string{"bucket": "b", "access_key": "AK", "secret_key": "SK"}, now)
+		if s.cfg["provider"] != "AWS" || s.cfg["region"] != "us-east-1" || s.cfg["access_key_id"] != "AK" {
+			t.Fatalf("legacy aliases not mapped: %+v", s)
+		}
+		if _, err := buildBackendConfig(ProviderS3, map[string]string{"access_key_id": "a"}, now); err == nil {
+			t.Fatal("expected bucket error")
+		}
+	})
+	t.Run("proton otp secret is its own option", func(t *testing.T) {
+		s, err := buildBackendConfig(ProviderProtonDrive, map[string]string{"username": "u@proton.me", "password": "pw", "otp_secret_key": "jbsw y3dp", "mailbox_password": "mb", "rclone.client_uid": "UID"}, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, has := s.cfg["2fa"]; has {
+			t.Fatal("otp secret must not be sent as 2fa code")
+		}
+		if reveal(t, s.cfg["otp_secret_key"]) != "JBSWY3DP" || reveal(t, s.cfg["password"]) != "pw" || reveal(t, s.cfg["mailbox_password"]) != "mb" {
+			t.Fatalf("unexpected %+v", s.cfg)
+		}
+		if s.cfg["client_uid"] != "UID" {
+			t.Fatal("persisted proton session state not restored")
+		}
+	})
+	t.Run("pikpak root_folder_id is an option", func(t *testing.T) {
+		s, _ := buildBackendConfig(ProviderPikPak, map[string]string{"user": "u", "pass": "p", "root_folder_id": "VN123", "rclone.device_id": "dev"}, now)
+		if s.root != "" || s.cfg["root_folder_id"] != "VN123" || reveal(t, s.cfg["pass"]) != "p" || s.cfg["device_id"] != "dev" {
+			t.Fatalf("unexpected %+v", s)
+		}
+	})
+	t.Run("smb root joins share and path", func(t *testing.T) {
+		s, _ := buildBackendConfig(ProviderSMB, map[string]string{"host": "h", "user": "u", "pass": "p", "share": "backups", "path": "/team/x"}, now)
+		if s.root != "backups/team/x" || s.cfg["domain"] != "WORKGROUP" || s.cfg["port"] != "445" {
+			t.Fatalf("unexpected %+v", s)
+		}
+		if _, err := buildBackendConfig(ProviderSMB, map[string]string{"host": "h", "user": "u"}, now); err == nil {
+			t.Fatal("share must be required")
+		}
+	})
+	t.Run("sftp secrets obscured, pem kept", func(t *testing.T) {
+		s, _ := buildBackendConfig(ProviderSFTP, map[string]string{"host": "h", "username": "u", "private_key": "-----BEGIN-----\r\nabc\r\n-----END-----", "passphrase": "pp"}, now)
+		if s.cfg["port"] != "22" || !strings.Contains(s.cfg["key_pem"], "\nabc\n") || reveal(t, s.cfg["key_file_pass"]) != "pp" {
+			t.Fatalf("unexpected %+v", s.cfg)
+		}
+	})
+	t.Run("mega totp", func(t *testing.T) {
+		s, err := buildBackendConfig(ProviderMega, map[string]string{"email": "m@x", "password": "p", "otp_secret_key": "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"}, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.cfg["2fa"] != "287082" || s.cfg["user"] != "m@x" || reveal(t, s.cfg["pass"]) != "p" {
+			t.Fatalf("unexpected %+v", s.cfg)
+		}
+	})
+	t.Run("koofr uses native backend", func(t *testing.T) {
+		s, _ := buildBackendConfig(ProviderKoofr, map[string]string{"url": "https://app.koofr.net/dav/Koofr", "username": "k@x", "password": "app"}, now)
+		if s.backend != "koofr" || s.cfg["provider"] != "koofr" || s.cfg["user"] != "k@x" || reveal(t, s.cfg["password"]) != "app" {
+			t.Fatalf("unexpected %+v", s)
+		}
+	})
+	t.Run("webdav vendor detection", func(t *testing.T) {
+		s, _ := buildBackendConfig(ProviderWebDAV, map[string]string{"url": "https://c.example.com/remote.php/dav/files/bob/", "username": "bob", "password": "p"}, now)
+		if s.cfg["vendor"] != "nextcloud" || reveal(t, s.cfg["pass"]) != "p" {
+			t.Fatalf("unexpected %+v", s.cfg)
+		}
+	})
+	t.Run("pcloud host", func(t *testing.T) {
+		base := map[string]string{"client_id": "c", "client_secret": "s", "access_token": "a"}
+		s, _ := buildBackendConfig(ProviderPCloud, base, now)
+		if s.cfg["hostname"] != "api.pcloud.com" {
+			t.Fatalf("unexpected %+v", s.cfg)
+		}
+		base["hostname"] = "eapi.pcloud.com"
+		s, _ = buildBackendConfig(ProviderPCloud, base, now)
+		if s.cfg["hostname"] != "eapi.pcloud.com" {
+			t.Fatalf("unexpected %+v", s.cfg)
+		}
+		base["hostname"] = "evil.example.com"
+		if _, err := buildBackendConfig(ProviderPCloud, base, now); err == nil {
+			t.Fatal("unexpected host must be rejected")
+		}
+	})
+	t.Run("legacy oauth token forces refresh", func(t *testing.T) {
+		s, err := buildBackendConfig(ProviderGDrive, map[string]string{"client_id": "c", "client_secret": "s", "access_token": "old", "refresh_token": "rt"}, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var tok oauth2.Token
+		_ = json.Unmarshal([]byte(s.cfg["token"]), &tok)
+		if s.backend != "drive" || tok.RefreshToken != "rt" || !tok.Expiry.Before(time.Now()) {
+			t.Fatalf("unexpected token %+v", tok)
+		}
+	})
+	t.Run("onedrive needs drive id", func(t *testing.T) {
+		if _, err := buildBackendConfig(ProviderOneDrive, map[string]string{"client_id": "c", "client_secret": "s", "access_token": "a"}, now); err == nil {
+			t.Fatal("expected drive id error")
+		}
+	})
+}
 
-	if err := drv.Put(ctx, "/pikpak_doc.txt", bytes.NewReader([]byte("pikpakdata")), 10); err != nil {
-		t.Fatalf("put failed: %v", err)
+func TestValidateCredentials(t *testing.T) {
+	ok := map[string]map[string]string{
+		"s3":          {"bucket": "b", "access_key_id": "a", "secret_access_key": "s"},
+		"webdav":      {"url": "https://x/dav"},
+		"koofr":       {"username": "u", "password": "p"},
+		"mega":        {"email": "u", "password": "p"},
+		"filen":       {"email": "u", "password": "p", "api_key": "k"},
+		"b2":          {"key_id": "a", "application_key": "b"},
+		"pikpak":      {"user": "u", "pass": "p"},
+		"sftp":        {"host": "h", "user": "u", "pass": "p"},
+		"smb":         {"host": "h", "user": "u", "share": "s"},
+		"protondrive": {"username": "u", "password": "p"},
+		"gdrive":      {"client_id": "c", "client_secret": "s", "token": `{"access_token":"a"}`},
 	}
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("list failed: %v", err)
+	for p, c := range ok {
+		if err := ValidateCredentials(p, c); err != nil {
+			t.Errorf("%s: unexpected error %v", p, err)
+		}
 	}
-	if len(files) == 0 {
-		t.Fatalf("expected at least 1 file, got 0")
+	bad := map[string]map[string]string{
+		"s3":          {"bucket": "b"},
+		"webdav":      {"url": "ftp://x"},
+		"filen":       {"email": "u", "api_key": "k"},
+		"sftp":        {"host": "h", "user": "u"},
+		"smb":         {"host": "h", "user": "u"},
+		"mega":        {"email": "u"},
+		"protondrive": {"username": "u"},
+		"onedrive":    {"client_id": "c"},
 	}
-	rc, info, err := drv.Get(ctx, "/pikpak_doc.txt")
-	if err != nil {
-		t.Fatalf("get failed: %v", err)
-	}
-	defer rc.Close()
-	data, _ := io.ReadAll(rc)
-	if string(data) != "pikpakdata" || info.Name != "pikpak_doc.txt" {
-		t.Errorf("unexpected content: %s", string(data))
-	}
-
-	if err := drv.Move(ctx, "/pikpak_doc.txt", "/pikpak_moved.txt"); err != nil {
-		t.Fatalf("move failed: %v", err)
-	}
-	if err := drv.Mkdir(ctx, "/pikpak_folder"); err != nil {
-		t.Fatalf("mkdir failed: %v", err)
-	}
-	if err := drv.Delete(ctx, "/pikpak_moved.txt"); err != nil {
-		t.Fatalf("delete failed: %v", err)
-	}
-	if err := drv.TestConnection(ctx); err != nil {
-		t.Fatalf("test connection failed: %v", err)
+	for p, c := range bad {
+		if err := ValidateCredentials(p, c); err == nil {
+			t.Errorf("%s: expected validation error", p)
+		}
 	}
 }
 
-func TestRcloneAdapter_SFTP_Basic(t *testing.T) {
-	creds := `{"host":"mock.sftp.local","port":"22","user":"mock_ssh_user","pass":"mock_ssh_pass"}`
-	drv, err := storage.NewRcloneDriver("sftp", "acc_sftp_test", creds)
-	if err != nil {
-		t.Fatalf("failed to create sftp driver: %v", err)
+func TestTOTPVector(t *testing.T) {
+	// RFC 6238 SHA1 vector (T=59s -> 94287082, last 6 digits).
+	code, err := totpCode("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", time.Unix(59, 0))
+	if err != nil || code != "287082" {
+		t.Fatalf("got %s %v", code, err)
 	}
-	if drv.Provider() != "sftp" {
-		t.Errorf("expected sftp, got %s", drv.Provider())
-	}
-	ctx := context.Background()
-	drv.SetBaseURL("http://127.0.0.1:9999")
-
-	quota, err := drv.About(ctx)
-	if err != nil {
-		t.Fatalf("about failed: %v", err)
-	}
-	if quota.Total <= 0 {
-		t.Errorf("expected positive total quota, got %d", quota.Total)
-	}
-
-	if err := drv.Put(ctx, "/sftp_doc.txt", bytes.NewReader([]byte("sftpdata")), 8); err != nil {
-		t.Fatalf("put failed: %v", err)
-	}
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("list failed: %v", err)
-	}
-	if len(files) == 0 {
-		t.Fatalf("expected at least 1 file, got 0")
-	}
-	rc, info, err := drv.Get(ctx, "/sftp_doc.txt")
-	if err != nil {
-		t.Fatalf("get failed: %v", err)
-	}
-	defer rc.Close()
-	data, _ := io.ReadAll(rc)
-	if string(data) != "sftpdata" || info.Name != "sftp_doc.txt" {
-		t.Errorf("unexpected content: %s", string(data))
-	}
-
-	if err := drv.Move(ctx, "/sftp_doc.txt", "/sftp_moved.txt"); err != nil {
-		t.Fatalf("move failed: %v", err)
-	}
-	if err := drv.Mkdir(ctx, "/sftp_folder"); err != nil {
-		t.Fatalf("mkdir failed: %v", err)
-	}
-	if err := drv.Delete(ctx, "/sftp_moved.txt"); err != nil {
-		t.Fatalf("delete failed: %v", err)
-	}
-	if err := drv.TestConnection(ctx); err != nil {
-		t.Fatalf("test connection failed: %v", err)
+	if _, err := totpCode("not base32 !!", time.Now()); err == nil {
+		t.Fatal("expected error")
 	}
 }
 
-func TestRcloneAdapter_SMB_Basic(t *testing.T) {
-	creds := `{"host":"mock.smb.local","port":"445","share":"mockshare","user":"mock_smb_user","pass":"mock_smb_pass"}`
-	drv, err := storage.NewRcloneDriver("smb", "acc_smb_test", creds)
-	if err != nil {
-		t.Fatalf("failed to create smb driver: %v", err)
+func TestCredMapperPersistsRotatedToken(t *testing.T) {
+	var mu sync.Mutex
+	var saved map[string]string
+	a, _ := NewRcloneDriverFromCreds("box", "acc_box", map[string]string{"client_id": "c", "client_secret": "s", "access_token": "a1", "refresh_token": "r1"},
+		WithPersister(func(id string, c map[string]string) {
+			mu.Lock()
+			saved = c
+			mu.Unlock()
+		}))
+	m := &credMapper{adapter: a, cfg: map[string]string{}}
+	m.Set("token", `{"access_token":"a2","token_type":"Bearer","refresh_token":"r2","expiry":"2030-01-01T00:00:00Z"}`)
+	m.Set("client_uid", "uid-1")
+	mu.Lock()
+	defer mu.Unlock()
+	if saved["access_token"] != "a2" || saved["refresh_token"] != "r2" || saved["token_expiry"] != "2030-01-01T00:00:00Z" || saved["rclone.client_uid"] != "uid-1" {
+		t.Fatalf("rotated state not persisted: %+v", saved)
 	}
-	if drv.Provider() != "smb" {
-		t.Errorf("expected smb, got %s", drv.Provider())
-	}
-	ctx := context.Background()
-	drv.SetBaseURL("http://127.0.0.1:9999")
-
-	quota, err := drv.About(ctx)
-	if err != nil {
-		t.Fatalf("about failed: %v", err)
-	}
-	if quota.Total <= 0 {
-		t.Errorf("expected positive total quota, got %d", quota.Total)
-	}
-
-	if err := drv.Put(ctx, "/smb_doc.txt", bytes.NewReader([]byte("smbdata")), 7); err != nil {
-		t.Fatalf("put failed: %v", err)
-	}
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("list failed: %v", err)
-	}
-	if len(files) == 0 {
-		t.Fatalf("expected at least 1 file, got 0")
-	}
-	rc, info, err := drv.Get(ctx, "/smb_doc.txt")
-	if err != nil {
-		t.Fatalf("get failed: %v", err)
-	}
-	defer rc.Close()
-	data, _ := io.ReadAll(rc)
-	if string(data) != "smbdata" || info.Name != "smb_doc.txt" {
-		t.Errorf("unexpected content: %s", string(data))
-	}
-
-	if err := drv.Move(ctx, "/smb_doc.txt", "/smb_moved.txt"); err != nil {
-		t.Fatalf("move failed: %v", err)
-	}
-	if err := drv.Mkdir(ctx, "/smb_folder"); err != nil {
-		t.Fatalf("mkdir failed: %v", err)
-	}
-	if err := drv.Delete(ctx, "/smb_moved.txt"); err != nil {
-		t.Fatalf("delete failed: %v", err)
-	}
-	if err := drv.TestConnection(ctx); err != nil {
-		t.Fatalf("test connection failed: %v", err)
+	if got := a.Credentials()["refresh_token"]; got != "r2" {
+		t.Fatalf("adapter creds not updated: %s", got)
 	}
 }
 
-func TestRcloneAdapter_ProtonDrive_Basic(t *testing.T) {
-	creds := `{"username":"mock_proton_user@proton.me","password":"mock_proton_password"}`
-	drv, err := storage.NewRcloneDriver("protondrive", "acc_proton_test", creds)
-	if err != nil {
-		t.Fatalf("failed to create protondrive driver: %v", err)
-	}
-	if drv.Provider() != "protondrive" {
-		t.Errorf("expected protondrive, got %s", drv.Provider())
-	}
-	ctx := context.Background()
-	drv.SetBaseURL("http://127.0.0.1:9999")
+func TestEnsureOneDriveDrive(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/token":
+			_ = r.ParseForm()
+			if r.Form.Get("refresh_token") != "rt" || r.Form.Get("client_id") != "cid" {
+				http.Error(w, `{"error":"invalid_grant"}`, 400)
+				return
+			}
+			_, _ = io.WriteString(w, `{"access_token":"fresh","refresh_token":"rt2","token_type":"Bearer","expires_in":3600}`)
+		case "/v1.0/me/drive":
+			if r.Header.Get("Authorization") != "Bearer fresh" {
+				http.Error(w, "unauthorized", 401)
+				return
+			}
+			_, _ = io.WriteString(w, `{"id":"DRIVE123","driveType":"personal"}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer ts.Close()
+	oldTok, oldGraph := oneDriveTokenURL, msGraphBaseURL
+	oneDriveTokenURL, msGraphBaseURL = ts.URL+"/token", ts.URL
+	defer func() { oneDriveTokenURL, msGraphBaseURL = oldTok, oldGraph }()
 
-	quota, err := drv.About(ctx)
-	if err != nil {
-		t.Fatalf("about failed: %v", err)
+	var saved map[string]string
+	a, _ := NewRcloneDriverFromCreds("onedrive", "acc_od", map[string]string{"client_id": "cid", "client_secret": "cs", "access_token": "stale", "refresh_token": "rt"},
+		WithPersister(func(_ string, c map[string]string) { saved = c }))
+	if err := a.ensureOneDriveDrive(context.Background()); err != nil {
+		t.Fatal(err)
 	}
-	if quota.Total <= 0 {
-		t.Errorf("expected positive total quota, got %d", quota.Total)
-	}
-
-	if err := drv.Put(ctx, "/proton_doc.txt", bytes.NewReader([]byte("protondata")), 10); err != nil {
-		t.Fatalf("put failed: %v", err)
-	}
-	files, err := drv.List(ctx, "/")
-	if err != nil {
-		t.Fatalf("list failed: %v", err)
-	}
-	if len(files) == 0 {
-		t.Fatalf("expected at least 1 file, got 0")
-	}
-	rc, info, err := drv.Get(ctx, "/proton_doc.txt")
-	if err != nil {
-		t.Fatalf("get failed: %v", err)
-	}
-	defer rc.Close()
-	data, _ := io.ReadAll(rc)
-	if string(data) != "protondata" || info.Name != "proton_doc.txt" {
-		t.Errorf("unexpected content: %s", string(data))
-	}
-
-	if err := drv.Move(ctx, "/proton_doc.txt", "/proton_moved.txt"); err != nil {
-		t.Fatalf("move failed: %v", err)
-	}
-	if err := drv.Mkdir(ctx, "/proton_folder"); err != nil {
-		t.Fatalf("mkdir failed: %v", err)
-	}
-	if err := drv.Delete(ctx, "/proton_moved.txt"); err != nil {
-		t.Fatalf("delete failed: %v", err)
-	}
-	if err := drv.TestConnection(ctx); err != nil {
-		t.Fatalf("test connection failed: %v", err)
+	if saved["drive_id"] != "DRIVE123" || saved["drive_type"] != "personal" || saved["refresh_token"] != "rt2" {
+		t.Fatalf("unexpected persisted creds %+v", saved)
 	}
 }
 
+func TestSFTPHostKeyPinning(t *testing.T) {
+	signer, err := ssh.NewSignerFromKey(testEd25519Key(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	calls := 0
+	old := sshHostKeyFetcher
+	sshHostKeyFetcher = func(ctx context.Context, addr string) (ssh.PublicKey, error) {
+		calls++
+		if addr != "files.example.com:2222" {
+			t.Errorf("unexpected addr %s", addr)
+		}
+		return signer.PublicKey(), nil
+	}
+	defer func() { sshHostKeyFetcher = old }()
 
+	var saved map[string]string
+	a, _ := NewRcloneDriverFromCreds("sftp", "acc_sftp", map[string]string{"host": "files.example.com", "port": "2222", "user": "u", "pass": "p"},
+		WithPersister(func(_ string, c map[string]string) { saved = c }))
+	if err := a.ensureSFTPHostKey(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(saved["known_host_key"], "[files.example.com]:2222 ssh-ed25519 ") || saved["host_key_fingerprint"] == "" {
+		t.Fatalf("host key not pinned: %+v", saved)
+	}
+	if a.knownHostsFile == "" {
+		t.Fatal("known_hosts file not prepared")
+	}
+	// Second bootstrap must reuse the pinned key, not re-trust the network.
+	if err := a.ensureSFTPHostKey(context.Background()); err != nil || calls != 1 {
+		t.Fatalf("expected pinned key reuse, calls=%d err=%v", calls, err)
+	}
+}
 
+func TestUnavailableDriver(t *testing.T) {
+	d := NewUnavailableDriver("acc", "s3", errors.New("missing credentials"))
+	if err := d.Put(context.Background(), "/a", strings.NewReader(""), 0); !errors.Is(err, ErrDriverNotAvailable) {
+		t.Fatalf("expected ErrDriverNotAvailable, got %v", err)
+	}
+	if _, err := d.About(context.Background()); err == nil {
+		t.Fatal("expected error")
+	}
+}
 
-
+func TestQuotaFromUsage(t *testing.T) {
+	i := func(v int64) *int64 { return &v }
+	cases := []struct {
+		total, used, free *int64
+		want              QuotaInfo
+		ok                bool
+	}{
+		{i(100), i(40), nil, QuotaInfo{100, 40, 60}, true},
+		{i(100), nil, i(30), QuotaInfo{100, 70, 30}, true},
+		{nil, i(5), i(10), QuotaInfo{15, 5, 10}, true},
+		{nil, nil, nil, QuotaInfo{}, false},
+	}
+	for _, c := range cases {
+		u := usageT{c.total, c.used, c.free}.toUsage()
+		got, ok := quotaFromUsage(&u)
+		if ok != c.ok || (ok && got != c.want) {
+			t.Errorf("got %+v %v want %+v", got, ok, c.want)
+		}
+	}
+	keys := []string{}
+	for _, p := range SupportedProviders {
+		keys = append(keys, string(p))
+	}
+	sort.Strings(keys)
+	if len(keys) != 16 {
+		t.Fatalf("expected 16 providers, got %d", len(keys))
+	}
+}

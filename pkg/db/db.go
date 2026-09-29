@@ -34,7 +34,6 @@ type StarredRecord struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-
 type TrashRecord struct {
 	ID              string    `json:"id"`
 	AccountID       string    `json:"account_id"`
@@ -283,6 +282,18 @@ func (d *DB) SaveAccount(acc RemoteAccount) error {
 	return err
 }
 
+// UpdateAccountCredentials replaces only the credentials JSON of an account.
+func (d *DB) UpdateAccountCredentials(id, credentials string) error {
+	res, err := d.conn.Exec(`UPDATE accounts SET credentials = ?, updated_at = ? WHERE id = ?`, credentials, time.Now().UTC(), id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 // ToggleAccount toggles the active/paused integration state of an account.
 func (d *DB) ToggleAccount(id string, enabled bool) error {
 	enabledInt := 0
@@ -405,7 +416,6 @@ func (d *DB) RemoveStarredFile(idOrAccountID, filePath string) error {
 	_, err := d.conn.Exec(`DELETE FROM starred_files WHERE account_id = ? AND path = ?`, idOrAccountID, filePath)
 	return err
 }
-
 
 // DeleteAccount permanently deletes an account from the database.
 func (d *DB) DeleteAccount(id string) error {
@@ -753,5 +763,3 @@ func (d *DB) RetryTask(id string) (*StorageTask, error) {
 	}
 	return d.GetTask(id)
 }
-
-

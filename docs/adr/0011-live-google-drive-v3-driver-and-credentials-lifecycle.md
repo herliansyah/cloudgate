@@ -1,5 +1,7 @@
 # Live Google Drive v3 Driver and Credential Lifecycle
 
+> **Update (2026-09-28):** Superseded by [ADR-0027](0027-full-rclone-backend-drivers-and-verified-onboarding.md): Google Drive now runs on the embedded rclone `drive` backend.
+
 We will implement a native, lightweight Google Drive v3 REST API driver with automatic token refreshing, persistent credential storage in SQLite, and full integration with the unified StoragePool.
 
 ## Context

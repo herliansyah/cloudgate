@@ -407,6 +407,7 @@ func TestAccountPrincipalAndDefaultNaming(t *testing.T) {
 	defer database.Close()
 
 	srv := server.NewServer(database, nil)
+	srv.SetDriverFactory(memoryDriverFactory)
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
 	setupTestAuth(t, database, ts.URL)
@@ -736,5 +737,145 @@ func TestProvidersAPI(t *testing.T) {
 		if !found[id] {
 			t.Errorf("expected provider %s not found in API response", id)
 		}
+	}
+}
+
+// memoryDriverFactory runs account drivers on rclone's memory backend so the
+// onboarding flow (including the mandatory connection test) works offline.
+func memoryDriverFactory(provider, id string, creds map[string]string, opts ...storage.AdapterOption) (storage.Driver, error) {
+	return storage.NewRcloneDriverFromCreds(provider, id, creds, append(opts, storage.WithMemoryBackend())...)
+}
+
+func TestAddAccountValidationAndVerification(t *testing.T) {
+	tmpDir, _ := os.MkdirTemp("", "cloudgate-add-validate-*")
+	defer os.RemoveAll(tmpDir)
+	database, err := db.Open(tmpDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	srv := server.NewServer(database, nil)
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
+
+	post := func(payload map[string]any) (*http.Response, map[string]any) {
+		b, _ := json.Marshal(payload)
+		resp, err := http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(b))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		var out map[string]any
+		_ = json.NewDecoder(resp.Body).Decode(&out)
+		return resp, out
+	}
+
+	// Missing required fields are rejected up front (no more empty-credential bypass).
+	for _, p := range []map[string]any{
+		{"provider": "s3", "bucket": "b"},
+		{"provider": "smb", "host": "h", "user": "u", "pass": "p"},
+		{"provider": "filen", "email": "e", "api_key": "k"},
+		{"provider": "mega"},
+		{"provider": "gdrive", "client_id": "x"},
+		{"provider": "nosuch"},
+	} {
+		resp, _ := post(p)
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("%v: expected 400, got %d", p, resp.StatusCode)
+		}
+	}
+
+	// A real backend that rejects the credentials must not be saved as connected.
+	dav := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	}))
+	defer dav.Close()
+	resp, out := post(map[string]any{"provider": "webdav", "url": dav.URL, "username": "u", "password": "wrong"})
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422 for failing connection, got %d %v", resp.StatusCode, out)
+	}
+	accs, _ := database.GetAccounts()
+	if len(accs) != 0 {
+		t.Fatalf("failed account must not be persisted: %+v", accs)
+	}
+
+	// Test-connection endpoint reports the failure too.
+	b, _ := json.Marshal(map[string]any{"provider": "webdav", "url": dav.URL, "username": "u", "password": "wrong"})
+	tr, err := http.Post(ts.URL+"/api/accounts/test", "application/json", bytes.NewReader(b))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var tres map[string]any
+	_ = json.NewDecoder(tr.Body).Decode(&tres)
+	tr.Body.Close()
+	if tres["success"] != false {
+		t.Fatalf("expected success=false, got %v", tres)
+	}
+}
+
+func TestLoadAccountsMarksBrokenAccountsUnavailable(t *testing.T) {
+	tmpDir, _ := os.MkdirTemp("", "cloudgate-load-*")
+	defer os.RemoveAll(tmpDir)
+	database, _ := db.Open(tmpDir)
+	defer database.Close()
+	_ = database.SaveAccount(db.RemoteAccount{ID: "acc_s3_nocreds", Provider: "s3", Name: "Broken", Status: "connected", Enabled: true})
+	_ = database.SaveAccount(db.RemoteAccount{ID: "acc_mem_ok", Provider: "sftp", Name: "OK", Status: "connected", Enabled: true,
+		Credentials: `{"host":"h","user":"u","pass":"p"}`})
+	srv := server.NewServer(database, nil)
+	srv.SetDriverFactory(memoryDriverFactory)
+	if err := srv.LoadAccounts(); err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
+
+	resp, err := http.Post(ts.URL+"/api/accounts/acc_s3_nocreds/test", "application/json", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var res map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&res)
+	resp.Body.Close()
+	if res["success"] != false {
+		t.Fatalf("account without credentials must not pretend to be connected: %v", res)
+	}
+	resp, _ = http.Post(ts.URL+"/api/accounts/acc_mem_ok/test", "application/json", nil)
+	_ = json.NewDecoder(resp.Body).Decode(&res)
+	resp.Body.Close()
+	if res["success"] != true {
+		t.Fatalf("expected healthy account: %v", res)
+	}
+}
+
+func TestAccountsAPIRedactsCredentials(t *testing.T) {
+	tmpDir, _ := os.MkdirTemp("", "cloudgate-redact-*")
+	defer os.RemoveAll(tmpDir)
+	database, _ := db.Open(tmpDir)
+	defer database.Close()
+	srv := server.NewServer(database, nil)
+	srv.SetDriverFactory(memoryDriverFactory)
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+	setupTestAuth(t, database, ts.URL)
+
+	b, _ := json.Marshal(map[string]any{"provider": "sftp", "host": "h", "user": "u", "pass": "topsecret"})
+	resp, err := http.Post(ts.URL+"/api/accounts", "application/json", bytes.NewReader(b))
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create failed: %v %d", err, resp.StatusCode)
+	}
+	created, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	list, _ := http.Get(ts.URL + "/api/accounts")
+	listed, _ := io.ReadAll(list.Body)
+	list.Body.Close()
+	for _, body := range [][]byte{created, listed} {
+		if bytes.Contains(body, []byte("topsecret")) || bytes.Contains(body, []byte(`"credentials"`)) {
+			t.Fatalf("credentials leaked in API response: %s", body)
+		}
+	}
+	if accs, _ := database.GetAccounts(); len(accs) != 1 || !bytes.Contains([]byte(accs[0].Credentials), []byte("topsecret")) {
+		t.Fatal("credentials must still be stored")
 	}
 }

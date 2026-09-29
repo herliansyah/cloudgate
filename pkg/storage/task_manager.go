@@ -208,7 +208,7 @@ func (tm *TaskManager) handleTransfer(ctx context.Context, task *db.StorageTask)
 	}
 
 	// Single file transfer
-	_, srcInfo, err := srcDriver.Get(ctx, task.SourcePath)
+	srcInfo, err := Stat(ctx, srcDriver, task.SourcePath)
 	if err != nil {
 		return fmt.Errorf("cannot access source file: %w", err), nil
 	}

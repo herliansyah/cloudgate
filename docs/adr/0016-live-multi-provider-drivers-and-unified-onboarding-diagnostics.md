@@ -1,5 +1,7 @@
 # 0016. Live Multi-Provider Drivers and Unified Onboarding Diagnostics
 
+> **Update (2026-09-28):** The hand-written REST drivers described here were replaced by embedded rclone backends in [ADR-0027](0027-full-rclone-backend-drivers-and-verified-onboarding.md). The earlier S3/WebDAV "live REST" claims did not hold (no SigV4 signing, silent in-memory fallback).
+
 Date: 2026-09-25
 
 ## Status

@@ -42,26 +42,30 @@
 
 ## Penyedia yang Didukung
 
-Cloudgate menghubungkan **16 penyedia penyimpanan cloud dan protokol server** melalui mesin rclone tersemat tanpa memerlukan dependensi binary daemon eksternal:
+Cloudgate menghubungkan **16 penyedia penyimpanan cloud dan protokol server**. Setiap provider dilayani oleh **backend rclone v1.73 tersemat** (`github.com/rclone/rclone/backend/*`) yang dikompilasi ke dalam satu binary, sehingga paginasi, upload bertahap/resumable, refresh token, dan kekhasan tiap provider ditangani rclone. Tidak perlu binary rclone atau daemon eksternal.
 
-| Penyedia | Kategori | Metode Autentikasi | Streaming Zero-Disk | Kompleksitas Setup |
-| :--- | :--- | :--- | :---: | :--- |
-| **Google Drive** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Client ID / Secret ([Panduan](#panduan-integrasi-google-drive)) |
-| **Microsoft OneDrive** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
-| **Dropbox** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
-| **Box** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
-| **pCloud** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
-| **Yandex Disk** | Cloud Drive | OAuth 2.0 | Ya (`io.Pipe`) | Persetujuan Browser |
-| **Koofr** | Cloud Drive | Kredensial Langsung | Ya (`io.Pipe`) | Username & Password |
-| **MEGA** | Cloud Privasi | Kredensial Langsung | Ya (`io.Pipe`) | Email & Password |
-| **Filen** | Cloud Privasi | Kredensial Langsung | Ya (`io.Pipe`) | Email, Password & 2FA |
-| **Proton Drive** | Cloud Privasi | Kredensial Langsung | Ya (`io.Pipe`) | Username, Password & 2FA |
-| **PikPak** | Cloud Privasi | Kredensial Langsung | Ya (`io.Pipe`) | Email & Password |
-| **Amazon S3** | Object Storage | Kunci Akses | Ya (`io.Pipe`) | Key, Secret, Endpoint, Bucket |
-| **Backblaze B2** | Object Storage | Kunci Akses | Ya (`io.Pipe`) | Key ID, App Key, Bucket |
-| **Nextcloud / WebDAV** | Protokol / Cloud | Kredensial Langsung | Ya (`io.Pipe`) | URL, Username, Password |
-| **SFTP** | Protokol Server | Kredensial SSH | Ya (`io.Pipe`) | Host, Port, User, Password / Key |
-| **SMB (Samba / Windows)** | Protokol Server | Berbagi Jaringan | Ya (`io.Pipe`) | Host, Share, User, Password |
+| Provider | Kategori | Metode Autentikasi | Backend rclone | Yang Dibutuhkan |
+| :--- | :--- | :--- | :--- | :--- |
+| **Google Drive** | Cloud Drive | OAuth 2.0 | `drive` | Client ID / Secret milik Anda ([Panduan](#panduan-integrasi-google-drive)) |
+| **Microsoft OneDrive** | Cloud Drive | OAuth 2.0 | `onedrive` | Client ID / Secret milik Anda (aplikasi Entra ID) |
+| **Dropbox** | Cloud Drive | OAuth 2.0 (offline) | `dropbox` | App key / App secret milik Anda |
+| **Box** | Cloud Drive | OAuth 2.0 | `box` | Client ID / Secret milik Anda |
+| **pCloud** (US & EU) | Cloud Drive | OAuth 2.0 | `pcloud` | Client ID / Secret milik Anda |
+| **Yandex Disk** | Cloud Drive | OAuth 2.0 | `yandex` | ClientID / Client secret milik Anda |
+| **Koofr** | Cloud Drive | Kredensial Langsung | `koofr` | Email & **app password** |
+| **MEGA** | Cloud Privasi | Kredensial Langsung | `mega` | Email, password (+ OTP secret jika 2FA) |
+| **Filen** | Cloud Privasi | Kredensial Langsung | `filen` | Email, password & **API key** (Filen CLI) |
+| **Proton Drive** | Cloud Privasi | Kredensial Langsung | `protondrive` | Username, password (+ OTP secret / kode 2FA, mailbox password) |
+| **PikPak** | Cloud Privasi | Kredensial Langsung | `pikpak` | Email/nomor HP & password |
+| **Amazon S3 & S3-compatible** (R2, Wasabi, MinIO, ...) | Object Storage | Kunci Akses (SigV4) | `s3` | Access key ID, secret, bucket, region, endpoint |
+| **Backblaze B2** | Object Storage | Application Key | `b2` | keyID, applicationKey, bucket |
+| **Nextcloud / WebDAV** | Protokol / Cloud | Kredensial Langsung | `webdav` | URL, username, (app) password |
+| **SFTP** | Protokol Server | Kredensial SSH | `sftp` | Host, port, user, password atau private key (host key dipin saat pertama) |
+| **SMB (Samba / Windows)** | Protokol Server | Network Share | `smb` | Host, share, user, password |
+
+Upload dan download dialirkan melalui rclone. Jika ukuran upload tidak diketahui dan backend tidak mendukung streaming, Cloudgate menampung upload ke file sementara terlebih dahulu.
+
+Setiap akun diverifikasi ke provider asli sebelum disimpan, dan kredensial yang berotasi (refresh token OAuth, sesi Proton/PikPak, drive ID OneDrive, host key SFTP) otomatis ditulis kembali ke database lokal.
 
 <!-- Placeholder Screenshot Web UI (misal: docs/assets/cloudgate-preview.png) -->
 
@@ -179,11 +183,12 @@ Buka antarmuka Web UI di browser Anda:
 Cloudgate menghubungkan akun cloud melalui dua metode autentikasi:
 
 1. **Penyedia Kredensial Langsung & Protokol Server** (Instan):
-   - **Didukung**: MEGA, Filen, Proton Drive, PikPak, Amazon S3, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba).
+   - **Didukung**: Koofr, MEGA, Filen, Proton Drive, PikPak, Amazon S3 / S3-compatible, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba).
    - **Cara Hubungkan**: Pada antarmuka Web UI, klik **"+ Tambah Akun"** / **"+ Add Account"**, pilih penyedia, lalu masukkan email/kata sandi, kunci API, atau alamat server Anda secara langsung. Tidak memerlukan pendaftaran aplikasi developer eksternal.
 2. **Penyedia Delegasi OAuth** (Persetujuan Izin Akun):
-   - **Didukung**: Google Drive, Microsoft OneDrive, Dropbox, Box.
-   - **Cara Hubungkan**: Memerlukan OAuth Client ID & Client Secret untuk verifikasi izin browser. Ikuti panduan langkah demi langkah untuk Google Drive di bawah ini sebagai referensi.
+   - **Didukung**: Google Drive, Microsoft OneDrive, Dropbox, Box, pCloud, Yandex Disk.
+   - **Cara Hubungkan**: Daftarkan aplikasi OAuth Anda sendiri di provider lalu tempel Client ID & Secret-nya. Dialog Tambah Akun dan halaman **Docs** di aplikasi menampilkan redirect URI yang tepat untuk alamat gateway Anda. Ikuti panduan Google Drive di bawah sebagai referensi.
+   - **Aturan Redirect URI**: Google menolak IP LAN privat, sehingga untuk Google Cloudgate memakai `http://localhost:<port>/...` saat diakses lewat IP LAN (selesaikan login di mesin Cloudgate). Microsoft Entra ID, Dropbox, dan Box hanya menerima `http://` untuk `localhost`; untuk akses dari perangkat lain sajikan Cloudgate lewat HTTPS.
 
 ---
 
@@ -196,26 +201,27 @@ Pada proyek Google Cloud Anda, Google Drive API harus diaktifkan:
 - Kunjungi [Google Drive API Overview](https://console.developers.google.com/apis/api/drive.googleapis.com/overview).
 - Klik **"ENABLE"** (Aktifkan).
 
-### 2. Konfigurasi Layar Persetujuan OAuth (OAuth Consent Screen)
-- Buka [Google Cloud Console - OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent).
-- Jika status publikasi masih **Testing**, tambahkan alamat email Google Anda di bagian **Test users**.
+### 2. Konfigurasi Google Auth Platform
+- Buka [Google Auth Platform](https://console.cloud.google.com/auth/overview) lalu klik **Get started**: isi nama aplikasi dan email dukungan, pilih audience **External**.
+- Di **Audience → Test users**, tambahkan setiap akun Google yang akan dihubungkan (wajib selama aplikasi berstatus *Testing*; jika tidak, login gagal dengan `403 access_denied`).
+- Selama berstatus *Testing*, Google menghentikan refresh token setelah 7 hari. Publikasikan aplikasi agar koneksi awet.
 
 ### 3. Buat Kredensial OAuth 2.0
-- Buka [Google Cloud Console - Credentials](https://console.cloud.google.com/apis/credentials).
-- Klik **Create Credentials** &rarr; **OAuth client ID**.
-- Pilih **Web application** (atau **Desktop app**).
-- Pada bagian **Authorized redirect URIs**, tambahkan:
+- Buka **Clients → Create client** di Google Auth Platform.
+- Pilih **Web application** (client Desktop tidak bisa memakai redirect URI ini).
+- Pada **Authorized redirect URIs**, tambahkan URI yang ditampilkan dialog Tambah Akun Cloudgate, untuk port default:
   ```
   http://localhost:5210/api/auth/google/callback
   ```
+  (Jika Cloudgate memakai port lain di rentang `5210..5300`, gunakan port tersebut.)
 - Salin **Client ID** dan **Client Secret** yang dihasilkan.
 
 ### 4. Hubungkan di Cloudgate
 - Pada Web UI Cloudgate, klik **"+ Tambah Akun"** / **"+ Add Account"**.
 - Pilih **Google Drive**.
 - Tempelkan **Client ID** dan **Client Secret** Anda.
-- Klik **"Masuk dengan Akun Google"** dan setujui akses izin.
-- Cloudgate akan menyelesaikan pertukaran token, membaca detail akun, mengambil kuota penyimpanan riil, dan menampilkan daftar file Anda.
+- Klik **"Masuk dengan Akun Google Drive"** dan setujui akses izin.
+- Cloudgate menyelesaikan pertukaran token (dengan PKCE), memverifikasi akses, mengambil kuota penyimpanan riil, dan menampilkan daftar file Anda.
 
 ---
 

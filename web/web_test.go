@@ -363,8 +363,9 @@ func TestFilenUIComponentsAndGuide(t *testing.T) {
 		`id="filenUser"`,
 		`id="filenPass"`,
 		`id="filenApiKey"`,
-		`export-api-key.sh`,
-		`4. Filen (Zero-Knowledge End-to-End Encrypted Cloud)`,
+		// The API key comes from the official Filen CLI, not a piped remote script.
+		`filen export-api-key`,
+		`https://github.com/FilenCloudDienste/filen-cli`,
 		`id="filen-logo"`,
 	}
 
@@ -372,6 +373,9 @@ func TestFilenUIComponentsAndGuide(t *testing.T) {
 		if !strings.Contains(content, marker) {
 			t.Errorf("expected embedded index.html to contain Filen marker %q, but was not found", marker)
 		}
+	}
+	if strings.Contains(content, "export-api-key.sh | bash") {
+		t.Errorf("Filen guide must not instruct users to pipe a remote script into bash")
 	}
 }
 
@@ -451,29 +455,25 @@ func TestDocumentationProvidersAndApiSync(t *testing.T) {
 	}
 	docsContent := content[startDocs : startDocs+endDocs]
 
-	// Ensure renderDocs includes guides for all 16 supported providers
-	expectedProviderGuides := []string{
-		"Google Drive",
-		"Microsoft OneDrive",
-		"Dropbox",
-		"Box",
-		"pCloud",
-		"Yandex Disk",
-		"Koofr",
-		"Mega",
-		"Filen",
-		"Backblaze B2",
-		"PikPak",
-		"SFTP",
-		"SMB",
-		"Proton Drive",
-		"S3",
-		"WebDAV",
+	// The Docs handbook is generated from PROVIDER_METADATA and must list all 16 providers.
+	expectedProviderIDs := []string{
+		"gdrive", "onedrive", "dropbox", "box", "pcloud", "yandex", "koofr", "webdav",
+		"s3", "b2", "mega", "filen", "pikpak", "protondrive", "sftp", "smb",
 	}
-
-	for _, p := range expectedProviderGuides {
-		if !strings.Contains(docsContent, p) {
-			t.Errorf("expected renderDocs in index.html to contain documentation for provider %q, but was not found", p)
+	for _, id := range expectedProviderIDs {
+		if !strings.Contains(docsContent, "'"+id+"'") {
+			t.Errorf("expected Docs handbook to include provider %q", id)
+		}
+	}
+	metaStart := strings.Index(content, "const PROVIDER_METADATA = {")
+	if metaStart == -1 {
+		t.Fatalf("PROVIDER_METADATA not found")
+	}
+	metaEnd := strings.Index(content[metaStart:], "function openModal(")
+	meta := content[metaStart : metaStart+metaEnd]
+	for _, id := range expectedProviderIDs {
+		if !strings.Contains(meta, "\n      "+id+": {") {
+			t.Errorf("PROVIDER_METADATA missing provider %q", id)
 		}
 	}
 
@@ -831,10 +831,7 @@ func TestAddProviderGuideBilingualSupport(t *testing.T) {
 	}
 
 	// Must supply English translations for guide headings in Add Provider modal
-	if !strings.Contains(content, "Google Drive API Registration Guide") {
-		t.Errorf("Add Provider guide missing English translation for Google Drive API Registration Guide")
+	if !strings.Contains(content, "Google Drive API registration (Google Auth Platform)") {
+		t.Errorf("Add Provider guide missing English translation for the Google Drive registration guide")
 	}
 }
-
-
-
