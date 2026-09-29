@@ -17,7 +17,6 @@ const (
 	DefaultPort = 5210
 	LockFileName = "cloudgate.lock"
 	DBFileName   = "cloudgate.db"
-	VaultFileName = "vault.enc"
 )
 
 // Dir returns the active configuration directory, creating it if necessary.

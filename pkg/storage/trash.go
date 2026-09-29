@@ -53,24 +53,15 @@ func (tm *TrashManager) MoveToTrash(ctx context.Context, driver Driver, original
 
 // Restore moves the file from /.cloudgate_trash back to its original path and removes the record from SQLite.
 func (tm *TrashManager) Restore(ctx context.Context, driver Driver, trashID string) error {
-	records, err := tm.database.GetTrashRecords()
+	rec, err := tm.database.GetTrashRecord(trashID)
 	if err != nil {
 		return err
 	}
-
-	var targetRec *db.TrashRecord
-	for _, r := range records {
-		if r.ID == trashID {
-			targetRec = &r
-			break
-		}
-	}
-
-	if targetRec == nil {
+	if rec == nil {
 		return fmt.Errorf("trash record %s not found", trashID)
 	}
 
-	if err := driver.Move(ctx, targetRec.RemoteTrashPath, targetRec.OriginalPath); err != nil {
+	if err := driver.Move(ctx, rec.RemoteTrashPath, rec.OriginalPath); err != nil {
 		return fmt.Errorf("failed to restore file on remote driver: %w", err)
 	}
 
@@ -83,17 +74,13 @@ func (tm *TrashManager) Restore(ctx context.Context, driver Driver, trashID stri
 
 // EmptyTrash permanently purges all soft-deleted files for the specified driver from remote trash and the database.
 func (tm *TrashManager) EmptyTrash(ctx context.Context, driver Driver) error {
-	records, err := tm.database.GetTrashRecords()
+	records, err := tm.database.GetTrashRecordsByAccount(driver.ID())
 	if err != nil {
 		return err
 	}
 
 	for _, r := range records {
-		if r.AccountID == driver.ID() {
-			_ = driver.Delete(ctx, r.RemoteTrashPath)
-			_ = tm.database.DeleteTrashRecord(r.ID)
-		}
+		_ = driver.Delete(ctx, r.RemoteTrashPath)
 	}
-
-	return nil
+	return tm.database.DeleteTrashRecordsByAccount(driver.ID())
 }

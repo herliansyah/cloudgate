@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,6 +11,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"golang.org/x/oauth2"
 )
 
 // TokenResponse is the provider's reply to the authorization-code exchange.
@@ -106,9 +107,7 @@ func NewPKCE() (verifier, challenge string, err error) {
 		return "", "", err
 	}
 	verifier = base64.RawURLEncoding.EncodeToString(b[:])
-	sum := sha256.Sum256([]byte(verifier))
-	challenge = base64.RawURLEncoding.EncodeToString(sum[:])
-	return verifier, challenge, nil
+	return verifier, oauth2.S256ChallengeFromVerifier(verifier), nil
 }
 
 // SupportsPKCE reports whether PKCE is used for provider.

@@ -344,42 +344,7 @@ func (s *Server) handleGetAccounts(w http.ResponseWriter, r *http.Request) {
 }
 
 func providerDisplayName(provider string) string {
-	switch strings.ToLower(provider) {
-	case "gdrive", "google":
-		return "Google Drive"
-	case "onedrive":
-		return "OneDrive"
-	case "dropbox":
-		return "Dropbox"
-	case "box":
-		return "Box"
-	case "pcloud":
-		return "pCloud"
-	case "yandex":
-		return "Yandex Disk"
-	case "koofr":
-		return "Koofr"
-	case "s3":
-		return "Amazon S3"
-	case "webdav":
-		return "WebDAV"
-	case "mega":
-		return "MEGA"
-	case "filen":
-		return "Filen"
-	case "b2":
-		return "Backblaze B2"
-	case "pikpak":
-		return "PikPak"
-	case "sftp":
-		return "SFTP / SSH"
-	case "smb":
-		return "SMB / Samba"
-	case "protondrive":
-		return "Proton Drive"
-	default:
-		return strings.ToUpper(provider)
-	}
+	return storage.ProviderLabel(storage.NormalizeProvider(provider))
 }
 
 func (s *Server) handleUpdateAccount(w http.ResponseWriter, r *http.Request) {
@@ -814,58 +779,12 @@ func (s *Server) handleUploadFile(w http.ResponseWriter, r *http.Request) {
 
 func detectContentType(filePath string) string {
 	ext := strings.ToLower(path.Ext(filePath))
-	switch ext {
-	case ".pdf":
-		return "application/pdf"
-	case ".txt", ".log", ".ini", ".conf", ".env":
-		return "text/plain; charset=utf-8"
-	case ".md", ".markdown":
-		return "text/markdown; charset=utf-8"
-	case ".json":
-		return "application/json; charset=utf-8"
-	case ".csv":
-		return "text/csv; charset=utf-8"
-	case ".html", ".htm":
-		return "text/html; charset=utf-8"
-	case ".css":
-		return "text/css; charset=utf-8"
-	case ".js", ".mjs":
-		return "application/javascript; charset=utf-8"
-	case ".go", ".py", ".rs", ".java", ".c", ".cpp", ".h", ".sh", ".bash", ".sql", ".yaml", ".yml", ".xml", ".ts", ".tsx", ".jsx":
-		return "text/plain; charset=utf-8"
-	case ".png":
-		return "image/png"
-	case ".jpg", ".jpeg":
-		return "image/jpeg"
-	case ".gif":
-		return "image/gif"
-	case ".webp":
-		return "image/webp"
-	case ".svg":
-		return "image/svg+xml"
-	case ".bmp":
-		return "image/bmp"
-	case ".ico":
-		return "image/x-icon"
-	case ".mp4":
-		return "video/mp4"
-	case ".webm":
-		return "video/webm"
-	case ".ogv":
-		return "video/ogg"
-	case ".mp3":
-		return "audio/mpeg"
-	case ".wav":
-		return "audio/wav"
-	case ".ogg", ".oga":
-		return "audio/ogg"
-	case ".m4a":
-		return "audio/mp4"
-	case ".flac":
-		return "audio/flac"
-	}
 	if t := mime.TypeByExtension(ext); t != "" {
 		return t
+	}
+	switch ext {
+	case ".md", ".markdown", ".go", ".py", ".rs", ".java", ".c", ".cpp", ".h", ".sh", ".bash", ".sql", ".yaml", ".yml", ".env", ".log", ".conf", ".ini", ".ts", ".tsx", ".jsx":
+		return "text/plain; charset=utf-8"
 	}
 	return "application/octet-stream"
 }

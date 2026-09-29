@@ -14,10 +14,11 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/mod/semver"
 
 	"github.com/herliansyah/cloudgate/pkg/config"
 )
@@ -156,37 +157,12 @@ func cacheResult(res *UpdateCheckResult) {
 	lastCheckTime = time.Now()
 }
 
-// isNewerVersion compares semver version strings (e.g. "0.2.0" vs "0.1.0", "0.10.0" vs "0.9.0").
+// isNewerVersion compares semver version strings using standard golang.org/x/mod/semver.
 func isNewerVersion(latest, current string) bool {
-	if latest == "" || latest == current {
+	if latest == "" || current == "" {
 		return false
 	}
-
-	lParts := strings.Split(latest, ".")
-	cParts := strings.Split(current, ".")
-
-	maxLen := len(lParts)
-	if len(cParts) > maxLen {
-		maxLen = len(cParts)
-	}
-
-	for i := 0; i < maxLen; i++ {
-		var lVal, cVal int
-		if i < len(lParts) {
-			lVal, _ = strconv.Atoi(strings.Split(lParts[i], "-")[0])
-		}
-		if i < len(cParts) {
-			cVal, _ = strconv.Atoi(strings.Split(cParts[i], "-")[0])
-		}
-
-		if lVal > cVal {
-			return true
-		}
-		if lVal < cVal {
-			return false
-		}
-	}
-	return false
+	return semver.Compare("v"+strings.TrimPrefix(latest, "v"), "v"+strings.TrimPrefix(current, "v")) > 0
 }
 
 // ApplyUpdate downloads the ReleasePackage binary, strictly validates its SHA-256 checksum

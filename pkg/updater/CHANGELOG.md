@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Codebase Simplification (Ponytail Audit)**:
+  - Replaced 50-line custom MIME switch in `pkg/server/server.go` with stdlib `mime.TypeByExtension` and compact fallback.
+  - Reused exported `storage.ProviderLabel` in `pkg/server/server.go`, eliminating duplicate 38-line provider display name mapping.
+  - Replaced 30-line hand-rolled semver comparison loop in `pkg/updater/updater.go` with standard `golang.org/x/mod/semver`.
+  - Piped streams directly to `dstDriver.Put` in `pkg/storage/transfer.go` and `pkg/storage/ingest.go`, eliminating redundant `io.Pipe`, buffer allocations, and background goroutines.
+  - Replaced full-table in-memory scans in `pkg/storage/trash.go` with targeted SQLite queries.
+  - Simplified PKCE challenge generation in `pkg/auth/oauth.go` with `oauth2.S256ChallengeFromVerifier`.
+  - Removed unused `pools` table migration from SQLite schema.
+  - Removed unused `SaveToFile`/`ReadFromFile` vault helpers and `VaultFileName` constant.
+
 ## [0.4.0] - 2026-09-29
 
 ### Changed

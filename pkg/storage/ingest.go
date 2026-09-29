@@ -216,24 +216,8 @@ func RemoteIngestStream(
 		lastReport: time.Now(),
 	}
 
-	pr, pw := io.Pipe()
-	errChan := make(chan error, 1)
-
-	go func() {
-		buf := make([]byte, transferBufferSize)
-		_, copyErr := io.CopyBuffer(pw, reader, buf)
-		_ = pw.CloseWithError(copyErr)
-		errChan <- copyErr
-	}()
-
-	putErr := dstDriver.Put(ctx, targetFilePath, pr, contentLength)
-	pipeErr := <-errChan
-
-	if putErr != nil {
-		return "", 0, fmt.Errorf("failed to store ingested file into remote account: %w", putErr)
-	}
-	if pipeErr != nil {
-		return "", 0, fmt.Errorf("streaming ingest error: %w", pipeErr)
+	if err := dstDriver.Put(ctx, targetFilePath, reader, contentLength); err != nil {
+		return "", 0, fmt.Errorf("failed to store ingested file into remote account: %w", err)
 	}
 
 	if onProgress != nil {
