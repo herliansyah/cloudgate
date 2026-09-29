@@ -10,7 +10,7 @@ import (
 
 const (
 	AppName    = "Cloudgate"
-	AppVersion = "0.4.0"
+	AppVersion = "0.4.1"
 	AppAuthor  = "Herliansyah"
 	AppRepo    = "https://github.com/herliansyah/cloudgate"
 
