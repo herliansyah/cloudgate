@@ -42,26 +42,30 @@
 
 ## Supported Providers
 
-Cloudgate connects to **16 storage providers and protocols** through an embedded rclone engine without requiring external daemon bridges:
+Cloudgate connects to **16 storage providers and protocols**. Every provider is served by an **embedded rclone v1.73 backend** (`github.com/rclone/rclone/backend/*`) compiled into the single binary, so pagination, chunked/resumable uploads, token refresh and provider quirks are handled by rclone. No external rclone binary or daemon is needed.
 
-| Provider | Category | Auth Method | Zero-Disk Streaming | Setup Friction |
-| :--- | :--- | :--- | :---: | :--- |
-| **Google Drive** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Client ID / Secret ([Guide](#google-drive-integration-guide)) |
-| **Microsoft OneDrive** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
-| **Dropbox** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
-| **Box** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
-| **pCloud** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
-| **Yandex Disk** | Cloud Drive | OAuth 2.0 | Yes (`io.Pipe`) | Browser Consent |
-| **Koofr** | Cloud Drive | Direct Credentials | Yes (`io.Pipe`) | User & Password |
-| **MEGA** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email & Password |
-| **Filen** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email, Password & 2FA |
-| **Proton Drive** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Username, Password & 2FA |
-| **PikPak** | Privacy Cloud | Direct Credentials | Yes (`io.Pipe`) | Email & Password |
-| **Amazon S3** | Object Storage | Access Keys | Yes (`io.Pipe`) | Key, Secret, Endpoint, Bucket |
-| **Backblaze B2** | Object Storage | Access Keys | Yes (`io.Pipe`) | Key ID, App Key, Bucket |
-| **Nextcloud / WebDAV** | Protocol / Cloud | Direct Credentials | Yes (`io.Pipe`) | URL, Username, Password |
-| **SFTP** | Server Protocol | SSH Credentials | Yes (`io.Pipe`) | Host, Port, User, Password / Key |
-| **SMB (Samba / Windows)** | Server Protocol | Network Share | Yes (`io.Pipe`) | Host, Share, User, Password |
+| Provider | Category | Auth Method | rclone backend | What you need |
+| :--- | :--- | :--- | :--- | :--- |
+| **Google Drive** | Cloud Drive | OAuth 2.0 | `drive` | Your own Client ID / Secret ([Guide](#google-drive-integration-guide)) |
+| **Microsoft OneDrive** | Cloud Drive | OAuth 2.0 | `onedrive` | Your own Client ID / Secret (Entra ID app) |
+| **Dropbox** | Cloud Drive | OAuth 2.0 (offline) | `dropbox` | Your own App key / App secret |
+| **Box** | Cloud Drive | OAuth 2.0 | `box` | Your own Client ID / Secret |
+| **pCloud** (US & EU) | Cloud Drive | OAuth 2.0 | `pcloud` | Your own Client ID / Secret |
+| **Yandex Disk** | Cloud Drive | OAuth 2.0 | `yandex` | Your own ClientID / Client secret |
+| **Koofr** | Cloud Drive | Direct Credentials | `koofr` | Email & **app password** |
+| **MEGA** | Privacy Cloud | Direct Credentials | `mega` | Email, password (+ OTP secret if 2FA) |
+| **Filen** | Privacy Cloud | Direct Credentials | `filen` | Email, password & **API key** (Filen CLI) |
+| **Proton Drive** | Privacy Cloud | Direct Credentials | `protondrive` | Username, password (+ OTP secret / 2FA code, mailbox password) |
+| **PikPak** | Privacy Cloud | Direct Credentials | `pikpak` | Email/phone & password |
+| **Amazon S3 & S3-compatible** (R2, Wasabi, MinIO, ...) | Object Storage | Access Keys (SigV4) | `s3` | Access key ID, secret, bucket, region, endpoint |
+| **Backblaze B2** | Object Storage | Application Key | `b2` | keyID, applicationKey, bucket |
+| **Nextcloud / WebDAV** | Protocol / Cloud | Direct Credentials | `webdav` | URL, username, (app) password |
+| **SFTP** | Server Protocol | SSH Credentials | `sftp` | Host, port, user, password or private key (host key pinned on first use) |
+| **SMB (Samba / Windows)** | Server Protocol | Network Share | `smb` | Host, share, user, password |
+
+Uploads and downloads are streamed through rclone. When the upload size is unknown and the backend cannot stream, Cloudgate spools the upload to a temporary file first.
+
+Every account is verified against the real provider before it is saved, and rotated credentials (OAuth refresh tokens, Proton/PikPak sessions, OneDrive drive IDs, SFTP host keys) are written back to the local database automatically.
 
 <!-- Web UI Preview Placeholder (e.g. docs/assets/cloudgate-preview.png) -->
 
@@ -178,11 +182,12 @@ Access the Web UI in your browser:
 Cloudgate connects to providers via two authentication methods:
 
 1. **Direct Credential & Server Protocol Providers** (Instant Setup):
-   - **Supported**: MEGA, Filen, Proton Drive, PikPak, Amazon S3, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba).
+   - **Supported**: Koofr, MEGA, Filen, Proton Drive, PikPak, Amazon S3 / S3-compatible, Backblaze B2, Nextcloud / WebDAV, SFTP, SMB (Windows Share / Samba).
    - **How to connect**: In the Web UI, click **"+ Add Account"**, select the provider, and enter your login credentials, API key, or server address directly. No external developer registration is required.
 2. **OAuth Delegated Providers** (App Consent):
-   - **Supported**: Google Drive, Microsoft OneDrive, Dropbox, Box.
-   - **How to connect**: Requires standard OAuth Client ID & Secret credentials. Follow the step-by-step walkthrough below for Google Drive as a reference.
+   - **Supported**: Google Drive, Microsoft OneDrive, Dropbox, Box, pCloud, Yandex Disk.
+   - **How to connect**: Register your own OAuth app with the provider and paste its Client ID & Secret. The Add Account dialog and the in-app **Docs** page show the exact redirect URI for your gateway address. Follow the walkthrough below for Google Drive as a reference.
+   - **Redirect URI rules**: Google rejects private LAN IPs, so for Google Cloudgate uses `http://localhost:<port>/...` when accessed via a LAN IP (finish the sign-in on the Cloudgate machine). Microsoft Entra ID, Dropbox and Box only accept plain `http://` for `localhost`; for access from other devices serve Cloudgate over HTTPS.
 
 ---
 
@@ -195,26 +200,27 @@ In your Google Cloud project, the Google Drive API must be enabled:
 - Visit [Google Drive API Overview](https://console.developers.google.com/apis/api/drive.googleapis.com/overview).
 - Click **"ENABLE"** (Aktifkan).
 
-### 2. Configure OAuth Consent Screen
-- Go to [Google Cloud Console - OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent).
-- If your publishing status is **Testing**, add your Google email address under **Test users**.
+### 2. Configure the Google Auth Platform
+- Open [Google Auth Platform](https://console.cloud.google.com/auth/overview) and click **Get started**: set the app name and support email, and choose audience **External**.
+- Under **Audience → Test users**, add every Google account you will connect (required while the app is in *Testing*; otherwise sign-in fails with `403 access_denied`).
+- While the app is in *Testing*, Google expires refresh tokens after 7 days. Publish the app for a long-lived connection.
 
 ### 3. Create OAuth 2.0 Credentials
-- Go to [Google Cloud Console - Credentials](https://console.cloud.google.com/apis/credentials).
-- Click **Create Credentials** &rarr; **OAuth client ID**.
-- Select **Web application** (or **Desktop app**).
-- Under **Authorized redirect URIs**, add:
+- Open **Clients → Create client** in the Google Auth Platform.
+- Select **Web application** (Desktop clients cannot use this redirect URI).
+- Under **Authorized redirect URIs**, add the URI shown in the Cloudgate Add Account dialog, for the default port:
   ```
   http://localhost:5210/api/auth/google/callback
   ```
+  (If Cloudgate picked another port in `5210..5300`, use that port.)
 - Copy the generated **Client ID** and **Client Secret**.
 
 ### 4. Connect in Cloudgate
 - In the Cloudgate Web UI, click **"+ Add Account"**.
 - Select **Google Drive**.
 - Paste your **Client ID** and **Client Secret**.
-- Click **"Masuk dengan Akun Google"** and approve access.
-- Cloudgate will complete the token exchange, fetch your account details, read your real storage quota, and list your files.
+- Click **"Sign in with Google Drive Account"** and approve access.
+- Cloudgate completes the token exchange (with PKCE), verifies access, reads your real storage quota, and lists your files.
 
 ---
 

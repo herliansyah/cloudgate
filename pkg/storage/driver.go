@@ -45,3 +45,22 @@ type Driver interface {
 	GetShareLink(ctx context.Context, path string) (string, error)
 }
 
+// Stater is implemented by drivers that can read file metadata without
+// opening a download stream.
+type Stater interface {
+	Stat(ctx context.Context, path string) (FileInfo, error)
+}
+
+// Stat returns file metadata. It never leaves a download stream open: an
+// unclosed stream keeps the remote file locked (SMB) and leaks connections.
+func Stat(ctx context.Context, d Driver, p string) (FileInfo, error) {
+	if s, ok := d.(Stater); ok {
+		return s.Stat(ctx, p)
+	}
+	rc, info, err := d.Get(ctx, p)
+	if err != nil {
+		return FileInfo{}, err
+	}
+	_ = rc.Close()
+	return info, nil
+}

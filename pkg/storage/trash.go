@@ -21,7 +21,7 @@ func NewTrashManager(database *db.DB) *TrashManager {
 
 // MoveToTrash moves a remote file into the isolated /.cloudgate_trash directory and catalogs its restoration path in SQLite.
 func (tm *TrashManager) MoveToTrash(ctx context.Context, driver Driver, originalPath string) (*db.TrashRecord, error) {
-	_, info, err := driver.Get(ctx, originalPath)
+	info, err := Stat(ctx, driver, originalPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to locate file for trash: %w", err)
 	}

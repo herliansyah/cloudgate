@@ -54,12 +54,12 @@ func MoveFile(ctx context.Context, srcDriver Driver, srcPath string, dstDriver D
 	}
 
 	// 2. Safe-move verification: ensure target exists and size matches
-	_, targetInfo, err := dstDriver.Get(ctx, dstPath)
+	targetInfo, err := Stat(ctx, dstDriver, dstPath)
 	if err != nil {
 		return fmt.Errorf("target verification failed after copy: %w", err)
 	}
 
-	_, srcInfo, err := srcDriver.Get(ctx, srcPath)
+	srcInfo, err := Stat(ctx, srcDriver, srcPath)
 	if err != nil {
 		return fmt.Errorf("source re-check failed: %w", err)
 	}

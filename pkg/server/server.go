@@ -2,23 +2,19 @@ package server
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"html"
 	"io"
 	"io/fs"
 	"mime"
 	"net"
 	"net/http"
-	"net/url"
 	"path"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
 
 	"github.com/herliansyah/cloudgate/pkg/auth"
 	"github.com/herliansyah/cloudgate/pkg/config"
@@ -29,23 +25,30 @@ import (
 )
 
 type Server struct {
-	mu           sync.RWMutex
-	database     *db.DB
-	trashManager *storage.TrashManager
-	taskManager  *storage.TaskManager
-	drivers      map[string]storage.Driver
+	mu             sync.RWMutex
+	database       *db.DB
+	trashManager   *storage.TrashManager
+	taskManager    *storage.TaskManager
+	drivers        map[string]storage.Driver
 	pools          map[string]*storage.StoragePool
 	assets         fs.FS
 	restartTrigger func()
+
+	driverFactory DriverFactory
+
+	oauthMu     sync.Mutex
+	oauthStates map[string]pendingOAuth
 }
 
 func NewServer(database *db.DB, assets fs.FS) *Server {
 	s := &Server{
-		database:     database,
-		trashManager: storage.NewTrashManager(database),
-		drivers:      make(map[string]storage.Driver),
-		pools:        make(map[string]*storage.StoragePool),
-		assets:       assets,
+		database:      database,
+		trashManager:  storage.NewTrashManager(database),
+		drivers:       make(map[string]storage.Driver),
+		pools:         make(map[string]*storage.StoragePool),
+		assets:        assets,
+		driverFactory: defaultDriverFactory,
+		oauthStates:   make(map[string]pendingOAuth),
 	}
 	s.taskManager = storage.NewTaskManager(database, s.trashManager, func(accountID string) (storage.Driver, error) {
 		s.mu.RLock()
@@ -88,7 +91,6 @@ func (s *Server) triggerRestart() {
 		fn()
 	}
 }
-
 
 // Close gracefully terminates background tasks and releases resources.
 func (s *Server) Close() {
@@ -136,6 +138,7 @@ func (s *Server) Handler() http.Handler {
 
 	// OAuth Routes
 	mux.HandleFunc("GET /api/auth/{provider}/login", s.handleOAuthLogin)
+	mux.HandleFunc("POST /api/auth/{provider}/login", s.handleOAuthLogin)
 	mux.HandleFunc("GET /api/auth/{provider}/callback", s.handleOAuthCallback)
 
 	mux.HandleFunc("GET /api/pools", s.handleGetPools)
@@ -151,7 +154,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/files/copy", s.handleCopyFile)
 	mux.HandleFunc("POST /api/files/move", s.handleMoveFile)
 	mux.HandleFunc("POST /api/files/trash", s.handleTrashFile)
-
 
 	mux.HandleFunc("GET /api/trash", s.handleGetTrash)
 	mux.HandleFunc("POST /api/trash/restore", s.handleRestoreTrash)
@@ -310,7 +312,7 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleProviders(w http.ResponseWriter, r *http.Request) {
-	// ponytail: static provider registry matching all 16 supported rclone drivers
+	// Static provider registry: all 16 providers are served by embedded rclone backends (ADR-0027).
 	providers := []map[string]any{
 		{"id": "gdrive", "name": "Google Drive", "category": "Cloud Drive", "auth_method": "oauth", "description": "Google Drive cloud storage via OAuth 2.0"},
 		{"id": "onedrive", "name": "OneDrive", "category": "Cloud Drive", "auth_method": "oauth", "description": "Microsoft OneDrive via OAuth 2.0"},
@@ -318,7 +320,7 @@ func (s *Server) handleProviders(w http.ResponseWriter, r *http.Request) {
 		{"id": "box", "name": "Box", "category": "Cloud Drive", "auth_method": "oauth", "description": "Box cloud storage via OAuth 2.0"},
 		{"id": "pcloud", "name": "pCloud", "category": "Cloud Drive", "auth_method": "oauth", "description": "pCloud storage via OAuth 2.0"},
 		{"id": "yandex", "name": "Yandex Disk", "category": "Cloud Drive", "auth_method": "oauth", "description": "Yandex Disk storage via OAuth 2.0"},
-		{"id": "koofr", "name": "Koofr", "category": "Cloud Drive", "auth_method": "credentials", "description": "Koofr storage via WebDAV credentials"},
+		{"id": "koofr", "name": "Koofr", "category": "Cloud Drive", "auth_method": "credentials", "description": "Koofr storage via email and app password"},
 		{"id": "mega", "name": "MEGA", "category": "Privacy Cloud", "auth_method": "credentials", "description": "Client-side encrypted MEGA storage"},
 		{"id": "filen", "name": "Filen", "category": "Privacy Cloud", "auth_method": "credentials", "description": "Zero-knowledge end-to-end encrypted Filen cloud"},
 		{"id": "b2", "name": "Backblaze B2", "category": "Object Storage", "auth_method": "access_keys", "description": "Backblaze B2 Cloud Object Storage"},
@@ -332,93 +334,13 @@ func (s *Server) handleProviders(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, providers)
 }
 
-func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	var totalStorage, totalUsed, totalFree int64
-	type AccountStat struct {
-		ID         string     `json:"id"`
-		Name       string     `json:"name"`
-		Provider   string     `json:"provider"`
-		Status     string     `json:"status"`
-		Enabled    bool       `json:"enabled"`
-		Email      string     `json:"email,omitempty"`
-		LastSyncAt *time.Time `json:"last_sync_at,omitempty"`
-		Total      int64      `json:"total"`
-		Used       int64      `json:"used"`
-		Free       int64      `json:"free"`
-	}
-
-	dbAccounts, _ := s.database.GetAccounts()
-	dbMap := make(map[string]db.RemoteAccount)
-	for _, a := range dbAccounts {
-		dbMap[a.ID] = a
-	}
-
-	var accountStats []AccountStat
-	for id, driver := range s.drivers {
-		accInfo := dbMap[id]
-		name := id
-		if accInfo.Name != "" {
-			name = accInfo.Name
-		}
-		quota, err := driver.About(r.Context())
-		status := "connected"
-		if !accInfo.Enabled && accInfo.Status == "disabled" {
-			status = "disabled"
-		} else if err != nil {
-			status = "error"
-			if accInfo.QuotaTotal > 0 {
-				quota.Total = accInfo.QuotaTotal
-				quota.Used = accInfo.QuotaUsed
-				free := accInfo.QuotaTotal - accInfo.QuotaUsed
-				if free < 0 {
-					free = 0
-				}
-				quota.Free = free
-				totalStorage += quota.Total
-				totalUsed += quota.Used
-				totalFree += quota.Free
-			}
-		} else {
-			if quota.Total <= 0 && accInfo.QuotaTotal > 0 {
-				quota.Total = accInfo.QuotaTotal
-			}
-			totalStorage += quota.Total
-			totalUsed += quota.Used
-			totalFree += quota.Free
-		}
-		accountStats = append(accountStats, AccountStat{
-			ID:         id,
-			Name:       name,
-			Provider:   driver.Provider(),
-			Status:     status,
-			Enabled:    accInfo.Enabled,
-			Email:      accInfo.Email,
-			LastSyncAt: accInfo.LastSyncAt,
-			Total:      quota.Total,
-			Used:       quota.Used,
-			Free:       quota.Free,
-		})
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"total_storage": totalStorage,
-		"total_used":    totalUsed,
-		"total_free":    totalFree,
-		"accounts":      accountStats,
-	})
-}
-
-
 func (s *Server) handleGetAccounts(w http.ResponseWriter, r *http.Request) {
 	accounts, err := s.database.GetAccounts()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, accounts)
+	writeJSON(w, http.StatusOK, redactAccounts(accounts))
 }
 
 func providerDisplayName(provider string) string {
@@ -458,264 +380,6 @@ func providerDisplayName(provider string) string {
 	default:
 		return strings.ToUpper(provider)
 	}
-}
-
-func (s *Server) handleAddAccount(w http.ResponseWriter, r *http.Request) {
-	var raw map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request payload")
-		return
-	}
-	getStr := func(k string) string {
-		if v, ok := raw[k]; ok {
-			if s, ok := v.(string); ok {
-				return s
-			}
-		}
-		return ""
-	}
-	getInt := func(k string) int64 {
-		if v, ok := raw[k]; ok {
-			switch x := v.(type) {
-			case float64:
-				return int64(x)
-			case int64:
-				return x
-			case int:
-				return int64(x)
-			}
-		}
-		return 0
-	}
-	id := getStr("id")
-	provider := getStr("provider")
-	name := getStr("name")
-	rootFolder := getStr("root_folder")
-	if rootFolder == "" {
-		rootFolder = "/"
-	}
-	quotaTotal := getInt("quota_total")
-	if id == "" {
-		id = fmt.Sprintf("%s_%d", provider, time.Now().Unix())
-	}
-	if provider == "" {
-		writeError(w, http.StatusBadRequest, "provider required")
-		return
-	}
-	// Collect provider-specific extra fields into credentials
-	extra := make(map[string]string)
-	for k, v := range raw {
-		switch k {
-		case "id", "provider", "name", "root_folder", "quota_total":
-		default:
-			if s, ok := v.(string); ok {
-				extra[k] = s
-			} else if v != nil {
-				b, _ := json.Marshal(v)
-				extra[k] = string(b)
-			}
-		}
-	}
-
-	principal := ""
-	switch provider {
-	case "s3":
-		if extra["bucket"] != "" {
-			if extra["endpoint"] != "" {
-				principal = fmt.Sprintf("%s (%s)", extra["bucket"], extra["endpoint"])
-			} else {
-				principal = extra["bucket"]
-			}
-		}
-	case "webdav", "koofr":
-		if extra["username"] != "" && extra["url"] != "" {
-			u, err := url.Parse(extra["url"])
-			if err == nil && u.Host != "" {
-				principal = fmt.Sprintf("%s@%s", extra["username"], u.Host)
-			} else {
-				principal = extra["username"]
-			}
-		} else if extra["username"] != "" {
-			principal = extra["username"]
-		}
-	case "mega", "filen", "pikpak":
-		if extra["email"] != "" {
-			principal = extra["email"]
-		} else if extra["user"] != "" {
-			principal = extra["user"]
-		} else {
-			principal = extra["username"]
-		}
-	case "b2":
-		if extra["bucket"] != "" {
-			principal = extra["bucket"]
-		} else if extra["account"] != "" {
-			principal = extra["account"]
-		} else if extra["key_id"] != "" {
-			principal = extra["key_id"]
-		} else {
-			principal = extra["username"]
-		}
-	case "sftp":
-		host := extra["host"]
-		user := extra["user"]
-		if user == "" {
-			user = extra["username"]
-		}
-		port := extra["port"]
-		if port == "" {
-			port = "22"
-		}
-		if user != "" && host != "" {
-			principal = fmt.Sprintf("%s@%s:%s", user, host, port)
-		} else if host != "" {
-			principal = host
-		} else {
-			principal = user
-		}
-	case "smb":
-		host := extra["host"]
-		share := extra["share"]
-		user := extra["user"]
-		if user == "" {
-			user = extra["username"]
-		}
-		if user != "" && host != "" && share != "" {
-			principal = fmt.Sprintf("%s@%s/%s", user, host, share)
-		} else if host != "" && share != "" {
-			principal = fmt.Sprintf("%s/%s", host, share)
-		} else if host != "" {
-			principal = host
-		} else {
-			principal = user
-		}
-	case "protondrive":
-		user := extra["username"]
-		if user == "" {
-			user = extra["user"]
-		}
-		if user == "" {
-			user = extra["email"]
-		}
-		principal = user
-	}
-	email := principal
-	if userEmail := getStr("email"); userEmail != "" {
-		email = userEmail
-	}
-
-	if name == "" {
-		disp := providerDisplayName(provider)
-		if principal != "" {
-			name = fmt.Sprintf("%s (%s)", disp, principal)
-		} else {
-			name = fmt.Sprintf("%s Account", disp)
-		}
-	}
-
-	credsJSON := ""
-	if len(extra) > 0 {
-		b, _ := json.Marshal(extra)
-		credsJSON = string(b)
-	}
-	// Validation for provider-specific required fields (synthetic allowed for tests)
-	switch provider {
-	case "s3":
-		if len(extra) > 0 && extra["bucket"] == "" {
-			writeError(w, http.StatusBadRequest, "s3 requires bucket")
-			return
-		}
-	case "webdav", "koofr":
-		if len(extra) > 0 && extra["url"] == "" {
-			writeError(w, http.StatusBadRequest, "webdav requires url")
-			return
-		}
-	case "mega":
-		if len(extra) > 0 && extra["username"] == "" && extra["email"] == "" {
-			writeError(w, http.StatusBadRequest, "mega requires username/email and password")
-			return
-		}
-	case "filen":
-		if len(extra) > 0 && ((extra["username"] == "" && extra["email"] == "") || extra["api_key"] == "") {
-			writeError(w, http.StatusBadRequest, "filen requires email, password, and api_key")
-			return
-		}
-	case "b2":
-		if len(extra) > 0 && ((extra["account"] == "" && extra["key_id"] == "" && extra["username"] == "") || (extra["key"] == "" && extra["application_key"] == "" && extra["password"] == "")) {
-			writeError(w, http.StatusBadRequest, "b2 requires account/key_id and application_key")
-			return
-		}
-	case "pikpak":
-		if len(extra) > 0 && ((extra["username"] == "" && extra["email"] == "" && extra["user"] == "") || (extra["password"] == "" && extra["pass"] == "")) {
-			writeError(w, http.StatusBadRequest, "pikpak requires username/email and password")
-			return
-		}
-	case "sftp":
-		if len(extra) > 0 && (extra["host"] == "" || (extra["user"] == "" && extra["username"] == "")) {
-			writeError(w, http.StatusBadRequest, "sftp requires host and user/username")
-			return
-		}
-	case "smb":
-		if len(extra) > 0 && (extra["host"] == "" || (extra["user"] == "" && extra["username"] == "")) {
-			writeError(w, http.StatusBadRequest, "smb requires host and user/username")
-			return
-		}
-	case "protondrive":
-		if len(extra) > 0 && ((extra["username"] == "" && extra["user"] == "" && extra["email"] == "") || (extra["password"] == "" && extra["pass"] == "")) {
-			writeError(w, http.StatusBadRequest, "protondrive requires username and password")
-			return
-		}
-	}
-	// For S3/WebDAV/Mega/B2/PikPak/SFTP/SMB/ProtonDrive synthetic quota
-	if (provider == "s3" || provider == "webdav" || provider == "mega" || provider == "koofr" || provider == "filen" || provider == "b2" || provider == "pikpak" || provider == "sftp" || provider == "smb" || provider == "protondrive") && quotaTotal == 0 {
-		quotaTotal = 1 << 40 // 1TB synthetic default before About()
-	}
-	acc := db.RemoteAccount{
-		ID:          id,
-		Provider:    provider,
-		Name:        name,
-		RootFolder:  rootFolder,
-		Status:      "connected",
-		QuotaTotal:  quotaTotal,
-		QuotaUsed:   0,
-		Credentials: credsJSON,
-		Email:       email,
-		UpdatedAt:   time.Now().UTC(),
-	}
-	if err := s.database.SaveAccount(acc); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	s.mu.Lock()
-	if _, exists := s.drivers[acc.ID]; !exists {
-		quota := acc.QuotaTotal
-		if quota <= 0 {
-			quota = 15 * 1024 * 1024 * 1024
-		}
-		var drv storage.Driver
-		switch provider {
-		case "s3", "webdav", "mega", "koofr", "box", "pcloud", "yandex", "onedrive", "dropbox", "filen", "b2", "pikpak", "sftp", "smb", "protondrive":
-			// Use RcloneAdapter for all non-gdrive providers (covers manual s3/webdav/mega and any future)
-			drv = storage.NewRcloneAdapterWithExtra(provider, acc.ID, extra["client_id"], extra["client_secret"], extra["access_token"], extra["refresh_token"], "", name, extra)
-		default:
-			drv = storage.NewMemDriver(acc.ID, acc.Provider, quota)
-		}
-		// If adapter has About with synthetic, use it to set quota
-		if ad, ok := drv.(interface{ About(context.Context) (storage.QuotaInfo, error) }); ok {
-			if q, err := ad.About(r.Context()); err == nil && q.Total > 0 {
-				acc.QuotaTotal = q.Total
-				acc.QuotaUsed = q.Used
-				_ = s.database.SaveAccount(acc)
-			}
-		}
-		s.drivers[acc.ID] = drv
-		if allPool, ok := s.pools["all_pool"]; ok {
-			allPool.AddDriver(drv)
-		}
-	}
-	s.mu.Unlock()
-	_ = s.database.RecordAudit("connect", acc.Name, acc.ID, "Account connected", "success", 0)
-	writeJSON(w, http.StatusCreated, acc)
 }
 
 func (s *Server) handleUpdateAccount(w http.ResponseWriter, r *http.Request) {
@@ -781,7 +445,7 @@ func (s *Server) handleUpdateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = s.database.RecordAudit("update", acc.Name, acc.ID, fmt.Sprintf("Updated RemoteAccount: name='%s', root_folder='%s'", acc.Name, acc.RootFolder), "success", 0)
-	writeJSON(w, http.StatusOK, acc)
+	writeJSON(w, http.StatusOK, redactAccount(*acc))
 }
 
 func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
@@ -853,7 +517,7 @@ func (s *Server) handleToggleAccount(w http.ResponseWriter, r *http.Request) {
 	} else {
 		acc.Status = "disabled"
 	}
-	writeJSON(w, http.StatusOK, acc)
+	writeJSON(w, http.StatusOK, redactAccount(*acc))
 }
 
 func (s *Server) handleTestAccount(w http.ResponseWriter, r *http.Request) {
@@ -886,47 +550,6 @@ func (s *Server) handleTestAccount(w http.ResponseWriter, r *http.Request) {
 
 	quota, _ := drv.About(r.Context())
 	_ = s.database.RecordAudit("test_connection", id, id, "Handshake verified", "success", durationMs)
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success":     true,
-		"duration_ms": durationMs,
-		"quota":       quota,
-	})
-}
-
-func (s *Server) handleTestConnectionNew(w http.ResponseWriter, r *http.Request) {
-	var raw map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request payload")
-		return
-	}
-	provider, _ := raw["provider"].(string)
-	if provider == "" {
-		writeError(w, http.StatusBadRequest, "provider required")
-		return
-	}
-
-	extra := make(map[string]string)
-	for k, v := range raw {
-		if s, ok := v.(string); ok {
-			extra[k] = s
-		}
-	}
-
-	tempDrv := storage.NewRcloneAdapterWithExtra(provider, "test_"+strconv.FormatInt(time.Now().Unix(), 10), extra["client_id"], extra["client_secret"], extra["access_token"], extra["refresh_token"], "", "Test Connection", extra)
-	start := time.Now()
-	err := tempDrv.TestConnection(r.Context())
-	durationMs := time.Since(start).Milliseconds()
-
-	if err != nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success":     false,
-			"error":       err.Error(),
-			"duration_ms": durationMs,
-		})
-		return
-	}
-
-	quota, _ := tempDrv.About(r.Context())
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":     true,
 		"duration_ms": durationMs,
@@ -982,468 +605,6 @@ func (s *Server) handleSyncStorage(w http.ResponseWriter, r *http.Request) {
 		"synced_at":      now,
 		"accounts_count": updatedCount,
 	})
-}
-
-
-func (s *Server) handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
-	provider := r.PathValue("provider")
-	if provider == "" {
-		writeError(w, http.StatusBadRequest, "missing provider")
-		return
-	}
-
-	customClientID := r.URL.Query().Get("client_id")
-	customClientSecret := r.URL.Query().Get("client_secret")
-	customRedirectURI := r.URL.Query().Get("redirect_uri")
-
-	var redirectURI string
-	if customRedirectURI != "" {
-		redirectURI = customRedirectURI
-	} else {
-		host := r.Host
-		// Google explicitly rejects private LAN IP addresses (192.168.x.x, 10.x.x.x) in redirect_uri.
-		// Normalize private IP host to localhost for Google compliance.
-		if (provider == "google" || provider == "gdrive") && isPrivateIP(host) {
-			_, port, err := net.SplitHostPort(host)
-			if err == nil {
-				host = "localhost:" + port
-			} else {
-				host = "localhost"
-			}
-		}
-
-		callbackProvider := provider
-		if callbackProvider == "gdrive" {
-			callbackProvider = "google"
-		}
-
-		scheme := "http"
-		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-			scheme = "https"
-		}
-		redirectURI = fmt.Sprintf("%s://%s/api/auth/%s/callback", scheme, host, callbackProvider)
-	}
-
-	statePayload, _ := json.Marshal(map[string]string{
-		"client_id":     customClientID,
-		"client_secret": customClientSecret,
-		"redirect_uri":  redirectURI,
-		"provider":      provider,
-		"name":          r.URL.Query().Get("name"),
-	})
-	stateStr := base64.RawURLEncoding.EncodeToString(statePayload)
-
-	authURL, err := auth.GenerateAuthURL(provider, redirectURI, customClientID, stateStr)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if r.URL.Query().Get("redirect") == "true" {
-		http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]string{
-		"auth_url":     authURL,
-		"redirect_uri": redirectURI,
-	})
-}
-
-func isPrivateIP(host string) bool {
-	h, _, err := net.SplitHostPort(host)
-	if err != nil {
-		h = host
-	}
-	ip := net.ParseIP(h)
-	if ip == nil {
-		return false
-	}
-	return ip.IsPrivate() || ip.IsLoopback()
-}
-
-func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
-	provider := r.PathValue("provider")
-	code := r.URL.Query().Get("code")
-	errParam := r.URL.Query().Get("error")
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	if errParam != "" {
-		fmt.Fprintf(w, "<html><body style='font-family:sans-serif;padding:30px;background:#0f172a;color:#f8fafc;'><h2>Authentication Cancelled</h2><p>%s</p><button onclick='window.close()' style='padding:10px 20px;cursor:pointer;'>Close Window</button></body></html>", errParam)
-		return
-	}
-
-	if code == "" {
-		fmt.Fprint(w, "<html><body style='font-family:sans-serif;padding:30px;background:#0f172a;color:#f8fafc;'><h2>Missing Authorization Code</h2><button onclick='window.close()' style='padding:10px 20px;cursor:pointer;'>Close Window</button></body></html>")
-		return
-	}
-
-	var stateData struct {
-		ClientID     string `json:"client_id"`
-		ClientSecret string `json:"client_secret"`
-		RedirectURI  string `json:"redirect_uri"`
-		Provider     string `json:"provider"`
-		Name         string `json:"name"`
-	}
-	if stateParam := r.URL.Query().Get("state"); stateParam != "" {
-		if raw, err := base64.RawURLEncoding.DecodeString(stateParam); err == nil {
-			_ = json.Unmarshal(raw, &stateData)
-		}
-	}
-
-	redirectURI := stateData.RedirectURI
-	if redirectURI == "" {
-		scheme := "http"
-		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-			scheme = "https"
-		}
-		callbackProvider := provider
-		if callbackProvider == "gdrive" {
-			callbackProvider = "google"
-		}
-		redirectURI = fmt.Sprintf("%s://%s/api/auth/%s/callback", scheme, r.Host, callbackProvider)
-	}
-
-	accID := fmt.Sprintf("%s_%d", provider, time.Now().Unix())
-	accName := stateData.Name
-	if accName == "" {
-		accName = fmt.Sprintf("%s Account", providerDisplayName(provider))
-	}
-	quotaTotal := int64(15 * 1024 * 1024 * 1024)
-	quotaUsed := int64(0)
-
-	// Attempt real token exchange with provider
-	tokenResp, tokenErr := auth.ExchangeCode(r.Context(), provider, code, redirectURI, stateData.ClientID, stateData.ClientSecret)
-	if tokenErr != nil || tokenResp == nil || tokenResp.AccessToken == "" {
-		providerName := strings.ToUpper(provider)
-		switch provider {
-		case "gdrive", "google":
-			providerName = "Google Drive"
-		case "onedrive":
-			providerName = "Microsoft OneDrive"
-		case "dropbox":
-			providerName = "Dropbox"
-		case "box":
-			providerName = "Box"
-		case "pcloud":
-			providerName = "pCloud"
-		case "yandex":
-			providerName = "Yandex Disk"
-		case "koofr":
-			providerName = "Koofr"
-		}
-
-		errMsg := fmt.Sprintf("Gagal mendapatkan token OAuth dari %s.", providerName)
-		if tokenErr != nil {
-			errMsg = tokenErr.Error()
-		}
-		fmt.Fprintf(w, `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Authentication Failed</title>
-<style>body { font-family: -apple-system, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
-.card { background: #1e293b; padding: 36px; border-radius: 16px; border: 1px solid #ef4444; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-h2 { color: #ef4444; margin-bottom: 12px; }
-p { color: #cbd5e1; line-height: 1.5; font-size: 0.95rem; }
-.err { background: rgba(239,68,68,0.15); color: #fca5a5; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; margin: 16px 0; word-break: break-all; }
-button { background: #334155; color: #fff; border: 0; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
-button:hover { background: #475569; }
-</style>
-</head>
-<body>
-<div class="card">
-  <h2>Autentikasi Gagal</h2>
-  <p>Cloudgate tidak dapat menyelesaikan token exchange dengan %s OAuth.</p>
-  <div class="err">%s</div>
-  <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:20px;">Pastikan <strong>%s OAuth Client ID</strong> dan <strong>Client Secret</strong> dimasukkan dengan benar pada form Add Account.</p>
-  <button onclick="window.close()">Tutup Jendela</button>
-</div>
-</body>
-</html>`, html.EscapeString(providerName), html.EscapeString(errMsg), html.EscapeString(providerName))
-		return
-	}
-
-	// Fetch provider-specific user info and instantiate live driver
-	var userEmail, userName string
-	var liveDriver storage.Driver
-	switch provider {
-	case "google", "gdrive":
-		// Query Google Drive v3 About endpoint to retrieve user email under existing Drive authorization (Least Privilege)
-		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://www.googleapis.com/drive/v3/about?fields=user", nil)
-		if err == nil {
-			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
-			userResp, err := http.DefaultClient.Do(userReq)
-			if err == nil {
-				defer userResp.Body.Close()
-				var aboutResp struct {
-					User struct {
-						DisplayName  string `json:"displayName"`
-						EmailAddress string `json:"emailAddress"`
-					} `json:"user"`
-				}
-				if err := json.NewDecoder(userResp.Body).Decode(&aboutResp); err == nil {
-					userEmail = aboutResp.User.EmailAddress
-					userName = aboutResp.User.DisplayName
-				}
-			}
-		}
-		// Fallback to oauth2 userinfo endpoint if About didn't return email
-		if userEmail == "" {
-			userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
-			if err == nil {
-				userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
-				userResp, err := http.DefaultClient.Do(userReq)
-				if err == nil {
-					defer userResp.Body.Close()
-					var userInfo struct {
-						Email string `json:"email"`
-						Name  string `json:"name"`
-					}
-					if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
-						if userEmail == "" {
-							userEmail = userInfo.Email
-						}
-						if userName == "" {
-							userName = userInfo.Name
-						}
-					}
-				}
-			}
-		}
-		if stateData.Name != "" {
-			accName = stateData.Name
-		} else if userEmail != "" {
-			accName = fmt.Sprintf("Google Drive (%s)", userEmail)
-		}
-		gdriver := storage.NewGDriveDriver(accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
-		liveDriver = gdriver
-	case "onedrive":
-		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://graph.microsoft.com/v1.0/me", nil)
-		if err == nil {
-			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
-			userResp, err := http.DefaultClient.Do(userReq)
-			if err == nil {
-				defer userResp.Body.Close()
-				var userInfo struct {
-					DisplayName string `json:"displayName"`
-					Mail        string `json:"mail"`
-					UserPrincipal string `json:"userPrincipalName"`
-				}
-				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
-					userEmail = userInfo.Mail
-					if userEmail == "" {
-						userEmail = userInfo.UserPrincipal
-					}
-					userName = userInfo.DisplayName
-					if userInfo.DisplayName != "" && userEmail != "" {
-						accName = fmt.Sprintf("%s (%s)", userInfo.DisplayName, userEmail)
-					} else if userEmail != "" {
-						accName = userEmail
-					} else if userInfo.DisplayName != "" {
-						accName = userInfo.DisplayName
-					}
-				}
-			}
-		}
-		adapter := storage.NewRcloneAdapter("onedrive", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
-		liveDriver = adapter
-	case "dropbox":
-		userReq, err := http.NewRequestWithContext(r.Context(), "POST", "https://api.dropboxapi.com/2/users/get_current_account", nil)
-		if err == nil {
-			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
-			userResp, err := http.DefaultClient.Do(userReq)
-			if err == nil {
-				defer userResp.Body.Close()
-				var userInfo struct {
-					Name struct {
-						DisplayName string `json:"display_name"`
-					} `json:"name"`
-					Email string `json:"email"`
-				}
-				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
-					userEmail = userInfo.Email
-					userName = userInfo.Name.DisplayName
-					if userInfo.Name.DisplayName != "" && userInfo.Email != "" {
-						accName = fmt.Sprintf("%s (%s)", userInfo.Name.DisplayName, userInfo.Email)
-					} else if userInfo.Email != "" {
-						accName = userInfo.Email
-					} else if userInfo.Name.DisplayName != "" {
-						accName = userInfo.Name.DisplayName
-					}
-				}
-			}
-		}
-		adapter := storage.NewRcloneAdapter("dropbox", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
-		liveDriver = adapter
-	case "box":
-		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://api.box.com/2.0/users/me", nil)
-		if err == nil {
-			userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
-			userResp, err := http.DefaultClient.Do(userReq)
-			if err == nil {
-				defer userResp.Body.Close()
-				var userInfo struct {
-					Name  string `json:"name"`
-					Login string `json:"login"`
-				}
-				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
-					userEmail = userInfo.Login
-					userName = userInfo.Name
-					if userInfo.Name != "" && userInfo.Login != "" {
-						accName = fmt.Sprintf("%s (%s)", userInfo.Name, userInfo.Login)
-					} else if userInfo.Login != "" {
-						accName = userInfo.Login
-					}
-				}
-			}
-		}
-		adapter := storage.NewRcloneAdapter("box", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
-		liveDriver = adapter
-	case "pcloud":
-		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://api.pcloud.com/userinfo?auth="+url.QueryEscape(tokenResp.AccessToken), nil)
-		if err == nil {
-			userResp, err := http.DefaultClient.Do(userReq)
-			if err == nil {
-				defer userResp.Body.Close()
-				var userInfo struct {
-					Email    string `json:"email"`
-					Username string `json:"username"`
-				}
-				if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err == nil {
-					userEmail = userInfo.Email
-					userName = userInfo.Username
-					if userInfo.Username != "" && userInfo.Email != "" {
-						accName = fmt.Sprintf("%s (%s)", userInfo.Username, userInfo.Email)
-					} else if userInfo.Email != "" {
-						accName = userInfo.Email
-					}
-				}
-			}
-		}
-		adapter := storage.NewRcloneAdapter("pcloud", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
-		liveDriver = adapter
-	case "yandex":
-		userReq, err := http.NewRequestWithContext(r.Context(), "GET", "https://cloud-api.yandex.net/v1/disk", nil)
-		if err == nil {
-			userReq.Header.Set("Authorization", "OAuth "+tokenResp.AccessToken)
-			userResp, err := http.DefaultClient.Do(userReq)
-			if err == nil {
-				defer userResp.Body.Close()
-				var info struct {
-					User struct {
-						Login string `json:"login"`
-						DisplayName string `json:"display_name"`
-					} `json:"user"`
-				}
-				if err := json.NewDecoder(userResp.Body).Decode(&info); err == nil {
-					userEmail = info.User.Login
-					userName = info.User.DisplayName
-					if info.User.DisplayName != "" && info.User.Login != "" {
-						accName = fmt.Sprintf("%s (%s)", info.User.DisplayName, info.User.Login)
-					} else if info.User.Login != "" {
-						accName = info.User.Login
-					}
-				}
-			}
-		}
-		adapter := storage.NewRcloneAdapter("yandex", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, userEmail, userName)
-		liveDriver = adapter
-	case "koofr":
-		// Koofr WebDAV — no dedicated userinfo endpoint, use token as identity
-		adapter := storage.NewRcloneAdapter("koofr", accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, "", accName)
-		liveDriver = adapter
-	default:
-		// Fallback: generic rclone adapter for any provider known to auth
-		adapter := storage.NewRcloneAdapter(provider, accID, stateData.ClientID, stateData.ClientSecret, tokenResp.AccessToken, tokenResp.RefreshToken, "", "")
-		liveDriver = adapter
-	}
-
-	if stateData.Name != "" {
-		accName = stateData.Name
-	}
-
-	quota, qErr := liveDriver.About(r.Context())
-	if qErr == nil {
-		quotaTotal = quota.Total
-		quotaUsed = quota.Used
-	}
-
-	s.mu.Lock()
-	s.drivers[accID] = liveDriver
-	if allPool, ok := s.pools["all_pool"]; ok {
-		allPool.AddDriver(liveDriver)
-	}
-	s.mu.Unlock()
-
-	// Trigger background indexing of real files
-	go func(drv storage.Driver) {
-		files, err := drv.List(context.Background(), "/")
-		if err == nil {
-			var indexed []db.IndexedFile
-			for _, f := range files {
-				indexed = append(indexed, db.IndexedFile{
-					AccountID: accID,
-					Path:      f.Path,
-					Name:      f.Name,
-					Size:      f.Size,
-					IsDir:     f.IsDir,
-					ModTime:   f.ModTime,
-				})
-			}
-			_ = s.database.IndexFiles(indexed)
-		}
-	}(liveDriver)
-
-	credsBytes, _ := json.Marshal(map[string]string{
-		"client_id":     stateData.ClientID,
-		"client_secret": stateData.ClientSecret,
-		"access_token":  tokenResp.AccessToken,
-		"refresh_token": tokenResp.RefreshToken,
-	})
-
-	acc := db.RemoteAccount{
-		ID:          accID,
-		Provider:    provider,
-		Name:        accName,
-		RootFolder:  "/",
-		Status:      "connected",
-		QuotaTotal:  quotaTotal,
-		QuotaUsed:   quotaUsed,
-		Credentials: string(credsBytes),
-		Email:       userEmail,
-		UpdatedAt:   time.Now().UTC(),
-	}
-
-	_ = s.database.SaveAccount(acc)
-	_ = s.database.RecordAudit("connect", acc.Name, acc.ID, "Connected via OAuth", "success", 0)
-
-	html := fmt.Sprintf(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Authentication Successful</title>
-<style>
-body { font-family: -apple-system, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
-.card { background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; }
-h2 { color: #10b981; margin-bottom: 12px; }
-</style>
-</head>
-<body>
-<div class="card">
-  <h2>✓ Authenticated with %s</h2>
-  <p style="color:#94a3b8;">Account <strong>%s</strong> has been connected successfully to Cloudgate.</p>
-  <p style="font-size:0.85rem;color:#64748b;">This window will close automatically...</p>
-</div>
-<script>
-if (window.opener) {
-  window.opener.postMessage({ type: 'oauth_complete', provider: '%s', account_id: '%s' }, '*');
-}
-setTimeout(() => window.close(), 1500);
-</script>
-</body>
-</html>`, strings.ToUpper(provider), accName, provider, acc.ID)
-
-	fmt.Fprint(w, html)
 }
 
 func (s *Server) handleGetPools(w http.ResponseWriter, r *http.Request) {
@@ -1589,54 +750,6 @@ func (s *Server) handleGetRecentFiles(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, []storage.FileInfo{})
 }
 
-
-func (s *Server) handleGetShareLink(w http.ResponseWriter, r *http.Request) {
-	accountID := r.URL.Query().Get("account_id")
-	filePath := r.URL.Query().Get("path")
-	if filePath == "" {
-		writeError(w, http.StatusBadRequest, "path required")
-		return
-	}
-
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	var drv storage.Driver
-	if accountID != "" {
-		drv = s.drivers[accountID]
-	} else if len(s.drivers) > 0 {
-		for _, d := range s.drivers {
-			drv = d
-			break
-		}
-	}
-
-	if drv == nil {
-		writeError(w, http.StatusNotFound, "no storage driver available")
-		return
-	}
-
-	link, err := drv.GetShareLink(r.Context(), filePath)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	host := r.Host
-	scheme := "http"
-	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-		scheme = "https"
-	}
-	fullURL := fmt.Sprintf("%s://%s%s", scheme, host, link)
-
-	writeJSON(w, http.StatusOK, map[string]string{
-		"share_url":  fullURL,
-		"path":       filePath,
-		"account_id": drv.ID(),
-	})
-}
-
-
 func (s *Server) handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	accountID := r.URL.Query().Get("account_id")
@@ -1766,7 +879,7 @@ func (s *Server) handleDownloadFile(w http.ResponseWriter, r *http.Request) {
 	driver, ok := s.drivers[accountID]
 	if !ok && accountID == "" {
 		for id, drv := range s.drivers {
-			if _, _, err := drv.Get(r.Context(), filePath); err == nil {
+			if _, err := storage.Stat(r.Context(), drv, filePath); err == nil {
 				accountID = id
 				driver = drv
 				ok = true
@@ -2066,7 +1179,6 @@ func (s *Server) handleGetChangelog(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 func (s *Server) handleSyncPush(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Token      string `json:"token"`
@@ -2132,7 +1244,7 @@ func (s *Server) handleSyncPull(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = s.database.RecordAudit("sync_pull", req.Repo, "github", "Encrypted vault restored", "success", 0)
-	writeJSON(w, http.StatusOK, accounts)
+	writeJSON(w, http.StatusOK, redactAccounts(accounts))
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
@@ -2546,5 +1658,3 @@ func (s *Server) handleClearFinishedTasks(w http.ResponseWriter, r *http.Request
 
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Riwayat task yang selesai telah dibersihkan"})
 }
-
-

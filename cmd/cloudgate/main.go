@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
@@ -19,7 +18,6 @@ import (
 	"github.com/herliansyah/cloudgate/pkg/config"
 	"github.com/herliansyah/cloudgate/pkg/db"
 	"github.com/herliansyah/cloudgate/pkg/server"
-	"github.com/herliansyah/cloudgate/pkg/storage"
 	"github.com/herliansyah/cloudgate/pkg/updater"
 	"github.com/herliansyah/cloudgate/web"
 )
@@ -142,62 +140,10 @@ func runServer(rawArgs []string) {
 	// 5. Initialize Server & Storage Pools
 	srv := server.NewServer(database, assets)
 
-	// Setup default StoragePool aggregating all connected accounts
-	savedAccounts, _ := database.GetAccounts()
-	var drivers []storage.Driver
-	for _, acc := range savedAccounts {
-		quota := acc.QuotaTotal
-		if quota <= 0 {
-			quota = 15 * 1024 * 1024 * 1024
-		}
-		var d storage.Driver
-		if acc.Credentials != "" {
-			var credMap map[string]string
-			if err := json.Unmarshal([]byte(acc.Credentials), &credMap); err != nil {
-				credMap = make(map[string]string)
-			}
-			creds := storage.RcloneCredentials{
-				Provider:     storage.Provider(acc.Provider),
-				AccountID:    acc.ID,
-				ClientID:     credMap["client_id"],
-				ClientSecret: credMap["client_secret"],
-				AccessToken:  credMap["access_token"],
-				RefreshToken: credMap["refresh_token"],
-				UserName:     acc.Name,
-				Extra:        credMap,
-			}
-			hasToken := creds.AccessToken != "" || creds.RefreshToken != ""
-			hasExtra := len(credMap) > 0
-			switch creds.Provider {
-			case storage.ProviderGDrive, storage.Provider("google"):
-				if hasToken {
-					d = storage.NewGDriveDriver(acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, acc.Email, acc.Name)
-				}
-			case storage.ProviderOneDrive, storage.ProviderDropbox, storage.ProviderBox, storage.ProviderPCloud, storage.ProviderYandex, storage.ProviderKoofr, storage.ProviderS3, storage.ProviderWebDAV, storage.ProviderMega, storage.ProviderFilen, storage.ProviderB2, storage.ProviderPikPak, storage.ProviderSFTP, storage.ProviderSMB, storage.ProviderProtonDrive:
-				if hasToken || hasExtra {
-					d = storage.NewRcloneAdapterWithExtra(string(creds.Provider), acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, acc.Email, acc.Name, credMap)
-				}
-			default:
-				// Unknown provider with credentials — try generic rclone adapter
-				if hasToken || hasExtra {
-					d = storage.NewRcloneAdapterWithExtra(acc.Provider, acc.ID, creds.ClientID, creds.ClientSecret, creds.AccessToken, creds.RefreshToken, acc.Email, acc.Name, credMap)
-				}
-			}
-		}
-		if d == nil {
-			// Synthetic adapter for known rclone providers without credentials (legacy or pre-auth)
-			switch storage.Provider(acc.Provider) {
-			case storage.ProviderS3, storage.ProviderWebDAV, storage.ProviderMega, storage.ProviderKoofr, storage.ProviderBox, storage.ProviderPCloud, storage.ProviderYandex, storage.ProviderOneDrive, storage.ProviderDropbox, storage.ProviderFilen, storage.ProviderB2, storage.ProviderPikPak, storage.ProviderSFTP, storage.ProviderSMB, storage.ProviderProtonDrive:
-				d = storage.NewRcloneAdapter(acc.Provider, acc.ID, "", "", "", "", acc.Email, acc.Name)
-			default:
-				d = storage.NewMemDriver(acc.ID, acc.Provider, quota)
-			}
-		}
-		srv.RegisterDriver(d)
-		drivers = append(drivers, d)
+	// Restore saved accounts (embedded rclone drivers) and the default StoragePool
+	if err := srv.LoadAccounts(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to load accounts: %v\n", err)
 	}
-	pool := storage.NewStoragePool("all_pool", "Round-Robin All Drives", drivers)
-	srv.RegisterPool(pool)
 
 	localURL := fmt.Sprintf("http://127.0.0.1:%d", port)
 	lanIPs := getLocalIPv4s()
@@ -558,6 +504,3 @@ func printStartupBanner(bindHost string, port int, localURL string, lanIPs []str
 	fmt.Println("===========================================================================")
 	fmt.Println("Press Ctrl+C to shut down.")
 }
-
-
-
