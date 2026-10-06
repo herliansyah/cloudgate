@@ -18,6 +18,9 @@
 
 </div>
 
+
+![Cloudgate Web UI](docs/assets/cloudgate-preview.png)
+
 ---
 
 ## Key Features
@@ -66,8 +69,6 @@ Cloudgate connects to **16 storage providers and protocols**. Every provider is 
 Uploads and downloads are streamed through rclone. When the upload size is unknown and the backend cannot stream, Cloudgate spools the upload to a temporary file first.
 
 Every account is verified against the real provider before it is saved, and rotated credentials (OAuth refresh tokens, Proton/PikPak sessions, OneDrive drive IDs, SFTP host keys) are written back to the local database automatically.
-
-![Cloudgate Web UI](docs/assets/cloudgate-preview.png)
 
 ---
 
