@@ -13,6 +13,7 @@ const (
 	AppVersion = "0.4.1"
 	AppAuthor  = "Herliansyah"
 	AppRepo    = "https://github.com/herliansyah/cloudgate"
+	AppDonationURL = "https://saweria.co/herliansyah26"
 
 	DefaultPort = 5210
 	LockFileName = "cloudgate.lock"

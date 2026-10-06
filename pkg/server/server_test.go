@@ -52,6 +52,12 @@ func TestServerAndAPI(t *testing.T) {
 	if info["repository"] != "https://github.com/herliansyah/cloudgate" {
 		t.Fatalf("expected repo https://github.com/herliansyah/cloudgate, got %s", info["repository"])
 	}
+	if info["donation_url"] != "https://saweria.co/herliansyah26" {
+		t.Fatalf("expected donation_url https://saweria.co/herliansyah26, got %s", info["donation_url"])
+	}
+	if info["sponsor_url"] != "https://saweria.co/herliansyah26" {
+		t.Fatalf("expected sponsor_url https://saweria.co/herliansyah26, got %s", info["sponsor_url"])
+	}
 
 	// 2. Test /api/stats
 	resp, err = http.Get(ts.URL + "/api/stats")

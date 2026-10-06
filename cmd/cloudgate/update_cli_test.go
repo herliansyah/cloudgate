@@ -30,5 +30,7 @@ func TestColorDetectionAndStartupBanner(t *testing.T) {
 
 	// Test printStartupBanner execution without panicking
 	printStartupBanner("0.0.0.0", 5210, "http://127.0.0.1:5210", []string{"192.168.1.50"}, "/tmp/cg_test")
+	printVersion()
+	printHelp()
 }
 
