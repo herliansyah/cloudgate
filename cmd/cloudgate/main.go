@@ -62,11 +62,13 @@ func printVersion() {
 	fmt.Printf("%s v%s\n", config.AppName, config.AppVersion)
 	fmt.Printf("Author: %s\n", config.AppAuthor)
 	fmt.Printf("Repository: %s\n", config.AppRepo)
+	fmt.Printf("Donation: %s\n", config.AppDonationURL)
 }
 
 func printHelp() {
 	fmt.Printf("%s v%s - Unified Cloud Storage Gateway\n", config.AppName, config.AppVersion)
-	fmt.Printf("Author: %s (%s)\n\n", config.AppAuthor, config.AppRepo)
+	fmt.Printf("Author: %s (%s)\n", config.AppAuthor, config.AppRepo)
+	fmt.Printf("Donation: %s\n\n", config.AppDonationURL)
 	fmt.Println("Usage:")
 	fmt.Println("  cloudgate                  Start server on 0.0.0.0:5210 and launch browser (default)")
 	fmt.Println("  cloudgate serve            Start server in current terminal")
@@ -491,6 +493,7 @@ func printStartupBanner(bindHost string, port int, localURL string, lanIPs []str
 	fmt.Printf("   %s Unified Cloud Storage Gateway v%s\n", config.AppName, config.AppVersion)
 	fmt.Printf("   Author     : %s\n", config.AppAuthor)
 	fmt.Printf("   Repository : %s\n", config.AppRepo)
+	fmt.Printf("   Donation   : %s\n", config.AppDonationURL)
 	fmt.Printf("   Config Dir : %s\n", configDir)
 	fmt.Println("---------------------------------------------------------------------------")
 	fmt.Printf("   Local URL   : %s%s%s\n", bold, localURL, reset)

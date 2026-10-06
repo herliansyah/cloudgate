@@ -283,6 +283,7 @@ go test -v ./pkg/...
 Dibuat dengan ❤️ oleh **Herliansyah**
 - **GitHub**: [@herliansyah](https://github.com/herliansyah)
 - **Repositori**: [https://github.com/herliansyah/cloudgate](https://github.com/herliansyah/cloudgate)
+- **Donasi / Dukungan**: [https://saweria.co/herliansyah26](https://saweria.co/herliansyah26)
 
 Kontribusi, saran fitur, dan laporan *bug* sangat kami nantikan!
 

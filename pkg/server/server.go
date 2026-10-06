@@ -304,10 +304,12 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"app":        config.AppName,
-		"version":    config.AppVersion,
-		"author":     config.AppAuthor,
-		"repository": config.AppRepo,
+		"app":          config.AppName,
+		"version":      config.AppVersion,
+		"author":       config.AppAuthor,
+		"repository":   config.AppRepo,
+		"donation_url": config.AppDonationURL,
+		"sponsor_url":  config.AppDonationURL,
 	})
 }
 
