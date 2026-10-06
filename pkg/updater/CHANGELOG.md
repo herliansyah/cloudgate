@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-06
+
+### Added
+- Web UI preview screenshot in `README.md` and `README.id.md` showcasing the StorageHub dashboard.
+- Saweria donation and sponsorship link (`https://saweria.co/herliansyah26`) across Web UI About dialog, CLI banners/commands, README documentation, and GitHub Funding.
+
 ## [0.4.1] - 2026-09-29
 
 ### Fixed
