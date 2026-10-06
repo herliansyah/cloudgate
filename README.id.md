@@ -67,7 +67,7 @@ Upload dan download dialirkan melalui rclone. Jika ukuran upload tidak diketahui
 
 Setiap akun diverifikasi ke provider asli sebelum disimpan, dan kredensial yang berotasi (refresh token OAuth, sesi Proton/PikPak, drive ID OneDrive, host key SFTP) otomatis ditulis kembali ke database lokal.
 
-<!-- Placeholder Screenshot Web UI (misal: docs/assets/cloudgate-preview.png) -->
+![Tampilan Antarmuka Cloudgate](docs/assets/cloudgate-preview.png)
 
 ---
 

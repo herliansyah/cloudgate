@@ -67,7 +67,7 @@ Uploads and downloads are streamed through rclone. When the upload size is unkno
 
 Every account is verified against the real provider before it is saved, and rotated credentials (OAuth refresh tokens, Proton/PikPak sessions, OneDrive drive IDs, SFTP host keys) are written back to the local database automatically.
 
-<!-- Web UI Preview Placeholder (e.g. docs/assets/cloudgate-preview.png) -->
+![Cloudgate Web UI](docs/assets/cloudgate-preview.png)
 
 ---
 
